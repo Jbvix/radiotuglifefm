@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>TugLife FM • App Mobile v1.2.2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚓</text></svg>" />
+
+    <style>
+        /* ================================
+           TugLife FM - App Mobile First
+           Versão: v1.2.2
+           Foco: layout mobile-first, CTA de rádio,
+                 apoio, Deezer, Alexa, mapa MarineTraffic/Windy
+                 com seleção de portos do Brasil.
+           ================================ */
+
+        :root {
+            --bg-main: #050814;
+            --bg-card: rgba(9, 16, 35, 0.96);
+            --accent: #1f98a7;
+            --accent-soft: rgba(31, 152, 167, 0.18);
+            --text-main: #f0f4ff;
+            --text-muted: #a3b0d0;
+            --danger: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #18253f 0, #050814 48%, #02040a 100%);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 520px;
+            min-height: 100vh;
+            padding: 16px 12px 80px;
+        }
+
+        header.app-header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .brand-title {
+            font-family: "Orbitron", system-ui, sans-serif;
+            font-size: 1.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+        }
+
+        .brand-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.85;
+            margin-bottom: 4px;
+        }
+
+        .brand-tagline {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .build-info {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            opacity: 0.85;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 14px 14px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(31, 152, 167, 0.3);
+        }
+
+        .live-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .badge-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #555;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .badge-live.is-on {
+            background: #c0392b;
+        }
+
+        .equalizer {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .eq-bar {
+            width: 3px;
+            background: #ff7675;
+            border-radius: 1px;
+            height: 3px;
+        }
+
+        .badge-live.is-on .eq-bar:nth-child(1) { animation: eq1 0.8s ease-in-out infinite alternate; }
+        .badge-live.is-on .eq-bar:nth-child(2) { animation: eq2 0.6s ease-in-out infinite alternate; }
+        .badge-live.is-on .eq-bar:nth-child(3) { animation: eq3 0.9s ease-in-out infinite alternate; }
+        .badge-live.is-on .eq-bar:nth-child(4) { animation: eq4 0.7s ease-in-out infinite alternate; }
+
+        @keyframes eq1 { from { height: 3px; } to { height: 12px; } }
+        @keyframes eq2 { from { height: 6px; } to { height: 10px; } }
+        @keyframes eq3 { from { height: 2px; } to { height: 14px; } }
+        @keyframes eq4 { from { height: 5px; } to { height: 8px; } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .badge-live.is-on .eq-bar {
+                animation: none;
+                height: 8px;
+            }
+        }
+
+        .now-playing-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg, #1f98a7, #29c7d8);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .btn-main:active {
+            transform: scale(0.97);
+            box-shadow: 0 0 10px rgba(41, 199, 216, 0.6);
+        }
+
+        .quick-actions {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            background: rgba(5, 10, 25, 0.9);
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .btn-secondary span.label {
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* Canais externos: TugLife Store, Deezer, Alexa */
+        .external-links {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+            font-size: 0.82rem;
+        }
+
+        .external-links a {
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .external-links a:hover {
+            text-decoration: underline;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            margin-bottom: 6px;
+            opacity: 0.9;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .schedule-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .schedule-item {
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: rgba(12, 20, 42, 0.9);
+            border: 1px solid rgba(31, 152, 167, 0.14);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .schedule-time {
+            font-family: "Orbitron", system-ui, sans-serif;
+            font-size: 0.8rem;
+            color: var(--accent);
+            flex-shrink: 0;
+            min-width: 70px;
+        }
+
+        .schedule-name {
+            font-size: 0.85rem;
+        }
+
+        .schedule-item.is-current {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .map-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(31, 152, 167, 0.6);
+            background: rgba(2, 6, 18, 0.9);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* ---- Lista de portos (rolagem horizontal no mobile) ---- */
+        .port-scroller {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+        }
+
+        .port-scroller::-webkit-scrollbar {
+            height: 4px;
+        }
+        .port-scroller::-webkit-scrollbar-thumb {
+            background: rgba(31, 152, 167, 0.7);
+            border-radius: 999px;
+        }
+
+        .port-btn {
+            flex: 0 0 auto;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(31, 152, 167, 0.7);
+            background: rgba(5, 10, 25, 0.9);
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .port-btn-active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .map-view {
+            width: 100%;
+            aspect-ratio: 5 / 9;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(31, 152, 167, 0.6);
+        }
+
+        .map-view iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .card-footer-note {
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ---- Responsivo para telas maiores ---- */
+        @media (min-width: 700px) {
+            .app-shell {
+                padding-top: 24px;
+            }
+
+            .quick-actions {
+                flex-direction: row;
+            }
+
+            .btn-secondary {
+                flex: 1;
+            }
+
+            .external-links {
+                flex-direction: row;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 520px;
+            background: rgba(5, 8, 20, 0.97);
+            border-top: 1px solid rgba(31, 152, 167, 0.3);
+            display: flex;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 8px 4px 10px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .nav-btn.active {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- Cabeçalho com identidade + versão técnica -->
+    <header class="app-header">
+        <div class="brand-title">TugLife FM</div>
+        <div class="brand-subtitle">O Som do Mar • TugLife FM</div>
+        <div class="brand-tagline">Da praça de máquinas ao passadiço, 24/7…</div>
+        <div class="build-info">
+            GOC v3.4.3 • Build: 22/04/26 • Autor: Jossian Brito
+        </div>
+    </header>
+
+    <!-- Cartão de player / AO VIVO -->
+    <section class="card" id="card-player">
+        <div class="live-row">
+            <div id="badge-live" class="badge-live">
+                <div class="equalizer" aria-hidden="true">
+                    <span class="eq-bar"></span>
+                    <span class="eq-bar"></span>
+                    <span class="eq-bar"></span>
+                    <span class="eq-bar"></span>
+                </div>
+                <span>Ao vivo</span>
+            </div>
+            <div class="now-playing-text" id="now-playing-text">
+                Toque para iniciar a transmissão da TugLife FM.
+            </div>
+        </div>
+
+        <!-- Botão principal: Ouça Agora ▶ ☾ -->
+        <button id="btn-play" class="btn-main">
+            <span>Ouça Agora</span>
+            <span>▶</span>
+            <span>☾</span>
+        </button>
+
+        <!-- Canais externos: TugLife Store, Deezer, Alexa -->
+        <div class="external-links">
+            <a href="https://www.tuglife.store" target="_blank" rel="noopener noreferrer">
+                ⚓ Apoie <strong>(TugLife Store)</strong>
+            </a>
+            <a href="https://www.deezer.com" target="_blank" rel="noopener noreferrer">
+                🎧 Ouça também na <strong>Deezer</strong>
+            </a>
+            <span>
+                🗣️ Alexa: <strong>“Peça à Alexa: Abrir Rádio Marujo”</strong>
+            </span>
+        </div>
+
+        <!-- Elemento de áudio: player real -->
+        <audio id="radio-stream" preload="none">
+            <source src="https://servidor27.brlogic.com:7098/live" type="audio/mpeg" />
+            Seu navegador não suporta áudio HTML5.
+        </audio>
+    </section>
+
+    <!-- Cartão de programação do dia (resumido) -->
+    <section class="card" id="card-programacao">
+        <div class="section-title">Programação de hoje</div>
+        <div class="section-subtitle" id="programacao-subtitle">
+            Baseada no fuso America/Fortaleza (UTC-3).
+        </div>
+
+        <ul class="schedule-list" id="schedule-list">
+            <!-- Conteúdo preenchido via JavaScript -->
+        </ul>
+
+        <div class="card-footer-note">
+            Em breve: grade completa da semana integrada ao painel GOC.
+        </div>
+    </section>
+
+    <!-- Cartão de mapa com tabs e portos -->
+    <section class="card" id="card-mapa">
+        <div class="section-title">Mapa de Operações</div>
+        <div class="section-subtitle">
+            Visualize vento e tráfego marítimo nos principais portos onde a TugLife vive.
+        </div>
+
+        <div class="map-tabs">
+            <button class="tab-btn active" data-map="marinetraffic">MarineTraffic</button>
+            <button class="tab-btn" data-map="windy">Windy</button>
+        </div>
+
+        <!-- Lista de portos (rolagem horizontal) -->
+        <div class="port-scroller" id="port-scroller">
+            <!-- Botões de portos gerados via JS -->
+        </div>
+
+        <div class="map-view" id="map-view">
+            <!-- Iframe carregado dinamicamente pelo JS -->
+        </div>
+
+        <div class="card-footer-note">
+            Para visão detalhada de operações e frota, utilize o painel GOC em desktop.
+        </div>
+    </section>
+
+    <footer class="footer">
+        Versão mobile v1.2.2 • Conceito GOC adaptado para bolso.<br />
+        Desenvolvido por <a href="https://www.tuglife.store" target="_blank">Jossian Brito (Charlie Bravo)</a>.
+    </footer>
+</div>
+
+<nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-btn active" data-target="card-player">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
+            <circle cx="12" cy="14" r="4"/>
+            <path d="M8.5 8.5 L12 5 L15.5 8.5"/>
+            <line x1="3" y1="14" x2="5" y2="14"/>
+            <line x1="19" y1="14" x2="21" y2="14"/>
+        </svg>
+        <span>Player</span>
+    </button>
+    <button class="nav-btn" data-target="card-programacao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>Programação</span>
+    </button>
+    <button class="nav-btn" data-target="card-mapa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+        <span>Mapa</span>
+    </button>
+</nav>
+
+<script>
+/* ===========================================================
+   TugLife FM - App Mobile First
+   Versão: v1.2.2
+   Data/Hora: 22/04/26
+   Autor: Jossian Brito (Charlie Bravo)
+
+   Modificações desta versão:
+   - Correção do botão PLAY inoperante:
+       * Toda a lógica agora é inicializada após o evento
+         DOMContentLoaded, garantindo que HTML esteja carregado
+         antes de buscar elementos (btn-play, radio-stream, etc.).
+   - Mantida a correção de programação diária v1.2.0:
+       * weeklySchedule completo por dia (domingo–sábado),
+         com base no fuso America/Fortaleza.
+   - Mantida a lista de portos e seleção para MarineTraffic/Windy.
+
+   Impacto em GDD / Manual:
+   - GDD: acrescentar nota em "Arquitetura Frontend" indicando
+     que a inicialização do app é feita em DOMContentLoaded.
+   - Manual: nenhuma mudança de uso para o usuário final;
+     apenas melhora de confiabilidade do botão PLAY.
+   =========================================================== */
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    (function() {
+        // ==========================
+        // Referências de DOM básicas
+        // ==========================
+        const btnPlay           = document.getElementById('btn-play');
+        const badgeLive         = document.getElementById('badge-live');
+        const nowPlayingText    = document.getElementById('now-playing-text');
+        const audio             = document.getElementById('radio-stream');
+
+        const cardProgramacao   = document.getElementById('card-programacao');
+        const cardMapa          = document.getElementById('card-mapa');
+        const scheduleList      = document.getElementById('schedule-list');
+
+        const mapTabs           = document.querySelectorAll('.tab-btn[data-map]');
+        const mapView           = document.getElementById('map-view');
+        const portScroller      = document.getElementById('port-scroller');
+
+        var lastNowPlaying = '';
+
+        // Se por algum motivo elementos críticos não existirem,
+        // evitamos quebrar toda a página.
+        if (!btnPlay || !audio) {
+            console.warn('TugLife FM: elementos de player não encontrados (btn-play ou radio-stream). Verifique o HTML.');
+        }
+
+        // ====================================================
+        // 1) Player: play/pause + indicador AO VIVO
+        // ====================================================
+        function updateLiveUI(isPlaying) {
+            if (!badgeLive || !nowPlayingText || !btnPlay) return;
+
+            if (isPlaying) {
+                badgeLive.classList.add('is-on');
+                nowPlayingText.textContent = lastNowPlaying
+                    ? 'Ao vivo \u2022 ' + lastNowPlaying
+                    : 'TugLife FM em transmissão. Ajuste o volume do seu dispositivo.';
+                btnPlay.innerHTML = '<span>Pausar</span><span>\u23F8</span>';
+            } else {
+                badgeLive.classList.remove('is-on');
+                nowPlayingText.textContent = lastNowPlaying
+                    ? 'Toque para ouvir \u2014 agora: ' + lastNowPlaying
+                    : 'Toque para iniciar a transmissão da TugLife FM.';
+                btnPlay.innerHTML = '<span>Ouça Agora</span><span>\u25B6</span><span>\u263E</span>';
+            }
+        }
+
+        if (btnPlay && audio) {
+            btnPlay.addEventListener('click', function() {
+                if (audio.paused) {
+                    audio.play().catch(function(err) {
+                        console.warn('Falha ao iniciar áudio. Interação adicional pode ser necessária.', err);
+                        if (nowPlayingText) {
+                            nowPlayingText.textContent = 'Não foi possível iniciar o áudio. Toque novamente ou verifique o navegador.';
+                        }
+                    });
+                } else {
+                    audio.pause();
+                }
+            });
+
+            audio.addEventListener('play', function() {
+                updateLiveUI(true);
+            });
+
+            audio.addEventListener('pause', function() {
+                updateLiveUI(false);
+            });
+        }
+
+        // ========================================
+        // 2) Navegação: scroll suave entre seções
+        // ========================================
+        function smoothScrollTo(element) {
+            if (!element) return;
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // ================================================
+        // 3) Programação completa por dia da semana
+        //    (usando o fuso America/Fortaleza)
+        // ================================================
+
+        const weeklySchedule = {
+            domingo: [
+                { time: "00:00", title: "Viajando na Emoção" },
+                { time: "01:00", title: "Coração Sertanejo FDS" },
+                { time: "03:00", title: "Top Classic" },
+                { time: "08:00", title: "Algazarra" },
+                { time: "10:00", title: "TugKids" },
+                { time: "11:00", title: "TugCast Cmte Valdir" },
+                { time: "14:00", title: "Flash Back Top Hits" },
+                { time: "15:00", title: "Encontro de Gigantes - Djavan e Belchior" },
+                { time: "19:00", title: "Poder Pentecostal e Hinos de Testemunho (Gospel Hits)" },
+                { time: "20:00", title: "Love Songs Are Back Again" },
+                { time: "21:00", title: "Top Hits 2000" },
+                { time: "22:00", title: "Top Hits 90s" },
+                { time: "23:00", title: "Clube do Rei DOM" }
+            ],
+            segunda: [
+                { time: "00:00", title: "Love Night - Madrugada Romântica" },
+                { time: "02:00", title: "Âncora da Fé" },
+                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
+                { time: "12:00", title: "Show da Tarde" },
+                { time: "16:00", title: "A Vibe do Reggae" },
+                { time: "17:00", title: "Back in Time" },
+                { time: "18:00", title: "TugLife Retrô" },
+                { time: "19:00", title: "Fita K7" },
+                { time: "20:00", title: "Top Hits 90s" },
+                { time: "21:00", title: "O Melhor do Soul" },
+                { time: "22:00", title: "Hits Eletrônicos" },
+                { time: "23:00", title: "Roberto Carlos : A Hora do Rei" }
+            ],
+            terca: [
+                { time: "00:00", title: "Love Night" },
+                { time: "02:00", title: "Insônia" },
+                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
+                { time: "12:00", title: "Mix Gospel" },
+                { time: "16:00", title: "Fita K7" },
+                { time: "17:00", title: "O Melhor do Soul" },
+                { time: "19:00", title: "Hora do Marinheiro" },
+                { time: "21:00", title: "Semeando a Palavra" },
+                { time: "23:00", title: "Love Songs Are Back Again" }
+            ],
+            quarta: [
+                { time: "00:00", title: "Âncora da Fé" },
+                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
+                { time: "12:00", title: "Show da Tarde" },
+                { time: "16:00", title: "Galpão Farrapo" },
+                { time: "17:00", title: "Os Melhores Remixes" },
+                { time: "18:00", title: "A Batalha dos Titãs (Rock & Grunge Anos 80/90)" },
+                { time: "20:00", title: "Clube do Brega - Especial Amado Batista" },
+                { time: "22:00", title: "Love Night" }
+            ],
+            quinta: [
+                { time: "00:00", title: "Insônia" },
+                { time: "02:00", title: "Âncora da Fé" },
+                { time: "06:00", title: "Convés Brasil _Semana" },
+                { time: "12:00", title: "Show da Tarde" },
+                { time: "16:00", title: "Axé e Pagode" },
+                { time: "17:00", title: "Top Hits 90s" },
+                { time: "19:00", title: "Garagem do Rock" },
+                { time: "20:00", title: "Back in Time" },
+                { time: "23:00", title: "Roberto Carlos : A Hora do Rei" }
+            ],
+            sexta: [
+                { time: "00:00", title: "Love Night" },
+                { time: "02:00", title: "Insônia" },
+                { time: "04:00", title: "Nas ondas do louvor" },
+                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
+                { time: "12:00", title: "Show da Tarde" },
+                { time: "17:00", title: "Groove & Disco Fever (Anos 70 & 80)" },
+                { time: "19:00", title: "A Vibe do Reggae" },
+                { time: "21:00", title: "Back in Time" }
+            ],
+            sabado: [
+                { time: "00:00", title: "Top Classic" },
+                { time: "04:00", title: "Mais Brasil Fins de Semana" },
+                { time: "08:00", title: "Flash Back Top Hits" },
+                { time: "09:00", title: "Bora Viajar" },
+                { time: "12:00", title: "Café com Samba" },
+                { time: "13:00", title: "Revirando o baú" },
+                { time: "15:00", title: "Encontro de Gigantes Legiao Urbana e Titãs" },
+                { time: "18:00", title: "Arriba!!!" },
+                { time: "19:00", title: "Fim de semana Convés Brasil" },
+                { time: "21:00", title: "Clube do Brega Seleção" },
+                { time: "22:00", title: "Back in Time" }
+            ]
+        };
+
+        const dayKeys = [
+            "domingo",  // 0
+            "segunda",  // 1
+            "terca",    // 2
+            "quarta",   // 3
+            "quinta",   // 4
+            "sexta",    // 5
+            "sabado"    // 6
+        ];
+
+        function parseHour(hhmm) {
+            const [h, m] = hhmm.split(':').map(Number);
+            return h + (m / 60);
+        }
+
+        function getFortalezaDate() {
+            const now = new Date();
+            const fortStr = now.toLocaleString("en-US", { timeZone: "America/Fortaleza" });
+            return new Date(fortStr);
+        }
+
+        function renderTodaySchedule() {
+            if (!scheduleList) return;
+
+            scheduleList.innerHTML = '';
+
+            const fortDate   = getFortalezaDate();
+            const jsDayIndex = fortDate.getDay(); // 0=Dom, 1=Seg...
+            const currentHourDecimal = fortDate.getHours() + fortDate.getMinutes()/60;
+
+            const dayKey = dayKeys[jsDayIndex];
+            const todayPrograms = weeklySchedule[dayKey];
+
+            if (!todayPrograms) {
+                const li = document.createElement('li');
+                li.className = 'schedule-item';
+                li.textContent = 'Programação não disponível para este dia.';
+                scheduleList.appendChild(li);
+                return;
+            }
+
+            todayPrograms.forEach((slot, index) => {
+                const startLabel = slot.time;
+                const startHour  = parseHour(slot.time);
+
+                let endLabel;
+                let endHour;
+
+                if (index < todayPrograms.length - 1) {
+                    endLabel = todayPrograms[index + 1].time;
+                    endHour  = parseHour(endLabel);
+                } else {
+                    endLabel = "00:00";
+                    endHour  = 24;
+                }
+
+                const li = document.createElement('li');
+                li.className = 'schedule-item';
+
+                if (currentHourDecimal >= startHour && currentHourDecimal < endHour) {
+                    li.classList.add('is-current');
+                }
+
+                const timeSpan = document.createElement('div');
+                timeSpan.className = 'schedule-time';
+                timeSpan.textContent = `${startLabel} - ${endLabel}`;
+
+                const titleSpan = document.createElement('div');
+                titleSpan.className = 'schedule-name';
+                titleSpan.textContent = slot.title;
+
+                li.appendChild(timeSpan);
+                li.appendChild(titleSpan);
+                scheduleList.appendChild(li);
+            });
+        }
+
+        renderTodaySchedule();
+        setInterval(renderTodaySchedule, 60 * 1000);
+
+        // ================================================
+        // 6) Now Playing: metadata Icecast via proxy CORS
+        // ================================================
+        function fetchNowPlaying() {
+            var endpoint = 'https://servidor27.brlogic.com:7098/status-json.xsl';
+            var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(endpoint);
+
+            fetch(proxyUrl)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    var parsed = JSON.parse(data.contents);
+                    var source = parsed.icestats && parsed.icestats.source;
+                    var title = (source && source.title) ? source.title.trim() : '';
+                    if (title && title !== lastNowPlaying) {
+                        lastNowPlaying = title;
+                        var isPlaying = audio && !audio.paused;
+                        updateLiveUI(isPlaying);
+                    }
+                })
+                .catch(function() {
+                    // fallback silencioso
+                });
+        }
+
+        fetchNowPlaying();
+        setInterval(fetchNowPlaying, 15 * 1000);
+
+        // =================================================
+        // 4) Mapa: abas MarineTraffic/Windy + lista de portos
+        // =================================================
+        const ports = [
+            { name: "Santos",           lat: -23.9608, lon: -46.3280, zoom: 9 },
+            { name: "Rio de Janeiro",   lat: -22.9000, lon: -43.1600, zoom: 9 },
+            { name: "Suape",            lat: -8.3920,  lon: -34.9540, zoom: 8 },
+            { name: "Vila do Conde",    lat: -1.5150,  lon: -48.7400, zoom: 8 },
+            { name: "Ponta da Madeira", lat: -2.5350,  lon: -44.3650, zoom: 8 },
+            { name: "Itaqui / Alumar",  lat: -2.5550,  lon: -44.3450, zoom: 8 },
+            { name: "Paranaguá",        lat: -25.5100, lon: -48.5000, zoom: 9 },
+            { name: "Rio Grande",       lat: -32.0300, lon: -52.1000, zoom: 8 },
+            { name: "Itajaí",           lat: -26.9000, lon: -48.6600, zoom: 9 },
+            { name: "Salvador",         lat: -12.9700, lon: -38.5100, zoom: 9 },
+            { name: "Pecém",            lat: -3.5400,  lon: -38.7700, zoom: 8 },
+            { name: "Mucuripe",         lat: -3.7160,  lon: -38.4830, zoom: 10 }
+        ];
+
+        let activeMapType   = 'marinetraffic';
+        let activePortIndex = 0;
+
+        function buildMarineTrafficURL(port) {
+            return `https://www.marinetraffic.com/en/ais/embed/zoom:${port.zoom}/centerx:${port.lon}/centery:${port.lat}/maptype:0/shownames:true/showmenu:false/showtrack:false`;
+        }
+
+        function buildWindyURL(port) {
+            return `https://embed.windy.com/embed.html?type=map&location=coordinates&zoom=${port.zoom}&lat=${port.lat}&lon=${port.lon}&detailLat=${port.lat}&detailLon=${port.lon}&metricWind=kt&metricTemp=%C2%B0C`;
+        }
+
+        function loadMapFor(portIndex) {
+            if (!mapView || !portScroller) return;
+
+            const port = ports[portIndex] || ports[0];
+            activePortIndex = portIndex;
+
+            const buttons = portScroller.querySelectorAll('.port-btn');
+            buttons.forEach((btn, idx) => {
+                if (idx === portIndex) {
+                    btn.classList.add('port-btn-active');
+                } else {
+                    btn.classList.remove('port-btn-active');
+                }
+            });
+
+            let url;
+            if (activeMapType === 'marinetraffic') {
+                url = buildMarineTrafficURL(port);
+            } else {
+                url = buildWindyURL(port);
+            }
+
+            mapView.innerHTML = '';
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.loading = 'lazy';
+            iframe.referrerPolicy = 'no-referrer-when-downgrade';
+            mapView.appendChild(iframe);
+        }
+
+        if (portScroller) {
+            ports.forEach((port, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'port-btn';
+                btn.textContent = port.name;
+                btn.addEventListener('click', () => loadMapFor(index));
+                portScroller.appendChild(btn);
+            });
+        }
+
+        if (mapTabs && mapTabs.length > 0) {
+            mapTabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    mapTabs.forEach(function(t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+
+                    const mapType = tab.getAttribute('data-map');
+                    activeMapType = mapType || 'marinetraffic';
+                    loadMapFor(activePortIndex);
+                });
+            });
+        }
+
+        loadMapFor(activePortIndex);
+
+        // ================================================
+        // 5) Bottom nav: scroll + IntersectionObserver
+        // ================================================
+        var navBtns = document.querySelectorAll('.nav-btn[data-target]');
+
+        navBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var targetEl = document.getElementById(btn.getAttribute('data-target'));
+                if (targetEl) smoothScrollTo(targetEl);
+            });
+        });
+
+        var sectionIds = ['card-player', 'card-programacao', 'card-mapa'];
+        var sectionObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    navBtns.forEach(function(btn) {
+                        btn.classList.toggle('active', btn.getAttribute('data-target') === entry.target.id);
+                    });
+                }
+            });
+        }, { threshold: 0.4 });
+
+        sectionIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) sectionObserver.observe(el);
+        });
+
+    })();
+
+});
+</script>
+
+
+
+</body>
+</html>
