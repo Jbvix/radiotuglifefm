@@ -11,7 +11,7 @@
            TugLife FM - App Mobile First
            Versão: v1.2.2
            Foco: layout mobile-first, CTA de rádio,
-                 apoio, Deezer, Alexa, mapa MarineTraffic/Windy
+                 apoio, Deezer, Alexa, mapa VesselFinder/Windy
                  com seleção de portos do Brasil.
            ================================ */
 
@@ -507,7 +507,7 @@
         </div>
 
         <div class="map-tabs">
-            <button class="tab-btn active" data-map="marinetraffic">MarineTraffic</button>
+            <button class="tab-btn active" data-map="vesselfinder">VesselFinder</button>
             <button class="tab-btn" data-map="windy">Windy</button>
         </div>
 
@@ -882,11 +882,11 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: "Mucuripe",         lat: -3.7160,  lon: -38.4830, zoom: 10 }
         ];
 
-        let activeMapType   = 'marinetraffic';
+        let activeMapType   = 'vesselfinder';
         let activePortIndex = 0;
 
-        function buildMarineTrafficURL(port) {
-            return `https://www.marinetraffic.com/en/ais/embed/zoom:${port.zoom}/centerx:${port.lon}/centery:${port.lat}/maptype:0/shownames:true/showmenu:false/showtrack:false`;
+        function buildVesselFinderURL(port) {
+            return `https://www.vesselfinder.com/aismap?zoom=${port.zoom}&lat=${port.lat}&lon=${port.lon}`;
         }
 
         function buildWindyURL(port) {
@@ -909,8 +909,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             let url;
-            if (activeMapType === 'marinetraffic') {
-                url = buildMarineTrafficURL(port);
+            if (activeMapType === 'vesselfinder') {
+                url = buildVesselFinderURL(port);
             } else {
                 url = buildWindyURL(port);
             }
@@ -940,7 +940,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     tab.classList.add('active');
 
                     const mapType = tab.getAttribute('data-map');
-                    activeMapType = mapType || 'marinetraffic';
+                    activeMapType = mapType || 'vesselfinder';
                     loadMapFor(activePortIndex);
                 });
             });
