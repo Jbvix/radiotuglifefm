@@ -2,986 +2,504 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v1.2.2</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TugLife FM • App Mobile v1.9.6</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
+    <meta property="og:title" content="TugLife FM • O Som do Mar" />
+    <meta property="og:description" content="Sintonize na rádio oficial do marujo. Monitoramento AIS, deriva global e o melhor som do mar." />
+    <!-- Substitua o URL abaixo pelo link real da imagem que deseja exibir -->
+    <meta property="og:image" content="https://imgur.com/a/S0mD5EX?auto=format&fit=crop&q=80&w=1200&h=630" />
+    <meta property="og:url" content="https://radiotuglifefm.netlify.app/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image">
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚓</text></svg>" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    
+    
+    <!-- PixiJS Engine v7.2.4 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
 
     <style>
-        /* ================================
-           TugLife FM - App Mobile First
-           Versão: v1.2.2
-           Foco: layout mobile-first, CTA de rádio,
-                 apoio, Deezer, Alexa, mapa VesselFinder/Windy
-                 com seleção de portos do Brasil.
-           ================================ */
+        /* ===========================================================
+           TugLife FM - App Mobile First (Elite Edition)
+           Versão: v1.9.6
+           Data: 2026-04-18 23:59
+           Autor: Jossian Brito (Charlie Bravo)
+           Modificações:
+           - Implementado Switch Dia/Noite (Theme Toggle).
+           - Adicionado Comando Alexa no Footer Actions.
+           - Refinamento de contraste para Modo Claro.
+           - Mantido Sincronismo Web Audio v1.9.4.
+           =========================================================== */
 
         :root {
-            --bg-main: #050814;
-            --bg-card: rgba(9, 16, 35, 0.96);
-            --accent: #1f98a7;
-            --accent-soft: rgba(31, 152, 167, 0.18);
-            --text-main: #f0f4ff;
-            --text-muted: #a3b0d0;
-            --danger: #e74c3c;
+            /* Tema Escuro (Padrão) */
+            --bg-deep: #020617;
+            --bg-card: rgba(15, 23, 42, 0.75);
+            --accent: #0ea5e9;
+            --accent-glow: rgba(14, 165, 233, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --neon-blue: #00d2ff;
+            --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
         }
 
-        * {
-            box-sizing: border-box;
+        /* Tema Claro */
+        body.light-theme {
+            --bg-deep: #f1f5f9;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --accent: #0284c7;
+            --accent-glow: rgba(2, 132, 199, 0.2);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --glass-border: rgba(15, 23, 42, 0.1);
+            --neon-blue: #0369a1;
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
         body {
-            margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: radial-gradient(circle at top, #18253f 0, #050814 48%, #02040a 100%);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
+            margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 50% -10%, var(--accent-glow) 0%, transparent 40%),
+                radial-gradient(circle at 10% 100%, rgba(14, 165, 233, 0.05) 0%, transparent 30%);
+            background-attachment: fixed; color: var(--text-main);
+            display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
         }
 
-        .app-shell {
-            width: 100%;
-            max-width: 520px;
-            min-height: 100vh;
-            padding: 16px 12px 80px;
-        }
+        .app-shell { width: 100%; max-width: 480px; padding: 20px 16px 60px; position: relative; z-index: 1; }
 
-        header.app-header {
-            text-align: center;
-            margin-bottom: 12px;
+        #global-anchor-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 9999;
+        }
+        #global-anchor-overlay canvas { width: 100%; height: 100%; display: block; }
+
+        header.app-header { 
+            display: flex; flex-direction: column; align-items: center; 
+            margin-bottom: 30px; padding-top: 20px; position: relative; 
+        }
+        
+        /* Botão Tema */
+        .theme-toggle-btn {
+            position: absolute; top: 10px; right: 0;
+            background: var(--bg-card); border: 1px solid var(--glass-border);
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--accent); font-size: 1.2rem;
+            box-shadow: var(--card-shadow); transition: all 0.3s;
         }
 
         .brand-title {
-            font-family: "Orbitron", system-ui, sans-serif;
-            font-size: 1.7rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
-        }
-
-        .brand-subtitle {
-            font-size: 0.9rem;
-            opacity: 0.85;
-            margin-bottom: 4px;
-        }
-
-        .brand-tagline {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .build-info {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            opacity: 0.85;
+            font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 700; letter-spacing: 0.15em;
+            background: linear-gradient(to bottom, var(--text-main), var(--neon-blue));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px var(--accent-glow));
         }
 
         .card {
-            background: var(--bg-card);
-            border-radius: 14px;
-            padding: 14px 14px 16px;
-            margin-bottom: 14px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(31, 152, 167, 0.3);
+            background: var(--bg-card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--glass-border);
+            box-shadow: var(--card-shadow);
+            transition: background 0.4s, border 0.4s;
         }
 
-        .live-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 10px;
+        .digital-clock-container {
+            display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; padding: 10px;
+            background: rgba(0, 0, 0, 0.1); border-radius: 16px; border: 1px solid var(--accent-glow);
         }
+        #digital-clock { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: var(--text-main); text-shadow: 0 0 10px var(--accent-glow); letter-spacing: 2px; }
+        
+        .schedule-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; scrollbar-width: none; }
+        .schedule-item { 
+            display: flex; align-items: flex-start; padding: 12px; border-radius: 14px; 
+            margin-bottom: 8px; background: rgba(255, 255, 255, 0.02); transition: all 0.3s;
+        }
+        .schedule-item.is-current { 
+            background: linear-gradient(90deg, var(--accent-glow), transparent); 
+            border-left: 3px solid var(--accent);
+        }
+
+        .live-status { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
 
         .badge-live {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 9px;
-            border-radius: 999px;
-            background: #555;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            background: rgba(255, 255, 255, 0.05); color: var(--text-muted);
+            padding: 6px 14px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; display: flex; align-items: center; gap: 8px;
+            border: 1px solid var(--glass-border);
         }
+        .badge-live.is-on { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .is-on .live-dot { animation: pulse-red 1.5s infinite; background: #ef4444; box-shadow: 0 0 10px #ef4444; }
 
-        .badge-live.is-on {
-            background: #c0392b;
+        @keyframes pulse-red { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+        .equalizer { display: flex; align-items: flex-end; gap: 3px; height: 20px; opacity: 0; transition: opacity 0.3s; }
+        .equalizer.active { opacity: 1; }
+        .equalizer span { width: 3px; background: var(--accent); border-radius: 1px; animation: bounce 1s infinite; }
+        @keyframes bounce { 0%, 100% { height: 4px; } 50% { height: 18px; } }
+
+        .play-wrapper { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .btn-play-main {
+            width: 90px; height: 90px; border-radius: 50%; background: var(--accent);
+            border: none; color: white; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: 0 10px 25px var(--accent-glow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .btn-play-main.playing { background: var(--text-main); color: var(--bg-deep); box-shadow: 0 0 30px var(--accent-glow); }
 
-        .equalizer {
-            display: flex;
-            align-items: flex-end;
-            gap: 2px;
-            height: 14px;
-            flex-shrink: 0;
+        .anchor-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+        .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+        .ctrl-label { font-size: 0.55rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 8px; border-radius: 10px;
+            color: var(--text-main); font-size: 0.65rem; font-weight: 600; cursor: pointer;
         }
+        .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
 
-        .eq-bar {
-            width: 3px;
-            background: #ff7675;
-            border-radius: 1px;
-            height: 3px;
-        }
-
-        .badge-live.is-on .eq-bar:nth-child(1) { animation: eq1 0.8s ease-in-out infinite alternate; }
-        .badge-live.is-on .eq-bar:nth-child(2) { animation: eq2 0.6s ease-in-out infinite alternate; }
-        .badge-live.is-on .eq-bar:nth-child(3) { animation: eq3 0.9s ease-in-out infinite alternate; }
-        .badge-live.is-on .eq-bar:nth-child(4) { animation: eq4 0.7s ease-in-out infinite alternate; }
-
-        @keyframes eq1 { from { height: 3px; } to { height: 12px; } }
-        @keyframes eq2 { from { height: 6px; } to { height: 10px; } }
-        @keyframes eq3 { from { height: 2px; } to { height: 14px; } }
-        @keyframes eq4 { from { height: 5px; } to { height: 8px; } }
-
-        @media (prefers-reduced-motion: reduce) {
-            .badge-live.is-on .eq-bar {
-                animation: none;
-                height: 8px;
-            }
-        }
-
-        .now-playing-text {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-align: right;
-        }
-
-        .btn-main {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 999px;
-            border: none;
-            background: linear-gradient(135deg, #1f98a7, #29c7d8);
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-
-        .btn-main:active {
-            transform: scale(0.97);
-            box-shadow: 0 0 10px rgba(41, 199, 216, 0.6);
-        }
-
-        .quick-actions {
-            margin-top: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .btn-secondary {
-            width: 100%;
-            padding: 9px 12px;
-            border-radius: 999px;
-            border: 1px solid var(--accent);
-            background: rgba(5, 10, 25, 0.9);
-            color: var(--accent);
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-
-        .btn-secondary span.label {
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        /* Canais externos: TugLife Store, Deezer, Alexa */
-        .external-links {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 10px;
-            font-size: 0.82rem;
-        }
-
-        .external-links a {
-            color: var(--accent);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .external-links a:hover {
-            text-decoration: underline;
-        }
-
-        .section-title {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.09em;
-            margin-bottom: 6px;
-            opacity: 0.9;
-        }
-
-        .section-subtitle {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .schedule-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-            max-height: 220px;
-            overflow-y: auto;
-        }
-
-        .schedule-item {
-            padding: 6px 8px;
-            border-radius: 8px;
-            background: rgba(12, 20, 42, 0.9);
-            border: 1px solid rgba(31, 152, 167, 0.14);
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .schedule-time {
-            font-family: "Orbitron", system-ui, sans-serif;
-            font-size: 0.8rem;
-            color: var(--accent);
-            flex-shrink: 0;
-            min-width: 70px;
-        }
-
-        .schedule-name {
-            font-size: 0.85rem;
-        }
-
-        .schedule-item.is-current {
-            background: var(--accent-soft);
-            border-color: var(--accent);
-            font-weight: 600;
-        }
-
-        .map-tabs {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 6px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(31, 152, 167, 0.6);
-            background: rgba(2, 6, 18, 0.9);
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        .tab-btn.active {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        /* ---- Lista de portos (rolagem horizontal no mobile) ---- */
+        /* Slider de Portos */
         .port-scroller {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            margin-bottom: 8px;
+            display: flex; gap: 10px; overflow-x: auto; padding: 10px 0 20px; margin-bottom: 15px;
+            scrollbar-width: none; cursor: grab; user-select: none; -webkit-overflow-scrolling: touch;
         }
-
-        .port-scroller::-webkit-scrollbar {
-            height: 4px;
+        .port-pill {
+            white-space: nowrap; padding: 10px 20px; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--glass-border);
+            color: var(--text-muted); font-size: 0.7rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
         }
-        .port-scroller::-webkit-scrollbar-thumb {
-            background: rgba(31, 152, 167, 0.7);
-            border-radius: 999px;
+        .port-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); }
+
+        .map-container { width: 100%; aspect-ratio: 1 / 1.25; border-radius: 20px; overflow: hidden; border: 1px solid var(--glass-border); background: #000; }
+        .map-container iframe { width: 100%; height: 100%; border: none; }
+
+        /* Ações de Footer */
+        .footer-actions {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 10px 0 25px;
         }
-
-        .port-btn {
-            flex: 0 0 auto;
-            padding: 5px 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(31, 152, 167, 0.7);
-            background: rgba(5, 10, 25, 0.9);
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            cursor: pointer;
-            white-space: nowrap;
+        .btn-ext {
+            background: var(--bg-card); border: 1px solid var(--glass-border);
+            padding: 10px 16px; border-radius: 14px; color: var(--text-main);
+            text-decoration: none; font-size: 0.7rem; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
         }
+        .btn-ext.alexa { border-color: #00CAFF; background: rgba(0, 202, 255, 0.05); }
+        .btn-ext:active { background: var(--accent); color: white; transform: scale(0.95); }
 
-        .port-btn-active {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
+        #goc-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px;
         }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--accent); padding: 30px; border-radius: 24px; text-align: center; max-width: 300px; }
+        .modal-btn { background: var(--accent); color: white; border: none; padding: 10px 25px; border-radius: 999px; cursor: pointer; font-family:'Orbitron'; font-size:0.65rem; }
 
-        .map-view {
-            width: 100%;
-            aspect-ratio: 5 / 9;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid rgba(31, 152, 167, 0.6);
-        }
-
-        .map-view iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .card-footer-note {
-            margin-top: 6px;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
-
-        .footer {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
-
-        .footer a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* ---- Responsivo para telas maiores ---- */
-        @media (min-width: 700px) {
-            .app-shell {
-                padding-top: 24px;
-            }
-
-            .quick-actions {
-                flex-direction: row;
-            }
-
-            .btn-secondary {
-                flex: 1;
-            }
-
-            .external-links {
-                flex-direction: row;
-                justify-content: space-between;
-                flex-wrap: wrap;
-            }
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 520px;
-            background: rgba(5, 8, 20, 0.97);
-            border-top: 1px solid rgba(31, 152, 167, 0.3);
-            display: flex;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-        }
-
-        .nav-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            padding: 8px 4px 10px;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            cursor: pointer;
-            transition: color 0.15s;
-        }
-
-        .nav-btn.active {
-            color: var(--accent);
-        }
+        footer { text-align: center; padding: 30px 10px; font-size: 0.6rem; color: var(--text-muted); line-height: 1.6; }
     </style>
 </head>
 <body>
-<div class="app-shell">
 
-    <!-- Cabeçalho com identidade + versão técnica -->
+<div id="global-anchor-overlay"></div>
+
+<div id="goc-modal">
+    <div class="modal-box">
+        <div id="modal-text" style="margin-bottom:20px; font-size:0.85rem;">Mensagem GOC</div>
+        <button class="modal-btn" onclick="closeModal()">ENTENDIDO</button>
+    </div>
+</div>
+
+<div class="app-shell">
     <header class="app-header">
-        <div class="brand-title">TugLife FM</div>
-        <div class="brand-subtitle">O Som do Mar • TugLife FM</div>
-        <div class="brand-tagline">Da praça de máquinas ao passadiço, 24/7…</div>
-        <div class="build-info">
-            GOC v3.4.3 • Build: 22/04/26 • Autor: Jossian Brito
-        </div>
+        <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">🌙</button>
+        <div class="brand-title">TUGLIFE FM</div>
+        <div class="brand-tagline">O Som do Mar • 24/7/365</div>
     </header>
 
-    <!-- Cartão de player / AO VIVO -->
-    <section class="card" id="card-player">
-        <div class="live-row">
+    <!-- Player Card -->
+    <section class="card">
+        <div class="live-status">
             <div id="badge-live" class="badge-live">
-                <div class="equalizer" aria-hidden="true">
-                    <span class="eq-bar"></span>
-                    <span class="eq-bar"></span>
-                    <span class="eq-bar"></span>
-                    <span class="eq-bar"></span>
-                </div>
-                <span>Ao vivo</span>
+                <span class="live-dot"></span>
+                <span>Standby</span>
             </div>
-            <div class="now-playing-text" id="now-playing-text">
-                Toque para iniciar a transmissão da TugLife FM.
+            <div class="equalizer" id="visualizer">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="now-playing-label" id="status-text">
+                Rádio Marujo pronta para navegar.
             </div>
         </div>
 
-        <!-- Botão principal: Ouça Agora ▶ ☾ -->
-        <button id="btn-play" class="btn-main">
-            <span>Ouça Agora</span>
-            <span>▶</span>
-            <span>☾</span>
-        </button>
-
-        <!-- Canais externos: TugLife Store, Deezer, Alexa -->
-        <div class="external-links">
-            <a href="https://www.tuglife.store" target="_blank" rel="noopener noreferrer">
-                ⚓ Apoie <strong>(TugLife Store)</strong>
-            </a>
-            <a href="https://www.deezer.com" target="_blank" rel="noopener noreferrer">
-                🎧 Ouça também na <strong>Deezer</strong>
-            </a>
-            <span>
-                🗣️ Alexa: <strong>“Peça à Alexa: Abrir Rádio Marujo”</strong>
-            </span>
+        <div class="play-wrapper">
+            <button id="btn-play" class="btn-play-main" aria-label="Play Radio">
+                <svg id="icon-svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+            <div class="play-label" id="play-text" style="font-family:'Orbitron'; font-size:0.8rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Ouça Agora</div>
         </div>
 
-        <!-- Elemento de áudio: player real -->
-        <audio id="radio-stream" preload="none">
+        <div class="anchor-controls">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Âncora</span>
+                <button id="toggle-anchor" class="toggle-btn active">Exibir: SIM</button>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Velocidade</span>
+                <input type="range" id="anchor-speed" min="0" max="5" step="0.1" value="1">
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Cor</span>
+                <input type="color" id="anchor-color" value="#0ea5e9" style="width:100%; height:25px; border:none; background:transparent; cursor:pointer;">
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Pulso Som</span>
+                <button id="toggle-sync" class="toggle-btn">Sinc: NÃO</button>
+            </div>
+        </div>
+
+        <audio id="radio-stream" preload="none" crossorigin="anonymous">
             <source src="https://servidor27.brlogic.com:7098/live" type="audio/mpeg" />
-            Seu navegador não suporta áudio HTML5.
         </audio>
     </section>
 
-    <!-- Cartão de programação do dia (resumido) -->
-    <section class="card" id="card-programacao">
-        <div class="section-title">Programação de hoje</div>
-        <div class="section-subtitle" id="programacao-subtitle">
-            Baseada no fuso America/Fortaleza (UTC-3).
+    <!-- Programação -->
+    <section class="card" id="card-prog">
+        <div class="digital-clock-container">
+            <span id="digital-date" style="font-family:'Orbitron', sans-serif; font-size:0.75rem; color:var(--text-main); font-weight:600; margin-bottom:6px; letter-spacing:1px; text-shadow: 0 0 5px var(--accent-glow);"></span>
+            <span style="font-size:0.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Hora de Fortaleza (UTC-3)</span>
+            <div id="digital-clock">00:00:00</div>
         </div>
-
-        <ul class="schedule-list" id="schedule-list">
-            <!-- Conteúdo preenchido via JavaScript -->
-        </ul>
-
-        <div class="card-footer-note">
-            Em breve: grade completa da semana integrada ao painel GOC.
-        </div>
+        <ul class="schedule-list" id="schedule-list"></ul>
     </section>
 
-    <!-- Cartão de mapa com tabs e portos -->
+    <!-- Monitoramento AIS -->
     <section class="card" id="card-mapa">
-        <div class="section-title">Mapa de Operações</div>
-        <div class="section-subtitle">
-            Visualize vento e tráfego marítimo nos principais portos onde a TugLife vive.
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--accent);">MONITORAMENTO GOC</div>
+            <div style="display:flex; background:rgba(0,0,0,0.1); padding:2px; border-radius:8px;">
+                <button class="tab-btn active" data-map="marinetraffic" style="padding:4px 10px; border:none; border-radius:6px; font-size:0.55rem; font-weight:700; cursor:pointer; background:transparent; color:var(--text-muted);">AIS</button>
+                <button class="tab-btn" data-map="windy" style="padding:4px 10px; border:none; border-radius:6px; font-size:0.55rem; font-weight:700; cursor:pointer; background:transparent; color:var(--text-muted);">VENTO</button>
+            </div>
         </div>
-
-        <div class="map-tabs">
-            <button class="tab-btn active" data-map="vesselfinder">VesselFinder</button>
-            <button class="tab-btn" data-map="windy">Windy</button>
-        </div>
-
-        <!-- Lista de portos (rolagem horizontal) -->
-        <div class="port-scroller" id="port-scroller">
-            <!-- Botões de portos gerados via JS -->
-        </div>
-
-        <div class="map-view" id="map-view">
-            <!-- Iframe carregado dinamicamente pelo JS -->
-        </div>
-
-        <div class="card-footer-note">
-            Para visão detalhada de operações e frota, utilize o painel GOC em desktop.
-        </div>
+        <div class="port-scroller" id="port-scroller"></div>
+        <div class="map-container" id="map-view"></div>
     </section>
 
-    <footer class="footer">
-        Versão mobile v1.2.2 • Conceito GOC adaptado para bolso.<br />
-        Desenvolvido por <a href="https://www.tuglife.store" target="_blank">Jossian Brito (Charlie Bravo)</a>.
+    <!-- Footer Actions -->
+    <div class="footer-actions">
+        <a href="https://www.tuglife.store" target="_blank" class="btn-ext">⚓ TugLife Store</a>
+        <a href="https://www.deezer.com/search/tuglife%20fm" target="_blank" class="btn-ext">🎧 Deezer</a>
+        <div class="btn-ext alexa">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Amazon_Alexa_Logo_2024.svg" width="16" alt="Alexa">
+            <span>"Alexa, abrir RÁDIO MARUJO"</span>
+        </div>
+    </div>
+
+    <footer>
+        <strong>TugLife FM v1.9.6</strong> • Mobile First GOC<br>
+        Desenvolvido por <strong>Jossian Brito</strong><br>
+        © 2026 • Dia/Noite & Alexa Engine.
     </footer>
 </div>
 
-<nav class="bottom-nav" id="bottom-nav">
-    <button class="nav-btn active" data-target="card-player">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
-            <circle cx="12" cy="14" r="4"/>
-            <path d="M8.5 8.5 L12 5 L15.5 8.5"/>
-            <line x1="3" y1="14" x2="5" y2="14"/>
-            <line x1="19" y1="14" x2="21" y2="14"/>
-        </svg>
-        <span>Player</span>
-    </button>
-    <button class="nav-btn" data-target="card-programacao">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        <span>Programação</span>
-    </button>
-    <button class="nav-btn" data-target="card-mapa">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-            <circle cx="12" cy="9" r="2.5"/>
-        </svg>
-        <span>Mapa</span>
-    </button>
-</nav>
-
 <script>
-/* ===========================================================
-   TugLife FM - App Mobile First
-   Versão: v1.2.2
-   Data/Hora: 22/04/26
-   Autor: Jossian Brito (Charlie Bravo)
+    /**
+     * TugLife FM Engine v1.9.6
+     * Jossian Brito - 18/04/2026
+     */
+    const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
+    const closeModal = () => document.getElementById('goc-modal').style.display = 'none';
 
-   Modificações desta versão:
-   - Correção do botão PLAY inoperante:
-       * Toda a lógica agora é inicializada após o evento
-         DOMContentLoaded, garantindo que HTML esteja carregado
-         antes de buscar elementos (btn-play, radio-stream, etc.).
-   - Mantida a correção de programação diária v1.2.0:
-       * weeklySchedule completo por dia (domingo–sábado),
-         com base no fuso America/Fortaleza.
-   - Mantida a lista de portos e seleção para MarineTraffic/Windy.
-
-   Impacto em GDD / Manual:
-   - GDD: acrescentar nota em "Arquitetura Frontend" indicando
-     que a inicialização do app é feita em DOMContentLoaded.
-   - Manual: nenhuma mudança de uso para o usuário final;
-     apenas melhora de confiabilidade do botão PLAY.
-   =========================================================== */
-
-document.addEventListener('DOMContentLoaded', function() {
-
-    (function() {
-        // ==========================
-        // Referências de DOM básicas
-        // ==========================
-        const btnPlay           = document.getElementById('btn-play');
-        const badgeLive         = document.getElementById('badge-live');
-        const nowPlayingText    = document.getElementById('now-playing-text');
-        const audio             = document.getElementById('radio-stream');
-
-        const cardProgramacao   = document.getElementById('card-programacao');
-        const cardMapa          = document.getElementById('card-mapa');
-        const scheduleList      = document.getElementById('schedule-list');
-
-        const mapTabs           = document.querySelectorAll('.tab-btn[data-map]');
-        const mapView           = document.getElementById('map-view');
-        const portScroller      = document.getElementById('port-scroller');
-
-        var lastNowPlaying = '';
-
-        // Se por algum motivo elementos críticos não existirem,
-        // evitamos quebrar toda a página.
-        if (!btnPlay || !audio) {
-            console.warn('TugLife FM: elementos de player não encontrados (btn-play ou radio-stream). Verifique o HTML.');
-        }
-
-        // ====================================================
-        // 1) Player: play/pause + indicador AO VIVO
-        // ====================================================
-        function updateLiveUI(isPlaying) {
-            if (!badgeLive || !nowPlayingText || !btnPlay) return;
-
-            if (isPlaying) {
-                badgeLive.classList.add('is-on');
-                nowPlayingText.textContent = lastNowPlaying
-                    ? 'Ao vivo \u2022 ' + lastNowPlaying
-                    : 'TugLife FM em transmissão. Ajuste o volume do seu dispositivo.';
-                btnPlay.innerHTML = '<span>Pausar</span><span>\u23F8</span>';
-            } else {
-                badgeLive.classList.remove('is-on');
-                nowPlayingText.textContent = lastNowPlaying
-                    ? 'Toque para ouvir \u2014 agora: ' + lastNowPlaying
-                    : 'Toque para iniciar a transmissão da TugLife FM.';
-                btnPlay.innerHTML = '<span>Ouça Agora</span><span>\u25B6</span><span>\u263E</span>';
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- 1. Tema Dia/Noite ---
+        const themeBtn = document.getElementById('theme-toggle');
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            themeBtn.innerText = isLight ? "☀️" : "🌙";
+            // Ajustar cor da âncora automaticamente se não foi mexida manualmente
+            if(isLight && document.getElementById('anchor-color').value === "#0ea5e9") {
+                anchor.tint = 0x0284c7;
+            } else if (!isLight && document.getElementById('anchor-color').value === "#0ea5e9") {
+                anchor.tint = 0x0ea5e9;
             }
-        }
+        });
 
-        if (btnPlay && audio) {
-            btnPlay.addEventListener('click', function() {
-                if (audio.paused) {
-                    audio.play().catch(function(err) {
-                        console.warn('Falha ao iniciar áudio. Interação adicional pode ser necessária.', err);
-                        if (nowPlayingText) {
-                            nowPlayingText.textContent = 'Não foi possível iniciar o áudio. Toque novamente ou verifique o navegador.';
-                        }
-                    });
-                } else {
-                    audio.pause();
-                }
-            });
-
-            audio.addEventListener('play', function() {
-                updateLiveUI(true);
-            });
-
-            audio.addEventListener('pause', function() {
-                updateLiveUI(false);
-            });
-        }
-
-        // ========================================
-        // 2) Navegação: scroll suave entre seções
-        // ========================================
-        function smoothScrollTo(element) {
-            if (!element) return;
-            element.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-
-        // ================================================
-        // 3) Programação completa por dia da semana
-        //    (usando o fuso America/Fortaleza)
-        // ================================================
-
-        const weeklySchedule = {
-            domingo: [
-                { time: "00:00", title: "Viajando na Emoção" },
-                { time: "01:00", title: "Coração Sertanejo FDS" },
-                { time: "03:00", title: "Top Classic" },
-                { time: "08:00", title: "Algazarra" },
-                { time: "10:00", title: "TugKids" },
-                { time: "11:00", title: "TugCast Cmte Valdir" },
-                { time: "14:00", title: "Flash Back Top Hits" },
-                { time: "15:00", title: "Encontro de Gigantes - Djavan e Belchior" },
-                { time: "19:00", title: "Poder Pentecostal e Hinos de Testemunho (Gospel Hits)" },
-                { time: "20:00", title: "Love Songs Are Back Again" },
-                { time: "21:00", title: "Top Hits 2000" },
-                { time: "22:00", title: "Top Hits 90s" },
-                { time: "23:00", title: "Clube do Rei DOM" }
-            ],
-            segunda: [
-                { time: "00:00", title: "Love Night - Madrugada Romântica" },
-                { time: "02:00", title: "Âncora da Fé" },
-                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
-                { time: "12:00", title: "Show da Tarde" },
-                { time: "16:00", title: "A Vibe do Reggae" },
-                { time: "17:00", title: "Back in Time" },
-                { time: "18:00", title: "TugLife Retrô" },
-                { time: "19:00", title: "Fita K7" },
-                { time: "20:00", title: "Top Hits 90s" },
-                { time: "21:00", title: "O Melhor do Soul" },
-                { time: "22:00", title: "Hits Eletrônicos" },
-                { time: "23:00", title: "Roberto Carlos : A Hora do Rei" }
-            ],
-            terca: [
-                { time: "00:00", title: "Love Night" },
-                { time: "02:00", title: "Insônia" },
-                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
-                { time: "12:00", title: "Mix Gospel" },
-                { time: "16:00", title: "Fita K7" },
-                { time: "17:00", title: "O Melhor do Soul" },
-                { time: "19:00", title: "Hora do Marinheiro" },
-                { time: "21:00", title: "Semeando a Palavra" },
-                { time: "23:00", title: "Love Songs Are Back Again" }
-            ],
-            quarta: [
-                { time: "00:00", title: "Âncora da Fé" },
-                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
-                { time: "12:00", title: "Show da Tarde" },
-                { time: "16:00", title: "Galpão Farrapo" },
-                { time: "17:00", title: "Os Melhores Remixes" },
-                { time: "18:00", title: "A Batalha dos Titãs (Rock & Grunge Anos 80/90)" },
-                { time: "20:00", title: "Clube do Brega - Especial Amado Batista" },
-                { time: "22:00", title: "Love Night" }
-            ],
-            quinta: [
-                { time: "00:00", title: "Insônia" },
-                { time: "02:00", title: "Âncora da Fé" },
-                { time: "06:00", title: "Convés Brasil _Semana" },
-                { time: "12:00", title: "Show da Tarde" },
-                { time: "16:00", title: "Axé e Pagode" },
-                { time: "17:00", title: "Top Hits 90s" },
-                { time: "19:00", title: "Garagem do Rock" },
-                { time: "20:00", title: "Back in Time" },
-                { time: "23:00", title: "Roberto Carlos : A Hora do Rei" }
-            ],
-            sexta: [
-                { time: "00:00", title: "Love Night" },
-                { time: "02:00", title: "Insônia" },
-                { time: "04:00", title: "Nas ondas do louvor" },
-                { time: "06:00", title: "Acorda Marujo ! Adrenalina" },
-                { time: "12:00", title: "Show da Tarde" },
-                { time: "17:00", title: "Groove & Disco Fever (Anos 70 & 80)" },
-                { time: "19:00", title: "A Vibe do Reggae" },
-                { time: "21:00", title: "Back in Time" }
-            ],
-            sabado: [
-                { time: "00:00", title: "Top Classic" },
-                { time: "04:00", title: "Mais Brasil Fins de Semana" },
-                { time: "08:00", title: "Flash Back Top Hits" },
-                { time: "09:00", title: "Bora Viajar" },
-                { time: "12:00", title: "Café com Samba" },
-                { time: "13:00", title: "Revirando o baú" },
-                { time: "15:00", title: "Encontro de Gigantes Legiao Urbana e Titãs" },
-                { time: "18:00", title: "Arriba!!!" },
-                { time: "19:00", title: "Fim de semana Convés Brasil" },
-                { time: "21:00", title: "Clube do Brega Seleção" },
-                { time: "22:00", title: "Back in Time" }
-            ]
+        // --- 2. Programação e Relógio ---
+        const schedule = {
+            domingo: [{h:"00:00", t:"Viajando na Emoção"}, {h:"01:00", t:"Coração Sertanejo FDS"}, {h:"03:00", t:"Top Classic"}, {h:"08:00", t:"Algazarra"}, {h:"10:00", t:"TugKids"}, {h:"11:00", t:"TugCast Cmte Valdir"}, {h:"14:00", t:"Flash Back Top Hits"}, {h:"15:00", t:"Encontro de Gigantes - Djavan e Belchior"}, {h:"19:00", t:"Poder Pentecostal e Hinos de Testemunho (Gospel Hits)"}, {h:"20:00", t:"Love Songs Are Back Again"}, {h:"21:00", t:"Top Hits 2000"}, {h:"22:00", t:"Top Hits 90s"}, {h:"23:00", t:"Clube do Rei DOM"}],
+            segunda: [{h:"00:00", t:"Love Night - Madrugada Romântica"}, {h:"02:00", t:"Âncora da Fé"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"A Vibe do Reggae"}, {h:"17:00", t:"Back in Time"}, {h:"18:00", t:"TugLife Retrô"}, {h:"19:00", t:"Fita K7"}, {h:"20:00", t:"Top Hits 90s"}, {h:"21:00", t:"O Melhor do Soul"}, {h:"22:00", t:"Hits Eletrônicos"}, {h:"23:00", t:"Roberto Carlos : A Hora do Rei"}],
+            terca: [{h:"00:00", t:"Love Night"}, {h:"02:00", t:"Insônia"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Mix Gospel"}, {h:"16:00", t:"Fita K7"}, {h:"17:00", t:"O Melhor do Soul"}, {h:"19:00", t:"Hora do Marinheiro"}, {h:"21:00", t:"Semeando a Palavra"}, {h:"23:00", t:"Love Songs Are Back Again"}],
+            quarta: [{h:"00:00", t:"Âncora da Fé"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"Galpão Farrapo"}, {h:"17:00", t:"Os Melhores Remixes"}, {h:"18:00", t:"A Batalha dos Titãs (Rock & Grunge Anos 80/90)"}, {h:"20:00", t:"Clube do Brega - Especial Amado Batista"}, {h:"22:00", t:"Love Night"}],
+            quinta: [{h:"00:00", t:"Insônia"}, {h:"02:00", t:"Âncora da Fé"}, {h:"06:00", t:"Convés Brasil _Semana"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"Axé e Pagode"}, {h:"17:00", t:"Top Hits 90s"}, {h:"19:00", t:"Garagem do Rock"}, {h:"20:00", t:"Back in Time"}, {h:"23:00", t:"Roberto Carlos : A Hora do Rei"}],
+            sexta: [{h:"00:00", t:"Love Night"}, {h:"02:00", t:"Insônia"}, {h:"04:00", t:"Nas ondas do louvor"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"17:00", t:"Groove & Disco Fever (Anos 70 & 80)"}, {h:"19:00", t:"A Vibe do Reggae"}, {h:"21:00", t:"Back in Time"}],
+            sabado: [{h:"00:00", t:"Top Classic"}, {h:"04:00", t:"Mais Brasil Fins de Semana"}, {h:"08:00", t:"Flash Back Top Hits"}, {h:"09:00", t:"Bora Viajar"}, {h:"12:00", t:"Café com Samba"}, {h:"13:00", t:"Revirando o baú"}, {h:"15:00", t:"Encontro de Gigantes Legiao Urbana e Titãs"}, {h:"18:00", t:"Arriba!!!"}, {h:"19:00", t:"Fim de semana Convés Brasil"}, {h:"21:00", t:"Clube do Brega Seleção"}, {h:"22:00", t:"Back in Time"}]
         };
 
-        const dayKeys = [
-            "domingo",  // 0
-            "segunda",  // 1
-            "terca",    // 2
-            "quarta",   // 3
-            "quinta",   // 4
-            "sexta",    // 5
-            "sabado"    // 6
-        ];
-
-        function parseHour(hhmm) {
-            const [h, m] = hhmm.split(':').map(Number);
-            return h + (m / 60);
-        }
-
-        function getFortalezaDate() {
-            const now = new Date();
-            const fortStr = now.toLocaleString("en-US", { timeZone: "America/Fortaleza" });
-            return new Date(fortStr);
-        }
-
-        function renderTodaySchedule() {
-            if (!scheduleList) return;
-
-            scheduleList.innerHTML = '';
-
-            const fortDate   = getFortalezaDate();
-            const jsDayIndex = fortDate.getDay(); // 0=Dom, 1=Seg...
-            const currentHourDecimal = fortDate.getHours() + fortDate.getMinutes()/60;
-
-            const dayKey = dayKeys[jsDayIndex];
-            const todayPrograms = weeklySchedule[dayKey];
-
-            if (!todayPrograms) {
-                const li = document.createElement('li');
-                li.className = 'schedule-item';
-                li.textContent = 'Programação não disponível para este dia.';
-                scheduleList.appendChild(li);
-                return;
+        const dayNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+        const getFortTime = () => new Date(new Date().toLocaleString("en-US", {timeZone: "America/Fortaleza"}));
+        
+        const updateClock = () => {
+            const now = getFortTime();
+            document.getElementById('digital-clock').innerText = 
+                `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            
+            const daysPT = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            const dateEl = document.getElementById('digital-date');
+            if (dateEl) {
+                dateEl.innerText = `${daysPT[now.getDay()]}, ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()}`;
             }
+        };
 
-            todayPrograms.forEach((slot, index) => {
-                const startLabel = slot.time;
-                const startHour  = parseHour(slot.time);
-
-                let endLabel;
-                let endHour;
-
-                if (index < todayPrograms.length - 1) {
-                    endLabel = todayPrograms[index + 1].time;
-                    endHour  = parseHour(endLabel);
-                } else {
-                    endLabel = "00:00";
-                    endHour  = 24;
-                }
-
+        const renderSchedule = () => {
+            const list = document.getElementById('schedule-list');
+            const now = getFortTime();
+            const day = dayNames[now.getDay()];
+            const currT = now.getHours() + (now.getMinutes()/60);
+            list.innerHTML = '';
+            (schedule[day] || []).forEach((item, i, arr) => {
+                const [h, m] = item.h.split(':').map(Number);
+                const start = h + m/60;
+                const nextS = arr[i+1] ? arr[i+1].h : "24:00";
+                const end = Number(nextS.split(':')[0]) + (Number(nextS.split(':')[1] || 0)/60);
                 const li = document.createElement('li');
                 li.className = 'schedule-item';
-
-                if (currentHourDecimal >= startHour && currentHourDecimal < endHour) {
-                    li.classList.add('is-current');
-                }
-
-                const timeSpan = document.createElement('div');
-                timeSpan.className = 'schedule-time';
-                timeSpan.textContent = `${startLabel} - ${endLabel}`;
-
-                const titleSpan = document.createElement('div');
-                titleSpan.className = 'schedule-name';
-                titleSpan.textContent = slot.title;
-
-                li.appendChild(timeSpan);
-                li.appendChild(titleSpan);
-                scheduleList.appendChild(li);
+                if(currT >= start && currT < end) li.classList.add('is-current');
+                li.innerHTML = `<div class="schedule-time">${item.h} - ${nextS === "24:00" ? "00:00" : nextS}</div><div class="schedule-name">${item.t}</div>`;
+                list.appendChild(li);
+                if(li.classList.contains('is-current')) setTimeout(() => li.scrollIntoView({behavior:'smooth', block:'center'}), 1000);
             });
-        }
+        };
+        setInterval(updateClock, 1000); setInterval(renderSchedule, 60000);
+        updateClock(); renderSchedule();
 
-        renderTodaySchedule();
-        setInterval(renderTodaySchedule, 60 * 1000);
+        // --- 3. PixiJS Engine (Âncora) ---
+        let aVis = true, aSpeed = 1, aSync = false, audioCtx, analyser, dataA, source;
+        const app = new PIXI.Application({ width: window.innerWidth, height: window.innerHeight, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1 });
+        document.getElementById('global-anchor-overlay').appendChild(app.view);
+        window.addEventListener('resize', () => app.renderer.resize(window.innerWidth, window.innerHeight));
 
-        // ================================================
-        // 6) Now Playing: metadata Icecast via proxy CORS
-        // ================================================
-        function fetchNowPlaying() {
-            var endpoint = 'https://servidor27.brlogic.com:7098/status-json.xsl';
-            var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(endpoint);
+        const anchor = new PIXI.Text('⚓', { fontSize: 80, fill: '#0ea5e9', fontFamily: ['Arial', 'sans-serif'], dropShadow: true, dropShadowColor: '#0ea5e9', dropShadowBlur: 15 });
+        anchor.anchor.set(0.5); anchor.x = window.innerWidth / 2; anchor.y = window.innerHeight / 2;
+        app.stage.addChild(anchor);
 
-            fetch(proxyUrl)
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    var parsed = JSON.parse(data.contents);
-                    var source = parsed.icestats && parsed.icestats.source;
-                    var title = (source && source.title) ? source.title.trim() : '';
-                    if (title && title !== lastNowPlaying) {
-                        lastNowPlaying = title;
-                        var isPlaying = audio && !audio.paused;
-                        updateLiveUI(isPlaying);
-                    }
-                })
-                .catch(function() {
-                    // fallback silencioso
-                });
-        }
-
-        fetchNowPlaying();
-        setInterval(fetchNowPlaying, 15 * 1000);
-
-        // =================================================
-        // 4) Mapa: abas MarineTraffic/Windy + lista de portos
-        // =================================================
-        const ports = [
-            { name: "Santos",           lat: -23.9608, lon: -46.3280, zoom: 9 },
-            { name: "Rio de Janeiro",   lat: -22.9000, lon: -43.1600, zoom: 9 },
-            { name: "Suape",            lat: -8.3920,  lon: -34.9540, zoom: 8 },
-            { name: "Vila do Conde",    lat: -1.5150,  lon: -48.7400, zoom: 8 },
-            { name: "Ponta da Madeira", lat: -2.5350,  lon: -44.3650, zoom: 8 },
-            { name: "Itaqui / Alumar",  lat: -2.5550,  lon: -44.3450, zoom: 8 },
-            { name: "Paranaguá",        lat: -25.5100, lon: -48.5000, zoom: 9 },
-            { name: "Rio Grande",       lat: -32.0300, lon: -52.1000, zoom: 8 },
-            { name: "Itajaí",           lat: -26.9000, lon: -48.6600, zoom: 9 },
-            { name: "Salvador",         lat: -12.9700, lon: -38.5100, zoom: 9 },
-            { name: "Pecém",            lat: -3.5400,  lon: -38.7700, zoom: 8 },
-            { name: "Mucuripe",         lat: -3.7160,  lon: -38.4830, zoom: 10 }
-        ];
-
-        let activeMapType   = 'vesselfinder';
-        let activePortIndex = 0;
-
-        function buildVesselFinderURL(port) {
-            return `https://www.vesselfinder.com/aismap?zoom=${port.zoom}&lat=${port.lat}&lon=${port.lon}`;
-        }
-
-        function buildWindyURL(port) {
-            return `https://embed.windy.com/embed.html?type=map&location=coordinates&zoom=${port.zoom}&lat=${port.lat}&lon=${port.lon}&detailLat=${port.lat}&detailLon=${port.lon}&metricWind=kt&metricTemp=%C2%B0C`;
-        }
-
-        function loadMapFor(portIndex) {
-            if (!mapView || !portScroller) return;
-
-            const port = ports[portIndex] || ports[0];
-            activePortIndex = portIndex;
-
-            const buttons = portScroller.querySelectorAll('.port-btn');
-            buttons.forEach((btn, idx) => {
-                if (idx === portIndex) {
-                    btn.classList.add('port-btn-active');
-                } else {
-                    btn.classList.remove('port-btn-active');
-                }
-            });
-
-            let url;
-            if (activeMapType === 'vesselfinder') {
-                url = buildVesselFinderURL(port);
+        let dX = (Math.random() - 0.5) * 0.4, dY = (Math.random() - 0.5) * 0.4, el = 0;
+        app.ticker.add((delta) => {
+            if (!aVis) { anchor.visible = false; return; }
+            anchor.visible = true; el += 0.05 * delta;
+            if (aSync && analyser) {
+                analyser.getByteFrequencyData(dataA);
+                let p = 0; for(let i=0; i<8; i++) p += dataA[i];
+                let avg = p / 8; let tS = 1.0 + (avg / 220);
+                anchor.scale.x += (tS - anchor.scale.x) * 0.3; anchor.scale.y = anchor.scale.x;
+                anchor.alpha = 0.6 + (avg / 255) * 0.4;
             } else {
-                url = buildWindyURL(port);
+                anchor.scale.set(1 + Math.sin(el * 0.4) * 0.04); anchor.alpha = 1;
             }
-
-            mapView.innerHTML = '';
-            const iframe = document.createElement('iframe');
-            iframe.src = url;
-            iframe.loading = 'lazy';
-            iframe.referrerPolicy = 'no-referrer-when-downgrade';
-            mapView.appendChild(iframe);
-        }
-
-        if (portScroller) {
-            ports.forEach((port, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'port-btn';
-                btn.textContent = port.name;
-                btn.addEventListener('click', () => loadMapFor(index));
-                portScroller.appendChild(btn);
-            });
-        }
-
-        if (mapTabs && mapTabs.length > 0) {
-            mapTabs.forEach(function(tab) {
-                tab.addEventListener('click', function() {
-                    mapTabs.forEach(function(t) { t.classList.remove('active'); });
-                    tab.classList.add('active');
-
-                    const mapType = tab.getAttribute('data-map');
-                    activeMapType = mapType || 'vesselfinder';
-                    loadMapFor(activePortIndex);
-                });
-            });
-        }
-
-        loadMapFor(activePortIndex);
-
-        // ================================================
-        // 5) Bottom nav: scroll + IntersectionObserver
-        // ================================================
-        var navBtns = document.querySelectorAll('.nav-btn[data-target]');
-
-        navBtns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var targetEl = document.getElementById(btn.getAttribute('data-target'));
-                if (targetEl) smoothScrollTo(targetEl);
-            });
+            anchor.x += dX * aSpeed * delta; anchor.y += dY * aSpeed * delta;
+            const m = 80; if (anchor.x < m || anchor.x > window.innerWidth - m) dX *= -1; if (anchor.y < m || anchor.y > window.innerHeight - m) dY *= -1;
+            anchor.rotation = Math.sin(el * 0.15) * 0.08;
         });
 
-        var sectionIds = ['card-player', 'card-programacao', 'card-mapa'];
-        var sectionObserver = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    navBtns.forEach(function(btn) {
-                        btn.classList.toggle('active', btn.getAttribute('data-target') === entry.target.id);
-                    });
-                }
-            });
-        }, { threshold: 0.4 });
+       // --- 4. Player & Web Audio Logic ---
+        const audio = document.getElementById('radio-stream');
+        const btnPlay = document.getElementById('btn-play');
+        const playText = document.getElementById('play-text');
+        const badge = document.getElementById('badge-live');
+        const statusText = document.getElementById('status-text');
+        const visualizer = document.getElementById('visualizer');
+        const iconSvg = document.getElementById('icon-svg');
 
-        sectionIds.forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) sectionObserver.observe(el);
+        const initAudioEngine = () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                source = audioCtx.createMediaElementSource(audio);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                dataA = new Uint8Array(analyser.frequencyBinCount);
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        };
+
+        const updateUI = (isPlaying) => {
+            if(isPlaying) {
+                badge.classList.add('is-on'); badge.querySelector('span:last-child').innerText = 'Ao Vivo';
+                statusText.innerText = 'Sintonizado...'; playText.innerText = 'Pausar';
+                btnPlay.classList.add('playing'); visualizer.classList.add('active');
+                iconSvg.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            } else {
+                badge.classList.remove('is-on'); badge.querySelector('span:last-child').innerText = 'Standby';
+                statusText.innerText = 'Toque para iniciar transmissão.'; playText.innerText = 'Ouça Agora';
+                btnPlay.classList.remove('playing'); visualizer.classList.remove('active');
+                iconSvg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        };
+
+        btnPlay.addEventListener('click', () => {
+            initAudioEngine();
+            if (audio.paused) { audio.load(); audio.play().catch(e => console.error(e)); }
+            else { audio.pause(); }
         });
 
-    })();
+        audio.onplay = () => updateUI(true); 
+        audio.onpause = () => updateUI(false);
 
-});
+        document.getElementById('toggle-anchor').onclick = (e) => { aVis = !aVis; e.target.classList.toggle('active', aVis); e.target.innerText = aVis ? "Exibir: SIM" : "Exibir: NÃO"; };
+        document.getElementById('anchor-speed').oninput = (e) => aSpeed = parseFloat(e.target.value);
+        document.getElementById('anchor-color').oninput = (e) => { anchor.tint = e.target.value.replace('#', '0x'); anchor.style.dropShadowColor = e.target.value; };
+        document.getElementById('toggle-sync').onclick = (e) => { if(!audioCtx) { showModal("Inicie a rádio primeiro para calibrar os instrumentos!"); return; } aSync = !aSync; e.target.classList.toggle('active', aSync); e.target.innerText = aSync ? "Sinc: SIM" : "Sinc: NÃO"; };
+
+        // --- 5. O Slider de Portos ---
+        const ports = [
+            { name: "Santos", lat: -23.96, lon: -46.32, z: 10 },
+            { name: "Rio de Janeiro", lat: -22.90, lon: -43.16, z: 10 },
+            { name: "Suape", lat: -8.39, lon: -34.95, z: 10 },
+            { name: "Vila do Conde", lat: -1.51, lon: -48.74, z: 9 },
+            { name: "Itaqui / Alumar", lat: -2.55, lon: -44.34, z: 9 },
+            { name: "Paranaguá", lat: -25.51, lon: -48.50, z: 10 },
+            { name: "Rio Grande", lat: -32.03, lon: -52.10, z: 9 },
+            { name: "Itajaí", lat: -26.90, lon: -48.66, z: 10 },
+            { name: "Mucuripe", lat: -3.71, lon: -38.48, z: 11 }
+        ];
+        let actPort = 0, actMap = 'marinetraffic';
+        const scroller = document.getElementById('port-scroller');
+        const mapView = document.getElementById('map-view');
+
+        let isDown = false, startX, scrollLeft, moved = 0;
+        scroller.addEventListener('mousedown', (e) => { isDown = true; moved = 0; startX = e.pageX - scroller.offsetLeft; scrollLeft = scroller.scrollLeft; });
+        scroller.addEventListener('mouseleave', () => isDown = false);
+        scroller.addEventListener('mouseup', () => isDown = false);
+        scroller.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); const x = e.pageX - scroller.offsetLeft; const walk = (x - startX) * 2.5; moved += Math.abs(walk); scroller.scrollLeft = scrollLeft - walk; });
+
+        const updateMap = () => {
+            const p = ports[actPort];
+            const url = actMap === 'marinetraffic' 
+                ? `https://www.marinetraffic.com/en/ais/embed/zoom:${p.z}/centerx:${p.lon}/centery:${p.lat}/maptype:0/shownames:true/showmenu:false`
+                : `https://embed.windy.com/embed.html?type=map&location=coordinates&zoom=${p.z}&lat=${p.lat}&lon=${p.lon}&metricWind=kt`;
+            mapView.innerHTML = `<iframe src="${url}"></iframe>`;
+        };
+
+        ports.forEach((p, i) => {
+            const pill = document.createElement('button');
+            pill.className = 'port-pill' + (i === 0 ? ' active' : '');
+            pill.innerText = p.name;
+            pill.addEventListener('click', () => { if (moved > 10) return; document.querySelectorAll('.port-pill').forEach(b => b.classList.remove('active')); pill.classList.add('active'); actPort = i; updateMap(); pill.scrollIntoView({ behavior: 'smooth', inline: 'center' }); });
+            scroller.appendChild(pill);
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); actMap = btn.dataset.map; updateMap(); };
+        });
+
+        updateMap();
+    });
 </script>
-
-
-
 </body>
 </html>
