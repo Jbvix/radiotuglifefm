@@ -243,22 +243,26 @@
             <div class="play-label" id="play-text" style="font-family:'Orbitron'; font-size:0.8rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Ouça Agora</div>
         </div>
 
-        <div class="anchor-controls">
+        <div class="anchor-controls" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="ctrl-group">
-                <span class="ctrl-label">Âncora</span>
-                <button id="toggle-anchor" class="toggle-btn active">Exibir: SIM</button>
+                <span class="ctrl-label">Ícone</span>
+                <button id="toggle-shape" class="toggle-btn active">Âncora</button>
             </div>
             <div class="ctrl-group">
+                <span class="ctrl-label">Exibir</span>
+                <button id="toggle-anchor" class="toggle-btn active">SIM</button>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Pulso</span>
+                <button id="toggle-sync" class="toggle-btn">NÃO</button>
+            </div>
+            <div class="ctrl-group" style="grid-column: span 2;">
                 <span class="ctrl-label">Velocidade</span>
                 <input type="range" id="anchor-speed" min="0" max="5" step="0.1" value="1">
             </div>
             <div class="ctrl-group">
                 <span class="ctrl-label">Cor</span>
                 <input type="color" id="anchor-color" value="#0ea5e9" style="width:100%; height:25px; border:none; background:transparent; cursor:pointer;">
-            </div>
-            <div class="ctrl-group">
-                <span class="ctrl-label">Pulso Som</span>
-                <button id="toggle-sync" class="toggle-btn">Sinc: NÃO</button>
             </div>
         </div>
 
@@ -379,8 +383,8 @@
         setInterval(updateClock, 1000); setInterval(renderSchedule, 60000);
         updateClock(); renderSchedule();
 
-        // --- 3. PixiJS Engine (Âncora) ---
-        let aVis = true, aSpeed = 1, aSync = false, audioCtx, analyser, dataA, source;
+        // --- 3. PixiJS Engine (Âncora/Hélice) ---
+        let aVis = true, aSpeed = 1, aSync = false, isAnchor = true, audioCtx, analyser, dataA, source;
         const app = new PIXI.Application({ width: window.innerWidth, height: window.innerHeight, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1 });
         document.getElementById('global-anchor-overlay').appendChild(app.view);
         window.addEventListener('resize', () => app.renderer.resize(window.innerWidth, window.innerHeight));
@@ -404,7 +408,13 @@
             }
             anchor.x += dX * aSpeed * delta; anchor.y += dY * aSpeed * delta;
             const m = 80; if (anchor.x < m || anchor.x > window.innerWidth - m) dX *= -1; if (anchor.y < m || anchor.y > window.innerHeight - m) dY *= -1;
-            anchor.rotation = Math.sin(el * 0.15) * 0.08;
+            
+            if (isAnchor) {
+                anchor.rotation = Math.sin(el * 0.15) * 0.08;
+            } else {
+                // Rotação contínua para simular a hélice girando
+                anchor.rotation += (aSpeed * 0.05 + 0.05) * delta;
+            }
         });
 
        // --- 4. Player & Web Audio Logic ---
@@ -451,10 +461,17 @@
         audio.onplay = () => updateUI(true); 
         audio.onpause = () => updateUI(false);
 
-        document.getElementById('toggle-anchor').onclick = (e) => { aVis = !aVis; e.target.classList.toggle('active', aVis); e.target.innerText = aVis ? "Exibir: SIM" : "Exibir: NÃO"; };
+        document.getElementById('toggle-shape').onclick = (e) => { 
+            isAnchor = !isAnchor; 
+            anchor.text = isAnchor ? '⚓' : '✇'; 
+            anchor.rotation = 0;
+            e.target.innerText = isAnchor ? "Âncora" : "Hélice"; 
+            e.target.classList.toggle('active', isAnchor);
+        };
+        document.getElementById('toggle-anchor').onclick = (e) => { aVis = !aVis; e.target.classList.toggle('active', aVis); e.target.innerText = aVis ? "SIM" : "NÃO"; };
         document.getElementById('anchor-speed').oninput = (e) => aSpeed = parseFloat(e.target.value);
         document.getElementById('anchor-color').oninput = (e) => { anchor.tint = e.target.value.replace('#', '0x'); anchor.style.dropShadowColor = e.target.value; };
-        document.getElementById('toggle-sync').onclick = (e) => { if(!audioCtx) { showModal("Inicie a rádio primeiro para calibrar os instrumentos!"); return; } aSync = !aSync; e.target.classList.toggle('active', aSync); e.target.innerText = aSync ? "Sinc: SIM" : "Sinc: NÃO"; };
+        document.getElementById('toggle-sync').onclick = (e) => { if(!audioCtx) { showModal("Inicie a rádio primeiro para calibrar os instrumentos!"); return; } aSync = !aSync; e.target.classList.toggle('active', aSync); e.target.innerText = aSync ? "SIM" : "NÃO"; };
 
         // --- 5. O Slider de Portos ---
         const ports = [
