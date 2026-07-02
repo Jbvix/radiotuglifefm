@@ -274,7 +274,7 @@
     <!-- Programação -->
     <section class="card" id="card-prog">
         <div class="digital-clock-container">
-            <span id="digital-date" style="font-family:'Orbitron', sans-serif; font-size:0.75rem; color:var(--text-main); font-weight:600; margin-bottom:6px; letter-spacing:1px; text-shadow: 0 0 5px var(--accent-glow);"></span>
+            <span id="digital-date" style="font-family:'Orbitron', sans-serif; font-size:0.75rem; color:var(--text-main); font-weight:600; margin-bottom:6px; letter-spacing:1px; text-shadow: 0 0 8px var(--accent-glow);">Carregando...</span>
             <span style="font-size:0.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Hora de Fortaleza (UTC-3)</span>
             <div id="digital-clock">00:00:00</div>
         </div>
@@ -286,8 +286,8 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--accent);">MONITORAMENTO GOC</div>
             <div style="display:flex; background:rgba(0,0,0,0.1); padding:2px; border-radius:8px;">
-                <button class="tab-btn active" data-map="marinetraffic" style="padding:4px 10px; border:none; border-radius:6px; font-size:0.55rem; font-weight:700; cursor:pointer; background:transparent; color:var(--text-muted);">AIS</button>
-                <button class="tab-btn" data-map="windy" style="padding:4px 10px; border:none; border-radius:6px; font-size:0.55rem; font-weight:700; cursor:pointer; background:transparent; color:var(--text-muted);">VENTO</button>
+                <button class="tab-btn active" data-map="marinetraffic" style="padding:4px 10px; border:none; border-radius:6px; font-size:0.55rem; font-weight:700; cursor:pointer; background:transparent; color:var(--accent);">Marítimo</button>
+                <button class="tab-btn" data-map="windy" style="padding:4px 10px; border:none; border-radius:6px; font-size:0.55rem; font-weight:700; cursor:pointer; background:transparent; color:var(--text-muted);">Clima</button>
             </div>
         </div>
         <div class="port-scroller" id="port-scroller"></div>
@@ -337,13 +337,13 @@
 
         // --- 2. Programação e Relógio ---
         const schedule = {
-            domingo: [{h:"00:00", t:"Viajando na Emoção"}, {h:"01:00", t:"Coração Sertanejo FDS"}, {h:"03:00", t:"Top Classic"}, {h:"08:00", t:"Algazarra"}, {h:"10:00", t:"TugKids"}, {h:"11:00", t:"TugCast Cmte Valdir"}, {h:"14:00", t:"Flash Back Top Hits"}, {h:"15:00", t:"Encontro de Gigantes - Djavan e Belchior"}, {h:"19:00", t:"Poder Pentecostal e Hinos de Testemunho (Gospel Hits)"}, {h:"20:00", t:"Love Songs Are Back Again"}, {h:"21:00", t:"Top Hits 2000"}, {h:"22:00", t:"Top Hits 90s"}, {h:"23:00", t:"Clube do Rei DOM"}],
+            domingo: [{h:"00:00", t:"Viajando na Emoção"}, {h:"01:00", t:"Coração Sertanejo FDS"}, {h:"03:00", t:"Âncora da Fé"}, {h:"08:00", t:"Algazarra"}, {h:"10:00", t:"TugKids"}, {h:"11:00", t:"TugSurf"}, {h:"12:00", t:"Classicos MPB"}, {h:"14:00", t:"Top Classic"}, {h:"16:00", t:"Encontro de Gigantes - Djavan e Belchior"}, {h:"19:00", t:"Poder Pentecostal e Hinos de Testemunho (Gospel Hits)"}, {h:"20:00", t:"Love Songs Are Back Again"}, {h:"21:00", t:"Top Hits 2000"}, {h:"22:00", t:"TugLounge"}, {h:"23:00", t:"Clube do Rei DOM"}],
             segunda: [{h:"00:00", t:"Love Night - Madrugada Romântica"}, {h:"02:00", t:"Âncora da Fé"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"A Vibe do Reggae"}, {h:"17:00", t:"Back in Time"}, {h:"18:00", t:"TugLife Retrô"}, {h:"19:00", t:"Fita K7"}, {h:"20:00", t:"Top Hits 90s"}, {h:"21:00", t:"O Melhor do Soul"}, {h:"22:00", t:"Hits Eletrônicos"}, {h:"23:00", t:"Roberto Carlos : A Hora do Rei"}],
             terca: [{h:"00:00", t:"Love Night"}, {h:"02:00", t:"Insônia"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Mix Gospel"}, {h:"16:00", t:"Fita K7"}, {h:"17:00", t:"O Melhor do Soul"}, {h:"19:00", t:"Hora do Marinheiro"}, {h:"21:00", t:"Semeando a Palavra"}, {h:"23:00", t:"Love Songs Are Back Again"}],
             quarta: [{h:"00:00", t:"Âncora da Fé"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"Galpão Farrapo"}, {h:"17:00", t:"Os Melhores Remixes"}, {h:"18:00", t:"A Batalha dos Titãs (Rock & Grunge Anos 80/90)"}, {h:"20:00", t:"Clube do Brega - Especial Amado Batista"}, {h:"22:00", t:"Love Night"}],
             quinta: [{h:"00:00", t:"Insônia"}, {h:"02:00", t:"Âncora da Fé"}, {h:"06:00", t:"Convés Brasil _Semana"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"Axé e Pagode"}, {h:"17:00", t:"Top Hits 90s"}, {h:"19:00", t:"Garagem do Rock"}, {h:"20:00", t:"Back in Time"}, {h:"23:00", t:"Roberto Carlos : A Hora do Rei"}],
-            sexta: [{h:"00:00", t:"Love Night"}, {h:"02:00", t:"Insônia"}, {h:"04:00", t:"Nas ondas do louvor"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"17:00", t:"Groove & Disco Fever (Anos 70 & 80)"}, {h:"19:00", t:"A Vibe do Reggae"}, {h:"21:00", t:"Back in Time"}],
-            sabado: [{h:"00:00", t:"Top Classic"}, {h:"04:00", t:"Mais Brasil Fins de Semana"}, {h:"08:00", t:"Flash Back Top Hits"}, {h:"09:00", t:"Bora Viajar"}, {h:"12:00", t:"Café com Samba"}, {h:"13:00", t:"Revirando o baú"}, {h:"15:00", t:"Encontro de Gigantes Legiao Urbana e Titãs"}, {h:"18:00", t:"Arriba!!!"}, {h:"19:00", t:"Fim de semana Convés Brasil"}, {h:"21:00", t:"Clube do Brega Seleção"}, {h:"22:00", t:"Back in Time"}]
+            sexta: [{h:"00:00", t:"Love Night"}, {h:"02:00", t:"Insônia"}, {h:"04:00", t:"Nas ondas do louvor"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"17:00", t:"Groove & Disco Fever (Anos 70 & 80)"}, {h:"19:00", t:"Love Night"}, {h:"21:00", t:"Love Songs Are Back Again"}],
+            sabado: [{h:"00:00", t:"Top Classic"}, {h:"04:00", t:"Mais Brasil Fins de Semana"}, {h:"08:00", t:"Flash Back Top Hits"}, {h:"09:00", t:"Bora Viajar"}, {h:"12:00", t:"Café com Samba"}, {h:"13:00", t:"Revirando o baú"}, {h:"15:00", t:"Encontro de Gigantes Legiao Urbana e Titãs"}, {h:"18:00", t:"Encontro de Gigantes SW & MJ"}, {h:"21:00", t:"Clube do Brega Seleção"}, {h:"22:00", t:"Back in Time"}]
         };
 
         const dayNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
@@ -397,7 +397,7 @@
         anchor.anchor.set(0.5); 
         mainObj.addChild(anchor);
 
-        const fanSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23FFFFFF" d="M50,35 C75,35 85,10 50,5 C35,5 30,20 50,35 Z M65,50 C65,75 90,85 95,50 C95,35 80,30 65,50 Z M50,65 C25,65 15,90 50,95 C65,95 70,80 50,65 Z M35,50 C35,25 10,15 5,50 C5,65 20,70 35,50 Z"/><circle cx="50" cy="50" r="10" fill="%23FFFFFF"/><circle cx="50" cy="50" r="14" fill="none" stroke="%23FFFFFF" stroke-width="2"/></svg>`;
+        const fanSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23FFFFFF" d="M50,35 C75,35 85,10 50,5 C35,5 30,20 50,35 Z M65,50 C65,75 90,85 95,50 C95,35 80,30 65,50 Z M50,65 C25,65 15,90 50,95 C65,95 70,80 50,65 Z M35,50 C35,25 10,15 5,50 C5,65 20,70 35,50 Z"/></svg>`;
         const propTex = PIXI.Texture.from(fanSvg);
         
         const fanMain = new PIXI.Sprite(propTex);
@@ -528,7 +528,7 @@
             const pill = document.createElement('button');
             pill.className = 'port-pill' + (i === 0 ? ' active' : '');
             pill.innerText = p.name;
-            pill.addEventListener('click', () => { if (moved > 10) return; document.querySelectorAll('.port-pill').forEach(b => b.classList.remove('active')); pill.classList.add('active'); actPort = i; updateMap(); pill.scrollIntoView({ behavior: 'smooth', inline: 'center' }); });
+            pill.addEventListener('click', () => { if (moved > 10) return; document.querySelectorAll('.port-pill').forEach(b => b.classList.remove('active')); pill.classList.add('active'); actPort = i; updateMap(); });
             scroller.appendChild(pill);
         });
 
