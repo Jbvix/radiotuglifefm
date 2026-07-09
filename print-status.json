@@ -3,24 +3,12 @@
   "printing": true,
   "state": "printing",
   "progress": 39.9,
-  "filename": "tugnde-Boat figurine #1(1).stl_PLA_14h22m43s.gcode",
   "layer": 51,
   "layer_count": 174,
   "print_duration": 16635.214777432,
   "remaining": 35127.785222567996,
-  "z_pos": 7.012371770009908,
-  "nozzle": {
-    "temp": 219.48,
-    "target": 220.0
-  },
-  "bed": {
-    "temp": 50.14,
-    "target": 50.0
-  },
-  "chamber_temp": 35.56,
-  "printer": "0.0.0.0",
-  "printer_name": "Creality K2 Plus",
-  "camera_page": "",
-  "fluidd": "",
-  "updated_at": 1783640664.769554
+  "title": "Tugboat · Impressão 3D ao vivo",
+  "updated_at": 1783640685.2070718,
+  "nozzle_temp": 219.0,
+  "bed_temp": 50.0
 }

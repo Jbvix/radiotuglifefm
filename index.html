@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v1.9.8</title>
+    <title>TugLife FM • App Mobile v1.9.9</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -24,14 +24,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v1.9.8
+           Versão: v1.9.9
            Data: 2026-04-18 23:59
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
            - Implementado Switch Dia/Noite (Theme Toggle).
            - Adicionado Comando Alexa no Footer Actions.
            - Refinamento de contraste para Modo Claro.
-           - Mantido Sincronismo Web Audio v1.9.4.
+           - Mantido Sincronismo Web Audio v1.9.9.
            =========================================================== */
 
         :root {
@@ -413,7 +413,7 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v1.9.8</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v1.9.9</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
         © 2026 • Dia/Noite & Alexa Engine.
     </footer>
@@ -421,7 +421,7 @@
 
 <script>
     /**
-     * TugLife FM Engine v1.9.6
+     * TugLife FM Engine v1.9.9
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
@@ -545,22 +545,35 @@
         // --- 4b. Impressão 3D (Moonraker via bridge / LAN) ---
         // Aparece só quando a impressora está online E imprimindo.
         const PRINT_CONFIG = {
-            // HTTPS público (Netlify/GitHub) + bridge local na rede
-            endpoints: [
-                '/print-status.json',
-                '/api/print-status',
-                'https://radiotuglifefm.netlify.app/print-status.json',
-                'https://raw.githubusercontent.com/Jbvix/radiotuglifefm/main/print-status.json',
-                'https://cdn.jsdelivr.net/gh/Jbvix/radiotuglifefm@main/print-status.json',
-                'http://127.0.0.1:8787/api/print-status',
-                '/api/print-status',
-                '/api/print-status',
-            ],
+            // Público (Netlify): só JSON sanitizado, sem IPs.
+            // Local: bridge /api/print-status (detalhes só na rede local).
+            endpoints: (function () {
+                var host = (location.hostname || '').toLowerCase();
+                var local = host === 'localhost' || host === '127.0.0.1' ||
+                    /^192\.168\./.test(host) || /^10\./.test(host) ||
+                    host.endsWith('.local');
+                var list = [
+                    '/print-status.json',
+                    '/api/print-status'
+                ];
+                if (local) {
+                    list.push(
+                        location.protocol + '//' + location.hostname + ':8787/api/print-status',
+                        location.protocol + '//' + location.hostname + ':8080/api/print-status'
+                    );
+                }
+                return list;
+            })(),
             pollMs: 8000,
-            printShareBase: '/',
-            // Cache-bust public JSON
             bustPublicCache: true,
+            enableCameraEmbed: (function () {
+                var host = (location.hostname || '').toLowerCase();
+                return host === 'localhost' || host === '127.0.0.1' ||
+                    /^192\.168\./.test(host) || /^10\./.test(host) ||
+                    host.endsWith('.local');
+            })(),
         };
+
 
 
         function fmtDur(sec) {
@@ -606,9 +619,21 @@
 
         function setPrintStream(active, printerHost) {
             const iframe = document.getElementById('print-stream');
+            const wrap = document.getElementById('print-stream-wrap');
             if (!iframe) return;
-            const host = printerHost || '0.0.0.0';
-            // Câmera WebRTC servida pelo próprio app (mesma origem)
+            if (!PRINT_CONFIG.enableCameraEmbed) {
+                if (wrap) wrap.style.display = 'none';
+                iframe.src = 'about:blank';
+                printStreamLoaded = false;
+                return;
+            }
+            if (wrap) wrap.style.display = '';
+            const host = printerHost || localStorage.getItem('tuglife.printerHost') || '';
+            if (!host) {
+                iframe.src = 'about:blank';
+                printStreamLoaded = false;
+                return;
+            }
             const camUrl = 'camera.html?obs=1&ip=' + encodeURIComponent(host) + '&auto=1';
             if (active) {
                 if (!printStreamLoaded || !iframe.src.includes('camera.html')) {
@@ -636,8 +661,10 @@
 
             setPrintStream(true, data.printer);
 
-            const file = data.filename || 'Impressão em andamento';
-            document.getElementById('print-file').textContent = file.replace(/\.gcode$/i, '');
+            let file = data.title || data.filename || 'Impressão em andamento';
+            if (data.filename) file = String(data.filename).replace(/\.gcode$/i, '');
+            file = String(file).split('/').pop();
+            document.getElementById('print-file').textContent = file;
             document.getElementById('print-state').textContent = data.state || 'printing';
             const pct = data.progress != null ? data.progress : 0;
             document.getElementById('print-progress').textContent = pct.toFixed(1) + '%';
@@ -648,8 +675,14 @@
             else if (data.layer != null) layer = String(data.layer);
             document.getElementById('print-layer').textContent = layer;
 
-            document.getElementById('print-nozzle').textContent = fmtTemp(data.nozzle);
-            document.getElementById('print-bed').textContent = fmtTemp(data.bed);
+            const nEl = document.getElementById('print-nozzle');
+            const bEl = document.getElementById('print-bed');
+            if (data.nozzle) nEl.textContent = fmtTemp(data.nozzle);
+            else if (data.nozzle_temp != null) nEl.textContent = Number(data.nozzle_temp).toFixed(0) + ' °C';
+            else nEl.textContent = '—';
+            if (data.bed) bEl.textContent = fmtTemp(data.bed);
+            else if (data.bed_temp != null) bEl.textContent = Number(data.bed_temp).toFixed(0) + ' °C';
+            else bEl.textContent = '—';
             document.getElementById('print-time').textContent = fmtDur(data.print_duration);
             document.getElementById('print-eta').textContent = fmtDur(data.remaining);
 

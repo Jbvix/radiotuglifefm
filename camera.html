@@ -149,7 +149,7 @@
 <body>
   <header id="chrome">
     <label for="host">IP impressora</label>
-    <input id="host" value="0.0.0.0" autocomplete="off" />
+    <input id="host" value="" placeholder="IP local (só na sua rede)" autocomplete="off" />
     <button id="connect" type="button">Conectar câmera</button>
     <button id="disconnect" class="secondary" type="button" disabled>Desconectar</button>
     <span id="status">Idle</span>
@@ -175,7 +175,7 @@
 
   <script>
     const params = new URLSearchParams(location.search);
-    const autoHost = params.get("ip") || params.get("host") || "0.0.0.0";
+    const autoHost = params.get("ip") || params.get("host") || localStorage.getItem("tuglife.printerHost") || "";
     const autoConnect = params.get("auto") !== "0";
     const clean = params.get("clean") === "1" || params.get("obs") === "1";
 
@@ -252,7 +252,7 @@
           overlay.classList.remove("hide");
           livePill.classList.remove("on");
           // auto-retry for OBS
-          if (autoConnect) {
+          if (autoConnect && autoHost) {
             reconnectTimer = setTimeout(() => {
               connect().catch((e) => setStatus(String(e.message || e), "err"));
             }, 4000);
@@ -326,7 +326,7 @@
     });
 
     // Auto-connect for OBS / page embed
-    if (autoConnect) {
+    if (autoConnect && autoHost) {
       setTimeout(() => {
         connect().catch((error) => {
           console.error(error);
