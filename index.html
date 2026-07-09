@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v1.9.6</title>
+    <title>TugLife FM • App Mobile v1.9.7</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -24,7 +24,7 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v1.9.6
+           Versão: v1.9.7
            Data: 2026-04-18 23:59
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
@@ -198,6 +198,68 @@
         .modal-box { background: var(--bg-card); border: 1px solid var(--accent); padding: 30px; border-radius: 24px; text-align: center; max-width: 300px; }
         .modal-btn { background: var(--accent); color: white; border: none; padding: 10px 25px; border-radius: 999px; cursor: pointer; font-family:'Orbitron'; font-size:0.65rem; }
 
+        
+        /* --- Print status card (K2 Plus / Moonraker) --- */
+        #card-print {
+            display: none;
+            border-color: rgba(255, 106, 43, 0.35);
+            background: linear-gradient(135deg, rgba(255,106,43,0.12), transparent 55%), var(--bg-card);
+        }
+        #card-print.is-visible { display: block; animation: print-in 0.45s ease; }
+        @keyframes print-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: none; }
+        }
+        .print-head {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 14px; gap: 10px;
+        }
+        .print-title {
+            font-family: 'Orbitron', sans-serif; font-size: 0.78rem;
+            color: #ff8a4c; letter-spacing: 0.06em; text-transform: uppercase;
+        }
+        .badge-print {
+            background: rgba(255, 106, 43, 0.18); color: #ff8a4c;
+            border: 1px solid rgba(255, 106, 43, 0.4);
+            padding: 5px 12px; border-radius: 999px; font-size: 0.65rem;
+            font-weight: 700; display: flex; align-items: center; gap: 6px;
+            text-transform: uppercase;
+        }
+        .badge-print .live-dot { background: #ff6a2b; box-shadow: 0 0 8px #ff6a2b; animation: pulse-red 1.5s infinite; }
+        .print-file {
+            font-size: 0.78rem; font-weight: 600; margin: 0 0 10px;
+            word-break: break-word; color: var(--text-main);
+        }
+        .print-bar {
+            height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08);
+            overflow: hidden; margin-bottom: 12px; border: 1px solid var(--glass-border);
+        }
+        .print-bar > i {
+            display: block; height: 100%; width: 0%;
+            background: linear-gradient(90deg, #ff6a2b, #0ea5e9);
+            border-radius: inherit; transition: width 0.6s ease;
+        }
+        .print-meta {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .print-meta div {
+            background: rgba(0,0,0,0.12); border-radius: 12px; padding: 8px 10px;
+            border: 1px solid var(--glass-border);
+        }
+        .print-meta span {
+            display: block; font-size: 0.55rem; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700;
+        }
+        .print-meta strong {
+            font-size: 0.78rem; font-variant-numeric: tabular-nums;
+        }
+        .print-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+        .print-actions a {
+            flex: 1; min-width: 120px; text-align: center; text-decoration: none;
+            background: rgba(255,106,43,0.15); color: #ffb080; border: 1px solid rgba(255,106,43,0.35);
+            padding: 10px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;
+        }
+
         footer { text-align: center; padding: 30px 10px; font-size: 0.6rem; color: var(--text-muted); line-height: 1.6; }
     </style>
 </head>
@@ -271,6 +333,29 @@
         </audio>
     </section>
 
+
+    <!-- Impressão 3D (aparece só quando K2 Plus está imprimindo) -->
+    <section class="card" id="card-print" aria-live="polite">
+        <div class="print-head">
+            <div class="print-title">⚓ Impressão 3D</div>
+            <div class="badge-print"><span class="live-dot"></span><span id="print-state">Printing</span></div>
+        </div>
+        <p class="print-file" id="print-file">—</p>
+        <div class="print-bar"><i id="print-bar"></i></div>
+        <div class="print-meta">
+            <div><span>Progresso</span><strong id="print-progress">—</strong></div>
+            <div><span>Camada</span><strong id="print-layer">—</strong></div>
+            <div><span>Bico</span><strong id="print-nozzle">—</strong></div>
+            <div><span>Mesa</span><strong id="print-bed">—</strong></div>
+            <div><span>Tempo</span><strong id="print-time">—</strong></div>
+            <div><span>Restante</span><strong id="print-eta">—</strong></div>
+        </div>
+        <div class="print-actions">
+            <a id="print-link-fluidd" href="#" target="_blank" rel="noopener">Fluidd / Câmera</a>
+            <a id="print-link-share" href="#" target="_blank" rel="noopener">PrintShare</a>
+        </div>
+    </section>
+
     <!-- Programação -->
     <section class="card" id="card-prog">
         <div class="digital-clock-container">
@@ -305,7 +390,7 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v1.9.6</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v1.9.7</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
         © 2026 • Dia/Noite & Alexa Engine.
     </footer>
@@ -432,6 +517,90 @@
                 mainObj.rotation += (aSpeed * 0.05 + 0.05) * delta;
             }
         });
+
+
+        // --- 4b. Impressão 3D (Moonraker via bridge / LAN) ---
+        // Aparece só quando a impressora está online E imprimindo.
+        const PRINT_CONFIG = {
+            // Preferir bridge local (server.py). Ajuste IP se necessário.
+            endpoints: [
+                '/api/print-status',
+                'http://127.0.0.1:8787/api/print-status',
+                '/api/print-status',
+                // PrintShare na rede (se estiver rodando com bridge)
+                '/api/print-status',
+            ],
+            pollMs: 5000,
+            printShareBase: '/',
+        };
+
+        function fmtDur(sec) {
+            if (sec == null || isNaN(sec) || sec < 0) return '—';
+            sec = Math.floor(sec);
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            if (h > 0) return h + 'h ' + String(m).padStart(2, '0') + 'm';
+            return m + 'm';
+        }
+
+        function fmtTemp(obj) {
+            if (!obj || obj.temp == null) return '—';
+            const t = Number(obj.temp).toFixed(0);
+            const tg = obj.target != null ? Number(obj.target).toFixed(0) : '—';
+            return t + ' → ' + tg + ' °C';
+        }
+
+        async function fetchPrintStatus() {
+            for (const url of PRINT_CONFIG.endpoints) {
+                try {
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), 3500);
+                    const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+                    clearTimeout(t);
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    if (data && (data.online || data.printing || data.state)) return data;
+                } catch (e) { /* tenta próximo */ }
+            }
+            return null;
+        }
+
+        function updatePrintCard(data) {
+            const card = document.getElementById('card-print');
+            if (!card) return;
+
+            const show = !!(data && data.online && data.printing);
+            card.classList.toggle('is-visible', show);
+            if (!show) return;
+
+            const file = data.filename || 'Impressão em andamento';
+            document.getElementById('print-file').textContent = file.replace(/\.gcode$/i, '');
+            document.getElementById('print-state').textContent = data.state || 'printing';
+            const pct = data.progress != null ? data.progress : 0;
+            document.getElementById('print-progress').textContent = pct.toFixed(1) + '%';
+            document.getElementById('print-bar').style.width = Math.min(100, pct) + '%';
+
+            let layer = '—';
+            if (data.layer != null && data.layer_count != null) layer = data.layer + ' / ' + data.layer_count;
+            else if (data.layer != null) layer = String(data.layer);
+            document.getElementById('print-layer').textContent = layer;
+
+            document.getElementById('print-nozzle').textContent = fmtTemp(data.nozzle);
+            document.getElementById('print-bed').textContent = fmtTemp(data.bed);
+            document.getElementById('print-time').textContent = fmtDur(data.print_duration);
+            document.getElementById('print-eta').textContent = fmtDur(data.remaining);
+
+            const fluidd = data.fluidd || data.camera_page || '#';
+            document.getElementById('print-link-fluidd').href = fluidd;
+            document.getElementById('print-link-share').href = PRINT_CONFIG.printShareBase;
+        }
+
+        async function pollPrint() {
+            const data = await fetchPrintStatus();
+            updatePrintCard(data);
+        }
+        pollPrint();
+        setInterval(pollPrint, PRINT_CONFIG.pollMs);
 
        // --- 4. Player & Web Audio Logic ---
         const audio = document.getElementById('radio-stream');
