@@ -2,25 +2,25 @@
   "online": true,
   "printing": true,
   "state": "printing",
-  "progress": 39.4,
+  "progress": 39.6,
   "filename": "tugnde-Boat figurine #1(1).stl_PLA_14h22m43s.gcode",
   "layer": 51,
   "layer_count": 174,
-  "print_duration": 16451.528935428,
-  "remaining": 35311.471064572004,
+  "print_duration": 16543.31509893,
+  "remaining": 35219.684901069995,
   "z_pos": 7.012371770009908,
   "nozzle": {
-    "temp": 220.17,
+    "temp": 220.39,
     "target": 220.0
   },
   "bed": {
-    "temp": 50.15,
+    "temp": 50.06,
     "target": 50.0
   },
-  "chamber_temp": 35.36,
+  "chamber_temp": 35.38,
   "printer": "0.0.0.0",
   "printer_name": "Creality K2 Plus",
   "camera_page": "",
   "fluidd": "",
-  "updated_at": 1783640481.0804327
+  "updated_at": 1783640572.8843303
 }
