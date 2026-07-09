@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v1.9.9</title>
+    <title>TugLife FM • App Mobile v1.9.10</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -24,14 +24,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v1.9.9
+           Versão: v1.9.10
            Data: 2026-04-18 23:59
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
            - Implementado Switch Dia/Noite (Theme Toggle).
            - Adicionado Comando Alexa no Footer Actions.
            - Refinamento de contraste para Modo Claro.
-           - Mantido Sincronismo Web Audio v1.9.9.
+           - Mantido Sincronismo Web Audio v1.9.10.
            =========================================================== */
 
         :root {
@@ -368,6 +368,12 @@
                 src="about:blank"></iframe>
         </div>
         <p class="print-file" id="print-file">—</p>
+        <p id="print-yt-open-wrap" style="display:none;margin:0 0 10px;text-align:center;">
+            <a id="print-yt-open" href="#" target="_blank" rel="noopener"
+               style="font-size:0.72rem;font-weight:700;color:var(--accent);text-decoration:none;">
+                ▶ Abrir no YouTube
+            </a>
+        </p>
         <div class="print-bar"><i id="print-bar"></i></div>
         <div class="print-meta">
             <div><span>Progresso</span><strong id="print-progress">—</strong></div>
@@ -413,7 +419,7 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v1.9.9</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v1.9.10</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
         © 2026 • Dia/Noite & Alexa Engine.
     </footer>
@@ -421,7 +427,7 @@
 
 <script>
     /**
-     * TugLife FM Engine v1.9.9
+     * TugLife FM Engine v1.9.10
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
@@ -617,35 +623,80 @@
 
         let printStreamLoaded = false;
 
-        function setPrintStream(active, printerHost) {
+        let youtubeLiveCfg = null;
+
+        async function loadYoutubeLiveCfg() {
+            if (youtubeLiveCfg) return youtubeLiveCfg;
+            try {
+                const res = await fetch('/youtube-live.json?t=' + Date.now(), { cache: 'no-store' });
+                if (res.ok) youtubeLiveCfg = await res.json();
+            } catch (e) {}
+            // também aceita no print-status público
+            return youtubeLiveCfg || {};
+        }
+
+        function youtubeEmbedFrom(data, ytCfg) {
+            const raw = (data && (data.youtube_embed || data.youtubeEmbed)) ||
+                (ytCfg && (ytCfg.embedUrl || ytCfg.watchUrl)) || '';
+            if (!raw) return '';
+            if (raw.includes('youtube.com/embed/')) {
+                return raw.includes('autoplay') ? raw : (raw.split('?')[0] + '?autoplay=1&mute=1&playsinline=1&rel=0');
+            }
+            const m = String(raw).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{6,})/);
+            if (m) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&mute=1&playsinline=1&rel=0';
+            return '';
+        }
+
+        function setPrintStream(active, printerHost, data) {
             const iframe = document.getElementById('print-stream');
             const wrap = document.getElementById('print-stream-wrap');
+            const label = wrap ? wrap.querySelector('.print-stream-label') : null;
             if (!iframe) return;
-            if (!PRINT_CONFIG.enableCameraEmbed) {
-                if (wrap) wrap.style.display = 'none';
+
+            if (!active) {
                 iframe.src = 'about:blank';
                 printStreamLoaded = false;
+                if (wrap) wrap.style.display = 'none';
                 return;
             }
             if (wrap) wrap.style.display = '';
-            const host = printerHost || localStorage.getItem('tuglife.printerHost') || '';
-            if (!host) {
+
+            // 1) Site público / preferência: YouTube Live
+            loadYoutubeLiveCfg().then(function (ytCfg) {
+                const yt = youtubeEmbedFrom(data || {}, ytCfg);
+                const useLocalCam = PRINT_CONFIG.enableCameraEmbed && !yt;
+
+                if (yt) {
+                    if (label) label.innerHTML = '<i></i> YT LIVE';
+                    if (!printStreamLoaded || iframe.src.indexOf('youtube.com/embed') === -1) {
+                        iframe.src = yt;
+                        printStreamLoaded = true;
+                    }
+                    return;
+                }
+
+                // 2) Fallback local: câmera WebRTC (só LAN)
+                if (useLocalCam) {
+                    if (label) label.innerHTML = '<i></i> CAM';
+                    const host = printerHost || localStorage.getItem('tuglife.printerHost') || '';
+                    if (!host) {
+                        iframe.src = 'about:blank';
+                        printStreamLoaded = false;
+                        return;
+                    }
+                    const camUrl = 'camera.html?obs=1&ip=' + encodeURIComponent(host) + '&auto=1';
+                    if (!printStreamLoaded || !iframe.src.includes('camera.html')) {
+                        iframe.src = camUrl;
+                        printStreamLoaded = true;
+                    }
+                    return;
+                }
+
+                // 3) Sem YouTube configurado e sem câmera local
+                if (label) label.innerHTML = '<i></i> LIVE';
                 iframe.src = 'about:blank';
                 printStreamLoaded = false;
-                return;
-            }
-            const camUrl = 'camera.html?obs=1&ip=' + encodeURIComponent(host) + '&auto=1';
-            if (active) {
-                if (!printStreamLoaded || !iframe.src.includes('camera.html')) {
-                    iframe.src = camUrl;
-                    printStreamLoaded = true;
-                }
-            } else {
-                if (printStreamLoaded) {
-                    iframe.src = 'about:blank';
-                    printStreamLoaded = false;
-                }
-            }
+            });
         }
 
         function updatePrintCard(data) {
@@ -655,14 +706,25 @@
             const show = !!(data && data.online && data.printing);
             card.classList.toggle('is-visible', show);
             if (!show) {
-                setPrintStream(false);
+                setPrintStream(false, null, null);
                 return;
             }
 
             if (data.printer && PRINT_CONFIG.enableCameraEmbed) {
                 try { localStorage.setItem('tuglife.printerHost', data.printer); } catch (e) {}
             }
-            setPrintStream(true, data.printer || localStorage.getItem('tuglife.printerHost'));
+            setPrintStream(true, data.printer || localStorage.getItem('tuglife.printerHost'), data);
+            loadYoutubeLiveCfg().then(function(ytCfg) {
+                const wrap = document.getElementById('print-yt-open-wrap');
+                const a = document.getElementById('print-yt-open');
+                const watch = (data && data.youtube_watch) || (ytCfg && ytCfg.watchUrl) || '';
+                if (wrap && a && watch) {
+                    a.href = watch;
+                    wrap.style.display = '';
+                } else if (wrap) {
+                    wrap.style.display = 'none';
+                }
+            });
 
             let file = data.title || data.filename || 'Impressão em andamento';
             if (data.filename) file = String(data.filename).replace(/\.gcode$/i, '');

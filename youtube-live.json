@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "watchUrl": "",
+  "embedUrl": "",
+  "note": "Defina watchUrl com o link da live (youtube.com/watch?v=... ou /live/...). O embed é gerado automaticamente."
+}

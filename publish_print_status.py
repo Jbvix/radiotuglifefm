@@ -76,6 +76,33 @@ def to_public(st: dict) -> dict:
         out["nozzle_temp"] = round(float(ext["temperature"]), 0)
     if bed.get("temperature") is not None:
         out["bed_temp"] = round(float(bed["temperature"]), 0)
+    # YouTube live (público — link já é público)
+    yt_path = ROOT / "youtube-live.json"
+    if yt_path.exists():
+        try:
+            yt = json.loads(yt_path.read_text(encoding="utf-8"))
+            if yt.get("enabled", True):
+                emb = yt.get("embedUrl") or ""
+                watch = yt.get("watchUrl") or os.environ.get("YOUTUBE_LIVE_URL", "")
+                if watch and not emb:
+                    import re as _re
+                    m = _re.search(r"(?:v=|youtu\.be/|/live/)([a-zA-Z0-9_-]{6,})", watch)
+                    if m:
+                        emb = f"https://www.youtube.com/embed/{m.group(1)}?autoplay=1&mute=1&playsinline=1&rel=0"
+                        watch = f"https://www.youtube.com/watch?v={m.group(1)}"
+                if emb:
+                    out["youtube_embed"] = emb
+                if watch:
+                    out["youtube_watch"] = watch
+        except Exception:
+            pass
+    env_yt = os.environ.get("YOUTUBE_LIVE_URL", "").strip()
+    if env_yt and "youtube_embed" not in out:
+        import re as _re
+        m = _re.search(r"(?:v=|youtu\.be/|/live/)([a-zA-Z0-9_-]{6,})", env_yt)
+        if m:
+            out["youtube_embed"] = f"https://www.youtube.com/embed/{m.group(1)}?autoplay=1&mute=1&playsinline=1&rel=0"
+            out["youtube_watch"] = f"https://www.youtube.com/watch?v={m.group(1)}"
     return out
 
 
