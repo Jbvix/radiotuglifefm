@@ -659,7 +659,10 @@
                 return;
             }
 
-            setPrintStream(true, data.printer);
+            if (data.printer && PRINT_CONFIG.enableCameraEmbed) {
+                try { localStorage.setItem('tuglife.printerHost', data.printer); } catch (e) {}
+            }
+            setPrintStream(true, data.printer || localStorage.getItem('tuglife.printerHost'));
 
             let file = data.title || data.filename || 'Impressão em andamento';
             if (data.filename) file = String(data.filename).replace(/\.gcode$/i, '');
