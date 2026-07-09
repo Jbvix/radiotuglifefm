@@ -281,12 +281,6 @@
         .print-meta strong {
             font-size: 0.78rem; font-variant-numeric: tabular-nums;
         }
-        .print-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-        .print-actions a {
-            flex: 1; min-width: 120px; text-align: center; text-decoration: none;
-            background: rgba(255,106,43,0.15); color: #ffb080; border: 1px solid rgba(255,106,43,0.35);
-            padding: 10px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;
-        }
 
         footer { text-align: center; padding: 30px 10px; font-size: 0.6rem; color: var(--text-muted); line-height: 1.6; }
     </style>
@@ -382,10 +376,6 @@
             <div><span>Mesa</span><strong id="print-bed">—</strong></div>
             <div><span>Tempo</span><strong id="print-time">—</strong></div>
             <div><span>Restante</span><strong id="print-eta">—</strong></div>
-        </div>
-        <div class="print-actions">
-            <a id="print-link-fluidd" href="#" target="_blank" rel="noopener">Fluidd / Câmera</a>
-            <a id="print-link-share" href="camera.html?ip=0.0.0.0&auto=1" target="_blank" rel="noopener">Câmera tela cheia</a>
         </div>
     </section>
 
@@ -663,9 +653,6 @@
             document.getElementById('print-time').textContent = fmtDur(data.print_duration);
             document.getElementById('print-eta').textContent = fmtDur(data.remaining);
 
-            const fluidd = data.fluidd || data.camera_page || '#';
-            document.getElementById('print-link-fluidd').href = fluidd;
-            document.getElementById('print-link-share').href = 'camera.html?obs=1&ip=' + encodeURIComponent(data.printer || '0.0.0.0') + '&auto=1';
         }
 
         async function pollPrint() {
