@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>K2 Plus · Câmera WebRTC</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05060a;
+      --panel: #12151c;
+      --text: #eef1f7;
+      --muted: #8b93a7;
+      --accent: #ff6a2b;
+      --ok: #3dd68c;
+      --err: #f87171;
+      --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+      --mono: ui-monospace, "Cascadia Code", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+    body {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100%;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 0.75rem;
+      align-items: center;
+      padding: 0.65rem 0.9rem;
+      background: var(--panel);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    header.hidden { display: none; }
+    label { color: var(--muted); font-size: 0.85rem; }
+    input {
+      width: min(220px, 40vw);
+      padding: 0.45rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: #0b0d12;
+      color: var(--text);
+      font: inherit;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.45rem 0.9rem;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff7a3d, #ff5520);
+      color: #fff;
+    }
+    button.secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+    }
+    button:disabled { opacity: 0.5; cursor: default; }
+    #status {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    #status.ok { color: var(--ok); }
+    #status.err { color: var(--err); }
+    main {
+      position: relative;
+      min-height: 0;
+      background: #000;
+      display: grid;
+      place-items: center;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 1.5rem;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(10,12,18,0.75), rgba(5,6,10,0.95));
+      transition: opacity 0.3s;
+    }
+    .overlay.hide { opacity: 0; }
+    .overlay h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.2rem;
+    }
+    .overlay p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 28rem;
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+    .live-pill {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: none;
+      align-items: center;
+      gap: 0.35rem;
+      background: #e11d48;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0.28rem 0.55rem;
+      border-radius: 999px;
+      z-index: 2;
+    }
+    .live-pill.on { display: inline-flex; }
+    .live-pill i {
+      width: 6px; height: 6px; border-radius: 50%; background: #fff;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.45; } }
+    footer {
+      padding: 0.45rem 0.9rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--panel);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-family: var(--mono);
+    }
+    footer.hidden { display: none; }
+    /* OBS / fullscreen clean mode: ?clean=1 */
+    body.clean header,
+    body.clean footer { display: none; }
+  </style>
+</head>
+<body>
+  <header id="chrome">
+    <label for="host">IP impressora</label>
+    <input id="host" value="0.0.0.0" autocomplete="off" />
+    <button id="connect" type="button">Conectar câmera</button>
+    <button id="disconnect" class="secondary" type="button" disabled>Desconectar</button>
+    <span id="status">Idle</span>
+  </header>
+
+  <main>
+    <span class="live-pill" id="live-pill"><i></i> LIVE</span>
+    <video id="video" autoplay playsinline muted controls></video>
+    <div class="overlay" id="overlay">
+      <div>
+        <h1>Câmera K2 Plus (WebRTC)</h1>
+        <p id="overlay-msg">
+          A Creality removeu o MJPEG no navegador. Esta página usa o sinal WebRTC local
+          em <code>:8000/call/webrtc_local</code>. Conectando…
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer id="foot">
+    Endpoint: <span id="endpoint">—</span>
+  </footer>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const autoHost = params.get("ip") || params.get("host") || "0.0.0.0";
+    const autoConnect = params.get("auto") !== "0";
+    const clean = params.get("clean") === "1" || params.get("obs") === "1";
+
+    if (clean) document.body.classList.add("clean");
+
+    const hostInput = document.querySelector("#host");
+    const connectButton = document.querySelector("#connect");
+    const disconnectButton = document.querySelector("#disconnect");
+    const endpointText = document.querySelector("#endpoint");
+    const statusText = document.querySelector("#status");
+    const overlay = document.querySelector("#overlay");
+    const overlayMsg = document.querySelector("#overlay-msg");
+    const livePill = document.querySelector("#live-pill");
+    const video = document.querySelector("#video");
+
+    hostInput.value = autoHost;
+    let pc;
+    let reconnectTimer;
+
+    function setStatus(text, kind) {
+      statusText.textContent = text;
+      statusText.className = kind || "";
+      if (kind === "err") overlayMsg.textContent = text;
+    }
+
+    function endpointFor() {
+      const host = hostInput.value.trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
+      if (!host) throw new Error("Informe o IP da impressora");
+      return { host, url: `http://${host}:8000/call/webrtc_local` };
+    }
+
+    function disconnect() {
+      clearTimeout(reconnectTimer);
+      if (pc) {
+        try {
+          pc.getSenders().forEach((s) => s.track && s.track.stop());
+          pc.getReceivers().forEach((r) => r.track && r.track.stop());
+          pc.close();
+        } catch (_) {}
+        pc = undefined;
+      }
+      video.srcObject = null;
+      livePill.classList.remove("on");
+      overlay.classList.remove("hide");
+      connectButton.disabled = false;
+      disconnectButton.disabled = true;
+    }
+
+    async function connect() {
+      disconnect();
+      const { host, url } = endpointFor();
+      endpointText.textContent = url;
+      setStatus("Criando offer…");
+      connectButton.disabled = true;
+      disconnectButton.disabled = false;
+      overlayMsg.textContent = `Conectando em ${host}:8000 (WebRTC)…`;
+
+      pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      });
+
+      pc.ontrack = (event) => {
+        video.srcObject = event.streams[0];
+        video.play().catch(() => {});
+        overlay.classList.add("hide");
+        livePill.classList.add("on");
+        setStatus("Recebendo vídeo", "ok");
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        const st = pc.iceConnectionState;
+        setStatus(st, st === "failed" || st === "disconnected" ? "err" : "");
+        if (st === "failed" || st === "disconnected") {
+          overlay.classList.remove("hide");
+          livePill.classList.remove("on");
+          // auto-retry for OBS
+          if (autoConnect) {
+            reconnectTimer = setTimeout(() => {
+              connect().catch((e) => setStatus(String(e.message || e), "err"));
+            }, 4000);
+          }
+        }
+      };
+
+      pc.addTransceiver("video", { direction: "sendrecv" });
+      await pc.setLocalDescription(await pc.createOffer());
+
+      await new Promise((resolve) => {
+        if (pc.iceGatheringState === "complete") return resolve();
+        const t = setTimeout(resolve, 2500);
+        pc.addEventListener("icegatheringstatechange", () => {
+          if (pc.iceGatheringState === "complete") {
+            clearTimeout(t);
+            resolve();
+          }
+        });
+      });
+
+      setStatus("Enviando offer…");
+      const payload = btoa(
+        JSON.stringify({ type: "offer", sdp: pc.localDescription.sdp })
+      );
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "plain/text" },
+        body: payload,
+      });
+
+      const raw = await response.text();
+      if (!response.ok) {
+        throw new Error(`Sinalização falhou: HTTP ${response.status}`);
+      }
+      if (!raw || raw === "{}") {
+        throw new Error(
+          "Impressora respondeu vazio. Câmera pode estar ocupada pelo app Creality — feche o stream no app e tente de novo."
+        );
+      }
+
+      let answer;
+      try {
+        answer = JSON.parse(atob(raw));
+      } catch {
+        // sometimes already JSON
+        answer = JSON.parse(raw);
+      }
+
+      if (!answer || !answer.sdp) {
+        throw new Error("Resposta WebRTC sem SDP. Câmera indisponível no momento.");
+      }
+
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      setStatus("Conectando…");
+    }
+
+    connectButton.addEventListener("click", () => {
+      connect().catch((error) => {
+        console.error(error);
+        setStatus(error.message || String(error), "err");
+        connectButton.disabled = false;
+        disconnectButton.disabled = true;
+        overlay.classList.remove("hide");
+      });
+    });
+    disconnectButton.addEventListener("click", () => {
+      disconnect();
+      setStatus("Desconectado");
+    });
+
+    // Auto-connect for OBS / page embed
+    if (autoConnect) {
+      setTimeout(() => {
+        connect().catch((error) => {
+          console.error(error);
+          setStatus(error.message || String(error), "err");
+          connectButton.disabled = false;
+          disconnectButton.disabled = true;
+        });
+      }, 400);
+    }
+  </script>
+</body>
+</html>

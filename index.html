@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v1.9.7</title>
+    <title>TugLife FM • App Mobile v1.9.8</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -24,7 +24,7 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v1.9.7
+           Versão: v1.9.8
            Data: 2026-04-18 23:59
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
@@ -199,6 +199,34 @@
         .modal-btn { background: var(--accent); color: white; border: none; padding: 10px 25px; border-radius: 999px; cursor: pointer; font-family:'Orbitron'; font-size:0.65rem; }
 
         
+        
+        .print-stream-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 0 0 14px;
+            background: #000;
+            border: 1px solid rgba(255,106,43,0.35);
+        }
+        .print-stream-wrap iframe {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            border: 0; background: #000;
+        }
+        .print-stream-label {
+            position: absolute; top: 8px; left: 8px; z-index: 2;
+            font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em;
+            text-transform: uppercase; color: #fff;
+            background: #e11d48; padding: 3px 8px; border-radius: 999px;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .print-stream-label i {
+            width: 6px; height: 6px; border-radius: 50%; background: #fff;
+            animation: pulse-red 1.2s infinite;
+        }
+
         /* --- Print status card (K2 Plus / Moonraker) --- */
         #card-print {
             display: none;
@@ -337,8 +365,13 @@
     <!-- Impressão 3D (aparece só quando K2 Plus está imprimindo) -->
     <section class="card" id="card-print" aria-live="polite">
         <div class="print-head">
-            <div class="print-title">⚓ Impressão 3D</div>
+            <div class="print-title">⚓ Impressão 3D · LIVE</div>
             <div class="badge-print"><span class="live-dot"></span><span id="print-state">Printing</span></div>
+        </div>
+        <div class="print-stream-wrap" id="print-stream-wrap">
+            <span class="print-stream-label"><i></i> CAM</span>
+            <iframe id="print-stream" title="Câmera K2 Plus" allow="autoplay; fullscreen" allowfullscreen
+                src="about:blank"></iframe>
         </div>
         <p class="print-file" id="print-file">—</p>
         <div class="print-bar"><i id="print-bar"></i></div>
@@ -352,7 +385,7 @@
         </div>
         <div class="print-actions">
             <a id="print-link-fluidd" href="#" target="_blank" rel="noopener">Fluidd / Câmera</a>
-            <a id="print-link-share" href="#" target="_blank" rel="noopener">PrintShare</a>
+            <a id="print-link-share" href="camera.html?ip=0.0.0.0&auto=1" target="_blank" rel="noopener">Câmera tela cheia</a>
         </div>
     </section>
 
@@ -390,7 +423,7 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v1.9.7</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v1.9.8</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
         © 2026 • Dia/Noite & Alexa Engine.
     </footer>
@@ -522,17 +555,23 @@
         // --- 4b. Impressão 3D (Moonraker via bridge / LAN) ---
         // Aparece só quando a impressora está online E imprimindo.
         const PRINT_CONFIG = {
-            // Preferir bridge local (server.py). Ajuste IP se necessário.
+            // HTTPS público (Netlify/GitHub) + bridge local na rede
             endpoints: [
+                '/print-status.json',
                 '/api/print-status',
+                'https://radiotuglifefm.netlify.app/print-status.json',
+                'https://raw.githubusercontent.com/Jbvix/radiotuglifefm/main/print-status.json',
+                'https://cdn.jsdelivr.net/gh/Jbvix/radiotuglifefm@main/print-status.json',
                 'http://127.0.0.1:8787/api/print-status',
                 '/api/print-status',
-                // PrintShare na rede (se estiver rodando com bridge)
                 '/api/print-status',
             ],
-            pollMs: 5000,
+            pollMs: 8000,
             printShareBase: '/',
+            // Cache-bust public JSON
+            bustPublicCache: true,
         };
+
 
         function fmtDur(sec) {
             if (sec == null || isNaN(sec) || sec < 0) return '—';
@@ -551,18 +590,47 @@
         }
 
         async function fetchPrintStatus() {
-            for (const url of PRINT_CONFIG.endpoints) {
+            for (const base of PRINT_CONFIG.endpoints) {
                 try {
+                    let url = base;
+                    if (PRINT_CONFIG.bustPublicCache && /print-status\.json/i.test(url)) {
+                        url += (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                    }
                     const ctrl = new AbortController();
-                    const t = setTimeout(() => ctrl.abort(), 3500);
+                    const t = setTimeout(() => ctrl.abort(), 4000);
                     const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
                     clearTimeout(t);
                     if (!res.ok) continue;
                     const data = await res.json();
-                    if (data && (data.online || data.printing || data.state)) return data;
+                    if (data && (data.online || data.printing || data.state || data.error === undefined || data.online === false)) {
+                        // aceita online:false só se veio de API válida com campo online
+                        if (data.online === false && data.printing === false && !data.state && data.error) continue;
+                        return data;
+                    }
                 } catch (e) { /* tenta próximo */ }
             }
             return null;
+        }
+
+        let printStreamLoaded = false;
+
+        function setPrintStream(active, printerHost) {
+            const iframe = document.getElementById('print-stream');
+            if (!iframe) return;
+            const host = printerHost || '0.0.0.0';
+            // Câmera WebRTC servida pelo próprio app (mesma origem)
+            const camUrl = 'camera.html?obs=1&ip=' + encodeURIComponent(host) + '&auto=1';
+            if (active) {
+                if (!printStreamLoaded || !iframe.src.includes('camera.html')) {
+                    iframe.src = camUrl;
+                    printStreamLoaded = true;
+                }
+            } else {
+                if (printStreamLoaded) {
+                    iframe.src = 'about:blank';
+                    printStreamLoaded = false;
+                }
+            }
         }
 
         function updatePrintCard(data) {
@@ -571,7 +639,12 @@
 
             const show = !!(data && data.online && data.printing);
             card.classList.toggle('is-visible', show);
-            if (!show) return;
+            if (!show) {
+                setPrintStream(false);
+                return;
+            }
+
+            setPrintStream(true, data.printer);
 
             const file = data.filename || 'Impressão em andamento';
             document.getElementById('print-file').textContent = file.replace(/\.gcode$/i, '');
@@ -592,7 +665,7 @@
 
             const fluidd = data.fluidd || data.camera_page || '#';
             document.getElementById('print-link-fluidd').href = fluidd;
-            document.getElementById('print-link-share').href = PRINT_CONFIG.printShareBase;
+            document.getElementById('print-link-share').href = 'camera.html?obs=1&ip=' + encodeURIComponent(data.printer || '0.0.0.0') + '&auto=1';
         }
 
         async function pollPrint() {
