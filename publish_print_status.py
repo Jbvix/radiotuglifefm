@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Publica status SANITIZADO (sem IPs/URLs locais) para o Netlify via GitHub."""
+"""Publica status SANITIZADO (sem IPs/URLs locais) para o Netlify via GitHub.
+
+Não sobrescreve um status 'printing' bom com 'offline' por falha transitória.
+"""
 from __future__ import annotations
 
 import json
@@ -10,10 +13,14 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-PRINTER = os.environ.get("PRINTER_HOST", "0.0.0.0")
+PRINTER = os.environ.get("PRINTER_HOST", "192.168.0.6")
 MOON = os.environ.get("MOONRAKER_URL", f"http://{PRINTER}:7125").rstrip("/")
-INTERVAL = int(os.environ.get("PUBLISH_INTERVAL", "90"))
+INTERVAL = int(os.environ.get("PUBLISH_INTERVAL", "60"))
 PUSH = os.environ.get("PUBLISH_PUSH", "1") == "1"
+# quantas falhas seguidas antes de marcar offline publicamente
+OFFLINE_AFTER = int(os.environ.get("OFFLINE_AFTER", "3"))
+
+_fail_streak = 0
 
 
 def fetch_raw() -> dict:
@@ -22,20 +29,11 @@ def fetch_raw() -> dict:
         "&heater_bed&extruder&temperature_sensor%20chamber_temp"
     )
     url = f"{MOON}/printer/objects/query?{q}"
-    with urllib.request.urlopen(url, timeout=5) as r:
+    with urllib.request.urlopen(url, timeout=8) as r:
         return json.loads(r.read().decode())["result"]["status"]
 
 
-def to_public(st: dict | None, err: str | None = None) -> dict:
-    """Payload seguro para internet — sem IPs, Fluidd, hosts ou nomes de arquivo."""
-    if err or not st:
-        return {
-            "online": False,
-            "printing": False,
-            "state": "offline",
-            "title": "Impressão 3D",
-            "updated_at": time.time(),
-        }
+def to_public(st: dict) -> dict:
     ps = st.get("print_stats") or {}
     vs = st.get("virtual_sdcard") or {}
     ds = st.get("display_status") or {}
@@ -81,11 +79,17 @@ def to_public(st: dict | None, err: str | None = None) -> dict:
     return out
 
 
-def publish_once() -> None:
+def load_last() -> dict | None:
+    path = ROOT / "print-status.json"
+    if not path.exists():
+        return None
     try:
-        data = to_public(fetch_raw())
-    except Exception as e:
-        data = to_public(None, str(e))
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def write_public(data: dict) -> None:
     path = ROOT / "print-status.json"
     text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     if path.exists() and path.read_text(encoding="utf-8") == text:
@@ -113,6 +117,37 @@ def publish_once() -> None:
     msg = f"chore: print-status {data.get('state')} {data.get('progress')}%"
     subprocess.run(["git", "commit", "-m", msg], cwd=ROOT, check=False)
     subprocess.run(["git", "push", "origin", "main"], cwd=ROOT, check=False)
+
+
+def publish_once() -> None:
+    global _fail_streak
+    try:
+        data = to_public(fetch_raw())
+        _fail_streak = 0
+        write_public(data)
+        return
+    except Exception as e:
+        _fail_streak += 1
+        print(
+            time.strftime("%H:%M:%S"),
+            f"fetch fail ({_fail_streak}/{OFFLINE_AFTER}):",
+            e,
+            flush=True,
+        )
+        if _fail_streak < OFFLINE_AFTER:
+            # mantém último status bom — não derruba o card no app
+            return
+        last = load_last() or {}
+        # só marca offline após várias falhas
+        data = {
+            "online": False,
+            "printing": False,
+            "state": "offline",
+            "title": last.get("title") or "Impressão 3D",
+            "updated_at": time.time(),
+            "note": "printer unreachable",
+        }
+        write_public(data)
 
 
 if __name__ == "__main__":
