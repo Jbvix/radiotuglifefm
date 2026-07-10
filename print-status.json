@@ -2,13 +2,13 @@
   "online": true,
   "printing": true,
   "state": "printing",
-  "progress": 60.5,
+  "progress": 60.6,
   "layer": 64,
   "layer_count": 174,
-  "print_duration": 25959.328395129003,
-  "remaining": 25803.671604870997,
+  "print_duration": 26020.117323991002,
+  "remaining": 25742.882676008998,
   "title": "Tugboat · Impressão 3D ao vivo",
-  "updated_at": 1783650189.0602798,
+  "updated_at": 1783650249.8201368,
   "nozzle_temp": 220.0,
   "bed_temp": 50.0
 }
