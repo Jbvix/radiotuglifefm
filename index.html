@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v1.9.10</title>
+    <title>TugLife FM • App Mobile v2.0.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -24,14 +24,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v1.9.10
+           Versão: v2.0.0
            Data: 2026-04-18 23:59
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
            - Implementado Switch Dia/Noite (Theme Toggle).
            - Adicionado Comando Alexa no Footer Actions.
            - Refinamento de contraste para Modo Claro.
-           - Mantido Sincronismo Web Audio v1.9.10.
+           - Mantido Sincronismo Web Audio v2.0.0.
            =========================================================== */
 
         :root {
@@ -198,91 +198,6 @@
         .modal-box { background: var(--bg-card); border: 1px solid var(--accent); padding: 30px; border-radius: 24px; text-align: center; max-width: 300px; }
         .modal-btn { background: var(--accent); color: white; border: none; padding: 10px 25px; border-radius: 999px; cursor: pointer; font-family:'Orbitron'; font-size:0.65rem; }
 
-        
-        
-        .print-stream-wrap {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16 / 10;
-            border-radius: 16px;
-            overflow: hidden;
-            margin: 0 0 14px;
-            background: #000;
-            border: 1px solid rgba(255,106,43,0.35);
-        }
-        .print-stream-wrap iframe {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
-            border: 0; background: #000;
-        }
-        .print-stream-label {
-            position: absolute; top: 8px; left: 8px; z-index: 2;
-            font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em;
-            text-transform: uppercase; color: #fff;
-            background: #e11d48; padding: 3px 8px; border-radius: 999px;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .print-stream-label i {
-            width: 6px; height: 6px; border-radius: 50%; background: #fff;
-            animation: pulse-red 1.2s infinite;
-        }
-
-        /* --- Print status card (K2 Plus / Moonraker) --- */
-        #card-print {
-            display: none;
-            border-color: rgba(255, 106, 43, 0.35);
-            background: linear-gradient(135deg, rgba(255,106,43,0.12), transparent 55%), var(--bg-card);
-        }
-        #card-print.is-visible { display: block; animation: print-in 0.45s ease; }
-        @keyframes print-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: none; }
-        }
-        .print-head {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 14px; gap: 10px;
-        }
-        .print-title {
-            font-family: 'Orbitron', sans-serif; font-size: 0.78rem;
-            color: #ff8a4c; letter-spacing: 0.06em; text-transform: uppercase;
-        }
-        .badge-print {
-            background: rgba(255, 106, 43, 0.18); color: #ff8a4c;
-            border: 1px solid rgba(255, 106, 43, 0.4);
-            padding: 5px 12px; border-radius: 999px; font-size: 0.65rem;
-            font-weight: 700; display: flex; align-items: center; gap: 6px;
-            text-transform: uppercase;
-        }
-        .badge-print .live-dot { background: #ff6a2b; box-shadow: 0 0 8px #ff6a2b; animation: pulse-red 1.5s infinite; }
-        .print-file {
-            font-size: 0.78rem; font-weight: 600; margin: 0 0 10px;
-            word-break: break-word; color: var(--text-main);
-        }
-        .print-bar {
-            height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08);
-            overflow: hidden; margin-bottom: 12px; border: 1px solid var(--glass-border);
-        }
-        .print-bar > i {
-            display: block; height: 100%; width: 0%;
-            background: linear-gradient(90deg, #ff6a2b, #0ea5e9);
-            border-radius: inherit; transition: width 0.6s ease;
-        }
-        .print-meta {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-        }
-        .print-meta div {
-            background: rgba(0,0,0,0.12); border-radius: 12px; padding: 8px 10px;
-            border: 1px solid var(--glass-border);
-        }
-        .print-meta span {
-            display: block; font-size: 0.55rem; text-transform: uppercase;
-            letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700;
-        }
-        .print-meta strong {
-            font-size: 0.78rem; font-variant-numeric: tabular-nums;
-        }
-
-        footer { text-align: center; padding: 30px 10px; font-size: 0.6rem; color: var(--text-muted); line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -354,38 +269,7 @@
             <source src="https://servidor27.brlogic.com:7098/live" type="audio/mpeg" />
         </audio>
     </section>
-
-
-    <!-- Impressão 3D (aparece só quando K2 Plus está imprimindo) -->
-    <section class="card" id="card-print" aria-live="polite">
-        <div class="print-head">
-            <div class="print-title">⚓ Impressão 3D · LIVE</div>
-            <div class="badge-print"><span class="live-dot"></span><span id="print-state">Printing</span></div>
-        </div>
-        <div class="print-stream-wrap" id="print-stream-wrap">
-            <span class="print-stream-label"><i></i> CAM</span>
-            <iframe id="print-stream" title="Câmera K2 Plus" allow="autoplay; fullscreen" allowfullscreen
-                src="about:blank"></iframe>
-        </div>
-        <p class="print-file" id="print-file">—</p>
-        <p id="print-yt-open-wrap" style="display:none;margin:0 0 10px;text-align:center;">
-            <a id="print-yt-open" href="#" target="_blank" rel="noopener"
-               style="font-size:0.72rem;font-weight:700;color:var(--accent);text-decoration:none;">
-                ▶ Abrir no YouTube
-            </a>
-        </p>
-        <div class="print-bar"><i id="print-bar"></i></div>
-        <div class="print-meta">
-            <div><span>Progresso</span><strong id="print-progress">—</strong></div>
-            <div><span>Camada</span><strong id="print-layer">—</strong></div>
-            <div><span>Bico</span><strong id="print-nozzle">—</strong></div>
-            <div><span>Mesa</span><strong id="print-bed">—</strong></div>
-            <div><span>Tempo</span><strong id="print-time">—</strong></div>
-            <div><span>Restante</span><strong id="print-eta">—</strong></div>
-        </div>
-    </section>
-
-    <!-- Programação -->
+<!-- Programação -->
     <section class="card" id="card-prog">
         <div class="digital-clock-container">
             <span id="digital-date" style="font-family:'Orbitron', sans-serif; font-size:0.75rem; color:var(--text-main); font-weight:600; margin-bottom:6px; letter-spacing:1px; text-shadow: 0 0 8px var(--accent-glow);">Carregando...</span>
@@ -419,15 +303,15 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v1.9.10</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v2.0.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Dia/Noite & Alexa Engine.
+        © 2026 • Rádio pura · Dia/Noite & Alexa · (impressão 3D em projeto separado).
     </footer>
 </div>
 
 <script>
     /**
-     * TugLife FM Engine v1.9.10
+     * TugLife FM Engine v2.0.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
@@ -546,221 +430,7 @@
                 mainObj.rotation += (aSpeed * 0.05 + 0.05) * delta;
             }
         });
-
-
-        // --- 4b. Impressão 3D (Moonraker via bridge / LAN) ---
-        // Aparece só quando a impressora está online E imprimindo.
-        const PRINT_CONFIG = {
-            // Público (Netlify): só JSON sanitizado, sem IPs.
-            // Local: bridge /api/print-status (detalhes só na rede local).
-            endpoints: (function () {
-                var host = (location.hostname || '').toLowerCase();
-                var local = host === 'localhost' || host === '127.0.0.1' ||
-                    /^192\.168\./.test(host) || /^10\./.test(host) ||
-                    host.endsWith('.local');
-                var list = [
-                    '/print-status.json',
-                    '/api/print-status'
-                ];
-                if (local) {
-                    list.push(
-                        location.protocol + '//' + location.hostname + ':8787/api/print-status',
-                        location.protocol + '//' + location.hostname + ':8080/api/print-status'
-                    );
-                }
-                return list;
-            })(),
-            pollMs: 8000,
-            bustPublicCache: true,
-            enableCameraEmbed: (function () {
-                var host = (location.hostname || '').toLowerCase();
-                return host === 'localhost' || host === '127.0.0.1' ||
-                    /^192\.168\./.test(host) || /^10\./.test(host) ||
-                    host.endsWith('.local');
-            })(),
-        };
-
-
-
-        function fmtDur(sec) {
-            if (sec == null || isNaN(sec) || sec < 0) return '—';
-            sec = Math.floor(sec);
-            const h = Math.floor(sec / 3600);
-            const m = Math.floor((sec % 3600) / 60);
-            if (h > 0) return h + 'h ' + String(m).padStart(2, '0') + 'm';
-            return m + 'm';
-        }
-
-        function fmtTemp(obj) {
-            if (!obj || obj.temp == null) return '—';
-            const t = Number(obj.temp).toFixed(0);
-            const tg = obj.target != null ? Number(obj.target).toFixed(0) : '—';
-            return t + ' → ' + tg + ' °C';
-        }
-
-        async function fetchPrintStatus() {
-            for (const base of PRINT_CONFIG.endpoints) {
-                try {
-                    let url = base;
-                    if (PRINT_CONFIG.bustPublicCache && /print-status\.json/i.test(url)) {
-                        url += (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-                    }
-                    const ctrl = new AbortController();
-                    const t = setTimeout(() => ctrl.abort(), 4000);
-                    const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
-                    clearTimeout(t);
-                    if (!res.ok) continue;
-                    const data = await res.json();
-                    if (data && (data.online || data.printing || data.state || data.error === undefined || data.online === false)) {
-                        // aceita online:false só se veio de API válida com campo online
-                        if (data.online === false && data.printing === false && !data.state && data.error) continue;
-                        return data;
-                    }
-                } catch (e) { /* tenta próximo */ }
-            }
-            return null;
-        }
-
-        let printStreamLoaded = false;
-
-        let youtubeLiveCfg = null;
-
-        async function loadYoutubeLiveCfg() {
-            if (youtubeLiveCfg) return youtubeLiveCfg;
-            try {
-                const res = await fetch('/youtube-live.json?t=' + Date.now(), { cache: 'no-store' });
-                if (res.ok) youtubeLiveCfg = await res.json();
-            } catch (e) {}
-            // também aceita no print-status público
-            return youtubeLiveCfg || {};
-        }
-
-        function youtubeEmbedFrom(data, ytCfg) {
-            const raw = (data && (data.youtube_embed || data.youtubeEmbed)) ||
-                (ytCfg && (ytCfg.embedUrl || ytCfg.watchUrl)) || '';
-            if (!raw) return '';
-            if (raw.includes('youtube.com/embed/')) {
-                return raw.includes('autoplay') ? raw : (raw.split('?')[0] + '?autoplay=1&mute=1&playsinline=1&rel=0');
-            }
-            const m = String(raw).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{6,})/);
-            if (m) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&mute=1&playsinline=1&rel=0';
-            return '';
-        }
-
-        function setPrintStream(active, printerHost, data) {
-            const iframe = document.getElementById('print-stream');
-            const wrap = document.getElementById('print-stream-wrap');
-            const label = wrap ? wrap.querySelector('.print-stream-label') : null;
-            if (!iframe) return;
-
-            if (!active) {
-                iframe.src = 'about:blank';
-                printStreamLoaded = false;
-                if (wrap) wrap.style.display = 'none';
-                return;
-            }
-            if (wrap) wrap.style.display = '';
-
-            // 1) Site público / preferência: YouTube Live
-            loadYoutubeLiveCfg().then(function (ytCfg) {
-                const yt = youtubeEmbedFrom(data || {}, ytCfg);
-                const useLocalCam = PRINT_CONFIG.enableCameraEmbed && !yt;
-
-                if (yt) {
-                    if (label) label.innerHTML = '<i></i> YT LIVE';
-                    if (!printStreamLoaded || iframe.src.indexOf('youtube.com/embed') === -1) {
-                        iframe.src = yt;
-                        printStreamLoaded = true;
-                    }
-                    return;
-                }
-
-                // 2) Fallback local: câmera WebRTC (só LAN)
-                if (useLocalCam) {
-                    if (label) label.innerHTML = '<i></i> CAM';
-                    const host = printerHost || localStorage.getItem('tuglife.printerHost') || '';
-                    if (!host) {
-                        iframe.src = 'about:blank';
-                        printStreamLoaded = false;
-                        return;
-                    }
-                    const camUrl = 'camera.html?obs=1&ip=' + encodeURIComponent(host) + '&auto=1';
-                    if (!printStreamLoaded || !iframe.src.includes('camera.html')) {
-                        iframe.src = camUrl;
-                        printStreamLoaded = true;
-                    }
-                    return;
-                }
-
-                // 3) Sem YouTube configurado e sem câmera local
-                if (label) label.innerHTML = '<i></i> LIVE';
-                iframe.src = 'about:blank';
-                printStreamLoaded = false;
-            });
-        }
-
-        function updatePrintCard(data) {
-            const card = document.getElementById('card-print');
-            if (!card) return;
-
-            const show = !!(data && data.online && data.printing);
-            card.classList.toggle('is-visible', show);
-            if (!show) {
-                setPrintStream(false, null, null);
-                return;
-            }
-
-            if (data.printer && PRINT_CONFIG.enableCameraEmbed) {
-                try { localStorage.setItem('tuglife.printerHost', data.printer); } catch (e) {}
-            }
-            setPrintStream(true, data.printer || localStorage.getItem('tuglife.printerHost'), data);
-            loadYoutubeLiveCfg().then(function(ytCfg) {
-                const wrap = document.getElementById('print-yt-open-wrap');
-                const a = document.getElementById('print-yt-open');
-                const watch = (data && data.youtube_watch) || (ytCfg && ytCfg.watchUrl) || '';
-                if (wrap && a && watch) {
-                    a.href = watch;
-                    wrap.style.display = '';
-                } else if (wrap) {
-                    wrap.style.display = 'none';
-                }
-            });
-
-            let file = data.title || data.filename || 'Impressão em andamento';
-            if (data.filename) file = String(data.filename).replace(/\.gcode$/i, '');
-            file = String(file).split('/').pop();
-            document.getElementById('print-file').textContent = file;
-            document.getElementById('print-state').textContent = data.state || 'printing';
-            const pct = data.progress != null ? data.progress : 0;
-            document.getElementById('print-progress').textContent = pct.toFixed(1) + '%';
-            document.getElementById('print-bar').style.width = Math.min(100, pct) + '%';
-
-            let layer = '—';
-            if (data.layer != null && data.layer_count != null) layer = data.layer + ' / ' + data.layer_count;
-            else if (data.layer != null) layer = String(data.layer);
-            document.getElementById('print-layer').textContent = layer;
-
-            const nEl = document.getElementById('print-nozzle');
-            const bEl = document.getElementById('print-bed');
-            if (data.nozzle) nEl.textContent = fmtTemp(data.nozzle);
-            else if (data.nozzle_temp != null) nEl.textContent = Number(data.nozzle_temp).toFixed(0) + ' °C';
-            else nEl.textContent = '—';
-            if (data.bed) bEl.textContent = fmtTemp(data.bed);
-            else if (data.bed_temp != null) bEl.textContent = Number(data.bed_temp).toFixed(0) + ' °C';
-            else bEl.textContent = '—';
-            document.getElementById('print-time').textContent = fmtDur(data.print_duration);
-            document.getElementById('print-eta').textContent = fmtDur(data.remaining);
-
-        }
-
-        async function pollPrint() {
-            const data = await fetchPrintStatus();
-            updatePrintCard(data);
-        }
-        pollPrint();
-        setInterval(pollPrint, PRINT_CONFIG.pollMs);
-
-       // --- 4. Player & Web Audio Logic ---
+// --- 4. Player & Web Audio Logic ---
         const audio = document.getElementById('radio-stream');
         const btnPlay = document.getElementById('btn-play');
         const playText = document.getElementById('play-text');
