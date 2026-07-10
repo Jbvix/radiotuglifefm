@@ -1,0 +1,9 @@
+# Nunca misturar impressão 3D neste repo
+print-status.json
+publish_print_status.py
+youtube-live.json
+camera.html
+set_youtube_live.py
+__pycache__/
+*.pyc
+.DS_Store
