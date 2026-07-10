@@ -266,9 +266,30 @@
         </div>
 
         <audio id="radio-stream" preload="none" crossorigin="anonymous">
-            <source src="https://servidor27.brlogic.com:7098/live" type="audio/mpeg" />
+            <source src="https://servidor27-1.brlogic.com:7098/live" type="audio/mpeg" />
         </audio>
     </section>
+
+    <!-- Player BRLogic: faixa atual + programação -->
+    <section class="card" id="card-brlogic-player" style="padding: 12px 10px 8px;">
+        <div style="font-family:'Orbitron'; font-size:0.7rem; color:var(--accent); margin:0 0 10px 4px; letter-spacing:1px;">
+            NO AR · PROGRAMAÇÃO
+        </div>
+        <div class="brlogic-player-wrap" style="border-radius:16px; overflow:hidden; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border);">
+            <iframe
+                title="TugLife FM · Player oficial"
+                src="https://public-player-widget.webradiosite.com/?cover=0&current_track=1&schedules=1&link=0&popup=0&share=0&embed=0&auto_play=0&source=5168&theme=light&color=0&identifier=tuglife&info=https%3A%2F%2Fpublic-player-widget.webradiosite.com%2Fapp%2Fplayer%2Finfo%2F251544%3Fhash%3D156f50693ab00c9bd7986420c9e18a9fcdb6211b&locale=pt-br"
+                loading="lazy"
+                scrolling="no"
+                frameborder="0"
+                allow="autoplay; clipboard-write"
+                allowtransparency="true"
+                style="display:block; width:100%; height:165px; border:0; background:transparent;"
+            ></iframe>
+        </div>
+        <p id="now-playing-brlogic" style="margin:10px 4px 0; font-size:0.75rem; color:var(--text-muted); min-height:1.2em;"></p>
+    </section>
+
 <!-- Programação -->
     <section class="card" id="card-prog">
         <div class="digital-clock-container">
@@ -473,6 +494,31 @@
 
         audio.onplay = () => updateUI(true); 
         audio.onpause = () => updateUI(false);
+
+        // --- BRLogic now playing (faixa atual + status) ---
+        const BRLOGIC_STATUS =
+            'https://d36nr0u3xmc4mm.cloudfront.net/index.php/api/streaming/status/7098/d92598a79a1991e75829a583a2527672/SV14BR';
+        const npLabel = document.getElementById('now-playing-brlogic');
+        let lastTrack = '';
+        const refreshNowPlaying = async () => {
+            try {
+                const r = await fetch(BRLOGIC_STATUS, { cache: 'no-store' });
+                if (!r.ok) return;
+                const d = await r.json();
+                const track = (d.currentTrack || d.current_track || '').trim();
+                if (!track) {
+                    if (npLabel) npLabel.textContent = 'Programação TugLife FM · ao vivo';
+                    return;
+                }
+                lastTrack = track;
+                if (npLabel) npLabel.textContent = '♪ Agora: ' + track;
+                if (audio && !audio.paused && statusText) {
+                    statusText.innerText = 'Agora: ' + track;
+                }
+            } catch (e) { /* silencioso */ }
+        };
+        refreshNowPlaying();
+        setInterval(refreshNowPlaying, 20000);
 
         document.getElementById('toggle-shape').onclick = (e) => { 
             isAnchor = !isAnchor; 
