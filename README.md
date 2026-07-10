@@ -1,6 +1,8 @@
 # TugLife FM · App da rádio (puro)
 
-App mobile da webrádio. **Sem impressão 3D.**
+App mobile da webrádio TugLife FM.
+
+**Só rádio** — sem impressão 3D, câmera, Moonraker ou PrintShare.
 
 - Site: https://radiotuglifefm.netlify.app/
 - Stream: BRLogic Icecast
