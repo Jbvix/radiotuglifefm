@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v2.4.1 · Rádio</title>
+    <title>TugLife FM • App Mobile v2.5.1 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,14 +29,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v2.4.1
-           Data: 2026-09-28T18:05:55-03:00
+           Versão: v2.5.1
+           Data: 2026-09-29T00:04:15-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
            - Implementado Switch Dia/Noite (Theme Toggle).
            - Adicionado Comando Alexa no Footer Actions.
            - Refinamento de contraste para Modo Claro.
-           - Mantido Sincronismo Web Audio v2.4.1.
+           - Mantido Sincronismo Web Audio v2.5.1.
            =========================================================== */
 
         :root {
@@ -245,7 +245,13 @@
             </div>
         </div>
 
-        <div class="official-cover"><img src="assets/brand.png" width="640" height="640" alt="TugLife FM — O Som do Mar"></div>
+        <section class="spectrum" aria-label="Espectro circular do áudio da rádio">
+            <div class="official-cover"><div class="spectrum-orbit">
+                <img src="assets/brand.png" width="640" height="640" alt="TugLife FM — O Som do Mar">
+                <div id="spectrum-bars" aria-hidden="true"></div>
+            </div></div>
+            <div class="spectrum-caption"><span>ESPECTRO AO VIVO</span><span id="spectrum-status" role="status">Aguardando reprodução</span></div>
+        </section>
         <div class="program-feature" aria-live="polite">
             <span class="eyebrow">No ar agora · conforme a grade</span>
             <h1 id="program-current">TugLife FM</h1>
@@ -260,11 +266,6 @@
             <div class="play-label" id="play-text" style="font-family:'Orbitron'; font-size:0.8rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Ouça Agora</div>
         </div>
 
-        <section class="spectrum" aria-label="Espectro do áudio da rádio">
-            <div class="spectrum-caption"><span>ESPECTRO AO VIVO</span><span id="spectrum-status" role="status">Aguardando reprodução</span></div>
-            <div id="spectrum-bars" aria-hidden="true"></div>
-            <div class="spectrum-axis" aria-hidden="true"><span>GRAVES</span><span>MÉDIOS</span><span>AGUDOS</span></div>
-        </section>
         <details class="effects-panel"><summary>Efeitos visuais <span>Personalizar</span></summary><div class="anchor-controls" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="ctrl-group">
                 <span class="ctrl-label">Ícone</span>
@@ -338,9 +339,9 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v2.4.1</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v2.5.1</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-09-28T18:05:55-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-09-29T00:04:15-03:00
     </footer>
 </div>
 <dialog id="share-dialog" aria-labelledby="share-title">
@@ -364,7 +365,7 @@
 <aside class="mini-player" aria-label="Player compacto"><span class="mini-symbol" aria-hidden="true">✦</span><div><small>TUGLIFE FM · AO VIVO</small><strong id="mini-title">O som do mar</strong><span id="mini-status">Pronto para ouvir</span></div><button id="mini-play" aria-label="Ouvir rádio">▶</button></aside>
 <script>
     /**
-     * TugLife FM Engine v2.4.1
+     * TugLife FM Engine v2.5.1
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

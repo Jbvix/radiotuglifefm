@@ -1,15 +1,11 @@
-# SPRINT 11 — Aplicação do logo A — v2.4.1
+# SPRINT 13 — Simetria bilateral — v2.5.1
 Autor: Jossian Brito  
-Data/hora: 2026-09-28T18:05:55-03:00
+Data/hora: 2026-09-29T00:04:15-03:00
 
-## Implementação
-Proposta A selecionada pelo usuário aplicada como logo principal (assets/brand.png). PNG transparente preservado. Ícones TL de instalação mantidos. Cache atualizado para v2.4.1.
+Implementação: 32 barras em 16 pares espelhados. Cada par recebe a mesma faixa de frequência e amplitude do áudio real. Posições igualmente afastadas do eixo vertical.
 
-## Correções e melhorias
-Identidade com âncora refinada substitui o logo anterior com microfone. Sem mudanças no player, na programação ou no QR Code.
+Verificação: teste de simetria falhou antes da alteração e passou depois; análise PCM real, pausa, retomada, movimento reduzido, responsividade e fallback passaram. git diff --check passou.
 
-## Lições aprendidas
-Atualizar o cache junto com recursos visuais evita manter o logo anterior em instalações existentes. Fechar as janelas antigas permite ativar a versão nova do service worker.
+Lição aprendida: espelhar tanto o ângulo quanto o índice da frequência garante igualdade visual dos dois lados.
 
-## Estado
-Alteração local; sem publicação. Arquivo aplicado idêntico à proposta A aprovada.
+Prévia local apenas; não publicada. Cache atualizado para v2.5.1. SPRINT 12 permanece cancelada.

@@ -40,8 +40,6 @@ footer {line-height:1.8;}
 .app-shell #card-prog {grid-row:3/5;}
 .app-shell #card-brlogic-player {grid-row:4;}
 #network-status {grid-column:1/-1;border:1px solid var(--amber);padding:12px;color:var(--amber);font-size:.85rem;}
-.official-cover {display:flex;justify-content:center;padding:14px;margin:0 0 24px;background:#061522;border-radius:16px;}
-.official-cover img {display:block;width:min(100%,260px);height:auto;object-fit:contain;}
 dialog {color:var(--text-main);background:var(--bg-card);border:1px solid var(--glass-border);border-radius:24px;padding:28px;max-width:460px;width:calc(100% - 28px);max-height:calc(100dvh - 36px);overflow:auto;box-shadow:0 24px 90px #0008;}
 dialog::backdrop {background:#020b15cc;backdrop-filter:blur(5px);}
 dialog h2 {padding-right:24px;font-size:1.35rem;line-height:1.3;}
@@ -53,12 +51,17 @@ dialog label {display:block;font-size:.75rem;color:var(--text-muted);margin-bott
 .dialog-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
 [hidden] {display:none!important;}
 @media(max-width:420px) {.brand-lockup {gap:8px;}.brand-lockup img {width:36px;height:36px;}.brand-title {font-size:1.35rem!important;} .app-tools button {font-size:.73rem;padding:10px 12px;}}
-.spectrum {margin:0 0 22px;padding:16px 0;border-top:1px solid var(--glass-border);}
-.spectrum-caption {display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.6rem;letter-spacing:.06em;color:var(--accent);}
+/* SPRINT 13: radial spectrum, amplitude remains driven by Web Audio. */
+.spectrum {margin:0 0 26px;}
+.official-cover {display:flex;justify-content:center;padding:8px;background:radial-gradient(circle,#14374966,transparent 70%);border-radius:16px;}
+.spectrum-orbit {position:relative;width:min(100%,360px);aspect-ratio:1;isolation:isolate;overflow:hidden;}
+.spectrum-orbit img {position:absolute;width:72%;height:72%;left:14%;top:14%;object-fit:contain;}
+#spectrum-bars {position:absolute;inset:0;pointer-events:none;}
+.spectrum-spoke {position:absolute;inset:0;transform:rotate(var(--angle));}
+#spectrum-bars span {position:absolute;left:calc(50% - 2.5px);top:2%;width:5px;height:11%;background:linear-gradient(to top,var(--accent) 25%,var(--amber));border-radius:5px;transform:scaleY(.035);transform-origin:center bottom;}
+.spectrum-caption {display:flex;justify-content:center;align-items:center;gap:6px 14px;flex-wrap:wrap;margin-top:12px;font-size:.6rem;letter-spacing:.08em;color:var(--accent);}
 #spectrum-status {color:var(--text-muted);letter-spacing:0;}
-#spectrum-bars {height:84px;display:flex;align-items:stretch;gap:4px;padding-top:14px;}
-#spectrum-bars span {flex:1;min-width:0;background:linear-gradient(to top,var(--accent) 35%,var(--amber) 95%);border-radius:3px 3px 0 0;transform:scaleY(.035);transform-origin:bottom;}
-.spectrum-axis {display:flex;justify-content:space-between;margin-top:9px;color:var(--text-muted);font-size:.55rem;letter-spacing:.12em;}
+@media(max-width:420px) {#spectrum-bars span {width:4px;left:calc(50% - 2px);}}
 :root {--bg-deep:#07131d;--bg-card:#101f2b;--accent:#69d5e7;--accent-glow:rgba(55,170,191,.16);--text-main:#ecf4f5;--text-muted:#a3b6c3;--amber:#f1bd70;}
 body {font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif; background-image:radial-gradient(ellipse at 15% 0%,#14303d,transparent 55%);}
 button,input {font:inherit;}

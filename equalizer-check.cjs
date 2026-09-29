@@ -17,7 +17,10 @@ function tone() {
  await p.locator('#btn-play').click();
  await p.waitForFunction(()=>Array.from(document.querySelectorAll('#spectrum-bars span')).some(e=>Number(e.style.transform.match(/[\d.]+/)[0])>.1));
  assert.equal(await p.locator('#spectrum-bars span').count(),32);
- console.log('PASS: decoded 440 Hz PCM drives real AnalyserNode bars');
+ assert.equal(await p.locator('.spectrum-orbit #spectrum-bars').count(),1);
+ assert.equal(await p.locator('.spectrum-spoke').count(),32);
+ assert.equal(await p.evaluate(() => {const bars=[...document.querySelectorAll('#spectrum-bars span')];return bars.every((bar,i)=>bar.style.transform===bars[bars.length-1-i].style.transform);}),true,'left and right pairs must match');
+ console.log('PASS: real PCM analysis and bilateral symmetry');
  await p.emulateMedia({reducedMotion:'reduce'});
  console.log(await p.evaluate(()=>({label:document.getElementById('spectrum-status').textContent, paused:document.getElementById('radio-stream').paused, time:document.getElementById('radio-stream').currentTime, reduced:matchMedia('(prefers-reduced-motion: reduce)').matches}))); 
  await p.waitForFunction(()=>document.getElementById('spectrum-status').textContent.includes('Movimento reduzido'));
@@ -28,7 +31,7 @@ function tone() {
  for(const width of [360,768,1440]){await p.setViewportSize({width,height:1000});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
  await p.locator('#btn-play').click();
  await p.waitForFunction(()=>document.getElementById('spectrum-status').textContent.includes('Frequências'));
- await p.screenshot({path:'../../outputs/tuglife-v2.3-equalizador.png',fullPage:true});
+ await p.screenshot({path:'../../outputs/tuglife-v2.5-circular.png',fullPage:true});
  assert.deepEqual(errors,[]);
  const fallback=await b.newPage();
  await fallback.route('https://**/*',r=>r.request().url().includes(':7098/live') && r.request().resourceType()==='media' ? r.fulfill({status:200,contentType:'audio/wav',body:tone()}) : r.abort());

@@ -40,8 +40,11 @@
     const container = document.getElementById('spectrum-bars');
     const label = document.getElementById('spectrum-status');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    const bars = Array.from({length:32}, () => {
-      const bar = document.createElement('span'); container.append(bar); return bar;
+    const bars = Array.from({length:32}, (_, index) => {
+      const spoke = document.createElement('div');
+      spoke.className = 'spectrum-spoke';
+      spoke.style.setProperty('--angle', `${(index + 0.5) * 360 / 32}deg`);
+      const bar = document.createElement('span'); spoke.append(bar); container.append(spoke); return bar;
     });
     let frame = 0, active = false;
     function stop(message) {
@@ -54,8 +57,10 @@
       analyser.getByteFrequencyData(data);
       const nyquist = context.sampleRate / 2;
       bars.forEach((bar, i) => {
-        const low = Math.max(1, Math.floor(50 * (16000 / 50) ** (i / bars.length) / nyquist * data.length));
-        const high = Math.min(data.length, Math.max(low + 1, Math.ceil(50 * (16000 / 50) ** ((i+1) / bars.length) / nyquist * data.length)));
+        const band = Math.min(i, bars.length - 1 - i);
+        const bandCount = bars.length / 2;
+        const low = Math.max(1, Math.floor(50 * (16000 / 50) ** (band / bandCount) / nyquist * data.length));
+        const high = Math.min(data.length, Math.max(low + 1, Math.ceil(50 * (16000 / 50) ** ((band+1) / bandCount) / nyquist * data.length)));
         let sum = 0;
         for (let bin=low; bin<high; bin++) sum += data[bin];
         const value = high > low ? sum / (high-low) / 255 : 0;
