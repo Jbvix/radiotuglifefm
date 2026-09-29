@@ -2,19 +2,24 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v2.0.0 · Rádio</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>TugLife FM • App Mobile v2.4.1 · Rádio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
     <meta property="og:title" content="TugLife FM • O Som do Mar" />
     <meta property="og:description" content="Sintonize na rádio oficial do marujo. Monitoramento AIS, deriva global e o melhor som do mar." />
     <!-- Substitua o URL abaixo pelo link real da imagem que deseja exibir -->
-    <meta property="og:image" content="https://imgur.com/a/S0mD5EX?auto=format&fit=crop&q=80&w=1200&h=630" />
+    <meta property="og:image" content="https://radiotuglifefm.netlify.app/assets/brand.png" />
     <meta property="og:url" content="https://radiotuglifefm.netlify.app/" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image">
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚓</text></svg>" />
+    <link rel="icon" href="assets/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#07131d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="TugLife FM">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     
     
@@ -24,14 +29,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v2.0.0
-           Data: 2026-04-18 23:59
+           Versão: v2.4.1
+           Data: 2026-09-28T18:05:55-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
            - Implementado Switch Dia/Noite (Theme Toggle).
            - Adicionado Comando Alexa no Footer Actions.
            - Refinamento de contraste para Modo Claro.
-           - Mantido Sincronismo Web Audio v2.0.0.
+           - Mantido Sincronismo Web Audio v2.4.1.
            =========================================================== */
 
         :root {
@@ -199,6 +204,12 @@
         .modal-btn { background: var(--accent); color: white; border: none; padding: 10px 25px; border-radius: 999px; cursor: pointer; font-family:'Orbitron'; font-size:0.65rem; }
 
     </style>
+    <link rel="stylesheet" href="refresh.css">
+    <script src="schedule.js" defer></script>
+    <script src="schedule-ui.js" defer></script>
+    <script src="experience.js" defer></script>
+    <script src="equalizer.js" defer></script>
+    <script src="pwa.js" defer></script>
 </head>
 <body>
 
@@ -213,28 +224,35 @@
 
 <div class="app-shell">
     <header class="app-header">
-        <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">🌙</button>
-        <div class="brand-title">TUGLIFE FM</div>
+        <button class="theme-toggle-btn" id="theme-toggle" aria-label="Alternar tema claro e escuro">🌙</button>
+        <div class="brand-lockup"><img src="assets/icon-192.png" alt="" width="52" height="52"><div class="brand-title">TUGLIFE FM</div></div>
         <div class="brand-tagline">O Som do Mar • 24/7/365</div>
     </header>
 
+    <nav class="app-tools" aria-label="Aplicativo e compartilhamento">
+        <button id="install-app">Instalar app</button><button id="share-radio">Compartilhar rádio · QR Code</button>
+    </nav>
+    <p id="network-status" role="status" hidden>Você está offline. A programação está disponível; conecte-se à internet para ouvir a rádio.</p>
     <!-- Player Card -->
-    <section class="card">
+    <section class="card player-card">
         <div class="live-status">
             <div id="badge-live" class="badge-live">
                 <span class="live-dot"></span>
                 <span>Standby</span>
-            </div>
-            <div class="equalizer" id="visualizer">
-                <span></span><span></span><span></span>
             </div>
             <div class="now-playing-label" id="status-text">
                 Rádio Marujo pronta para navegar.
             </div>
         </div>
 
+        <div class="official-cover"><img src="assets/brand.png" width="640" height="640" alt="TugLife FM — O Som do Mar"></div>
+        <div class="program-feature" aria-live="polite">
+            <span class="eyebrow">No ar agora · conforme a grade</span>
+            <h1 id="program-current">TugLife FM</h1>
+            <div class="next-program"><span>PRÓXIMO PROGRAMA</span><strong id="program-next">Carregando programação…</strong></div>
+        </div>
         <div class="play-wrapper">
-            <button id="btn-play" class="btn-play-main" aria-label="Play Radio">
+            <button id="btn-play" class="btn-play-main" aria-label="Ouvir rádio">
                 <svg id="icon-svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z"/>
                 </svg>
@@ -242,7 +260,12 @@
             <div class="play-label" id="play-text" style="font-family:'Orbitron'; font-size:0.8rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Ouça Agora</div>
         </div>
 
-        <div class="anchor-controls" style="grid-template-columns: 1fr 1fr 1fr;">
+        <section class="spectrum" aria-label="Espectro do áudio da rádio">
+            <div class="spectrum-caption"><span>ESPECTRO AO VIVO</span><span id="spectrum-status" role="status">Aguardando reprodução</span></div>
+            <div id="spectrum-bars" aria-hidden="true"></div>
+            <div class="spectrum-axis" aria-hidden="true"><span>GRAVES</span><span>MÉDIOS</span><span>AGUDOS</span></div>
+        </section>
+        <details class="effects-panel"><summary>Efeitos visuais <span>Personalizar</span></summary><div class="anchor-controls" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="ctrl-group">
                 <span class="ctrl-label">Ícone</span>
                 <button id="toggle-shape" class="toggle-btn active">Âncora</button>
@@ -265,43 +288,34 @@
             </div>
         </div>
 
+        </details>
         <audio id="radio-stream" preload="none" crossorigin="anonymous">
             <source src="https://servidor27-1.brlogic.com:7098/live" type="audio/mpeg" />
         </audio>
     </section>
 
-    <!-- Player BRLogic: faixa atual + programação -->
+    <!-- Informações da faixa -->
     <section class="card" id="card-brlogic-player" style="padding: 12px 10px 8px;">
         <div style="font-family:'Orbitron'; font-size:0.7rem; color:var(--accent); margin:0 0 10px 4px; letter-spacing:1px;">
-            NO AR · PROGRAMAÇÃO
+            NESTA FREQUÊNCIA · FAIXA ATUAL
         </div>
-        <div class="brlogic-player-wrap" style="border-radius:16px; overflow:hidden; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border);">
-            <iframe
-                title="TugLife FM · Player oficial"
-                src="https://public-player-widget.webradiosite.com/?cover=0&current_track=1&schedules=1&link=0&popup=0&share=0&embed=0&auto_play=0&source=5168&theme=light&color=0&identifier=tuglife&info=https%3A%2F%2Fpublic-player-widget.webradiosite.com%2Fapp%2Fplayer%2Finfo%2F251544%3Fhash%3D156f50693ab00c9bd7986420c9e18a9fcdb6211b&locale=pt-br"
-                loading="lazy"
-                scrolling="no"
-                frameborder="0"
-                allow="autoplay; clipboard-write"
-                allowtransparency="true"
-                style="display:block; width:100%; height:165px; border:0; background:transparent;"
-            ></iframe>
-        </div>
-        <p id="now-playing-brlogic" style="margin:10px 4px 0; font-size:0.75rem; color:var(--text-muted); min-height:1.2em;"></p>
+        <p id="now-playing-brlogic" style="margin:10px 4px 0; font-size:0.75rem; color:var(--text-muted); min-height:1.2em;" role="status">Consultando a faixa atual…</p>
     </section>
 
 <!-- Programação -->
     <section class="card" id="card-prog">
         <div class="digital-clock-container">
             <span id="digital-date" style="font-family:'Orbitron', sans-serif; font-size:0.75rem; color:var(--text-main); font-weight:600; margin-bottom:6px; letter-spacing:1px; text-shadow: 0 0 8px var(--accent-glow);">Carregando...</span>
-            <span style="font-size:0.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Hora de Fortaleza (UTC-3)</span>
+            <span style="font-size:0.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Horário de Brasília · America/Sao_Paulo</span>
             <div id="digital-clock">00:00:00</div>
         </div>
-        <ul class="schedule-list" id="schedule-list"></ul>
+        <div class="schedule-toolbar"><h2 id="schedule-heading">Programação semanal</h2><button id="schedule-today">Hoje</button></div>
+        <div id="schedule-days" class="schedule-days" role="group" aria-label="Dia da programação"></div>
+        <ul class="schedule-list" id="schedule-list" aria-labelledby="schedule-heading"></ul>
     </section>
 
     <!-- Monitoramento AIS -->
-    <section class="card" id="card-mapa">
+    <section class="card" id="card-mapa"><details id="mariner-panel"><summary>Painel do Marujo <span>Portos e clima</span></summary><p class="service-note">Mapas fornecidos por serviços externos. Se estiverem indisponíveis, tente novamente mais tarde.</p>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--accent);">MONITORAMENTO GOC</div>
             <div style="display:flex; background:rgba(0,0,0,0.1); padding:2px; border-radius:8px;">
@@ -310,29 +324,47 @@
             </div>
         </div>
         <div class="port-scroller" id="port-scroller"></div>
-        <div class="map-container" id="map-view"></div>
+        <div class="map-container" id="map-view"></div></details>
     </section>
 
     <!-- Footer Actions -->
     <div class="footer-actions">
-        <a href="https://www.tuglife.store" target="_blank" class="btn-ext">⚓ TugLife Store</a>
-        <a href="https://www.deezer.com/search/tuglife%20fm" target="_blank" class="btn-ext">🎧 Deezer</a>
+        <a href="https://www.tuglife.store" target="_blank" rel="noopener noreferrer" class="btn-ext">⚓ TugLife Store</a>
+        <a href="https://www.deezer.com/search/tuglife%20fm" target="_blank" rel="noopener noreferrer" class="btn-ext">🎧 Deezer</a>
         <div class="btn-ext alexa">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Amazon_Alexa_Logo_2024.svg" width="16" alt="Alexa">
+            <span aria-hidden="true">◉</span>
             <span>"Alexa, abrir RÁDIO MARUJO"</span>
         </div>
     </div>
 
     <footer>
-        <strong>TugLife FM v2.0.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v2.4.1</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Dia/Noite & Alexa.
+        © 2026 • Rádio TugLife FM · Atualização: 2026-09-28T18:05:55-03:00
     </footer>
 </div>
-
+<dialog id="share-dialog" aria-labelledby="share-title">
+    <button class="dialog-close" data-close-dialog aria-label="Fechar compartilhamento">×</button>
+    <h2 id="share-title">Leve o som do mar com você</h2>
+    <p>Aponte a câmera do celular para abrir a rádio.</p>
+    <img class="share-qr" src="assets/share-qr.png" alt="QR Code para https://radiotuglifefm.netlify.app/" width="330" height="330">
+    <label for="share-url">Endereço público da rádio</label>
+    <input id="share-url" readonly value="https://radiotuglifefm.netlify.app/">
+    <div class="dialog-actions"><button id="copy-link">Copiar link</button><button id="native-share">Compartilhar…</button><a href="assets/share-qr.png" download="tuglife-fm-qrcode.png">Baixar QR Code</a></div>
+    <p id="share-status" role="status"></p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title">
+    <button class="dialog-close" data-close-dialog aria-label="Fechar instruções">×</button>
+    <img src="assets/icon-192.png" alt="" width="72" height="72">
+    <h2 id="install-title">TugLife FM na sua tela inicial</h2>
+    <p>No iPhone/iPad, abra no Safari, toque em Compartilhar e escolha Adicionar à Tela de Início.</p>
+    <p>No Android ou computador, abra o menu do navegador e procure Instalar app ou Adicionar à tela inicial, quando disponível.</p>
+    <p id="install-note">A rádio ao vivo precisa de internet. A opção de instalação depende do navegador.</p>
+</dialog>
+<aside class="mini-player" aria-label="Player compacto"><span class="mini-symbol" aria-hidden="true">✦</span><div><small>TUGLIFE FM · AO VIVO</small><strong id="mini-title">O som do mar</strong><span id="mini-status">Pronto para ouvir</span></div><button id="mini-play" aria-label="Ouvir rádio">▶</button></aside>
 <script>
     /**
-     * TugLife FM Engine v2.0.0
+     * TugLife FM Engine v2.4.1
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
@@ -349,80 +381,36 @@
             // Ajustar cor da âncora/hélice automaticamente se não foi mexida manualmente
             if(document.getElementById('anchor-color').value === "#0ea5e9") {
                 const autoColor = isLight ? 0x0284c7 : 0x0ea5e9;
-                if(typeof anchor !== 'undefined') anchor.tint = autoColor;
-                if(typeof fanMain !== 'undefined') { fanMain.tint = autoColor; }
+                if(anchor) anchor.tint = autoColor;
+                if(fanMain) { fanMain.tint = autoColor; }
             }
         });
 
-        // --- 2. Programação e Relógio ---
-        const schedule = {
-            domingo: [{h:"00:00", t:"Viajando na Emoção"}, {h:"01:00", t:"Coração Sertanejo FDS"}, {h:"03:00", t:"Âncora da Fé"}, {h:"08:00", t:"Algazarra"}, {h:"10:00", t:"TugKids"}, {h:"11:00", t:"TugSurf"}, {h:"12:00", t:"Classicos MPB"}, {h:"14:00", t:"Top Classic"}, {h:"16:00", t:"Encontro de Gigantes - Djavan e Belchior"}, {h:"19:00", t:"Poder Pentecostal e Hinos de Testemunho (Gospel Hits)"}, {h:"20:00", t:"Love Songs Are Back Again"}, {h:"21:00", t:"Top Hits 2000"}, {h:"22:00", t:"TugLounge"}, {h:"23:00", t:"Clube do Rei DOM"}],
-            segunda: [{h:"00:00", t:"Love Night - Madrugada Romântica"}, {h:"02:00", t:"Âncora da Fé"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"A Vibe do Reggae"}, {h:"17:00", t:"Back in Time"}, {h:"18:00", t:"TugLife Retrô"}, {h:"19:00", t:"Fita K7"}, {h:"20:00", t:"Top Hits 90s"}, {h:"21:00", t:"O Melhor do Soul"}, {h:"22:00", t:"Hits Eletrônicos"}, {h:"23:00", t:"Roberto Carlos : A Hora do Rei"}],
-            terca: [{h:"00:00", t:"Love Night"}, {h:"02:00", t:"Insônia"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Mix Gospel"}, {h:"16:00", t:"Fita K7"}, {h:"17:00", t:"O Melhor do Soul"}, {h:"19:00", t:"Hora do Marinheiro"}, {h:"21:00", t:"Semeando a Palavra"}, {h:"23:00", t:"Love Songs Are Back Again"}],
-            quarta: [{h:"00:00", t:"Âncora da Fé"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"Galpão Farrapo"}, {h:"17:00", t:"Os Melhores Remixes"}, {h:"18:00", t:"A Batalha dos Titãs (Rock & Grunge Anos 80/90)"}, {h:"20:00", t:"Clube do Brega - Especial Amado Batista"}, {h:"22:00", t:"Love Night"}],
-            quinta: [{h:"00:00", t:"Insônia"}, {h:"02:00", t:"Âncora da Fé"}, {h:"06:00", t:"Convés Brasil _Semana"}, {h:"12:00", t:"Show da Tarde"}, {h:"16:00", t:"Axé e Pagode"}, {h:"17:00", t:"Top Hits 90s"}, {h:"19:00", t:"Garagem do Rock"}, {h:"20:00", t:"Back in Time"}, {h:"23:00", t:"Roberto Carlos : A Hora do Rei"}],
-            sexta: [{h:"00:00", t:"Love Night"}, {h:"02:00", t:"Insônia"}, {h:"04:00", t:"Nas ondas do louvor"}, {h:"06:00", t:"Acorda Marujo ! Adrenalina"}, {h:"12:00", t:"Show da Tarde"}, {h:"17:00", t:"Groove & Disco Fever (Anos 70 & 80)"}, {h:"19:00", t:"Love Night"}, {h:"21:00", t:"Love Songs Are Back Again"}],
-            sabado: [{h:"00:00", t:"Top Classic"}, {h:"04:00", t:"Mais Brasil Fins de Semana"}, {h:"08:00", t:"Flash Back Top Hits"}, {h:"09:00", t:"Bora Viajar"}, {h:"12:00", t:"Café com Samba"}, {h:"13:00", t:"Revirando o baú"}, {h:"15:00", t:"Encontro de Gigantes Legiao Urbana e Titãs"}, {h:"18:00", t:"Encontro de Gigantes SW & MJ"}, {h:"21:00", t:"Clube do Brega Seleção"}, {h:"22:00", t:"Back in Time"}]
-        };
-
-        const dayNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
-        const getFortTime = () => new Date(new Date().toLocaleString("en-US", {timeZone: "America/Fortaleza"}));
-        
-        const updateClock = () => {
-            const now = getFortTime();
-            document.getElementById('digital-clock').innerText = 
-                `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-            
-            const daysPT = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            const dateEl = document.getElementById('digital-date');
-            if (dateEl) {
-                dateEl.innerText = `${daysPT[now.getDay()]}, ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()}`;
-            }
-        };
-
-        const renderSchedule = () => {
-            const list = document.getElementById('schedule-list');
-            const now = getFortTime();
-            const day = dayNames[now.getDay()];
-            const currT = now.getHours() + (now.getMinutes()/60);
-            list.innerHTML = '';
-            (schedule[day] || []).forEach((item, i, arr) => {
-                const [h, m] = item.h.split(':').map(Number);
-                const start = h + m/60;
-                const nextS = arr[i+1] ? arr[i+1].h : "24:00";
-                const end = Number(nextS.split(':')[0]) + (Number(nextS.split(':')[1] || 0)/60);
-                const li = document.createElement('li');
-                li.className = 'schedule-item';
-                if(currT >= start && currT < end) li.classList.add('is-current');
-                li.innerHTML = `<div class="schedule-time">${item.h} - ${nextS === "24:00" ? "00:00" : nextS}</div><div class="schedule-name">${item.t}</div>`;
-                list.appendChild(li);
-                if(li.classList.contains('is-current')) setTimeout(() => li.scrollIntoView({behavior:'smooth', block:'center'}), 1000);
-            });
-        };
-        setInterval(updateClock, 1000); setInterval(renderSchedule, 60000);
-        updateClock(); renderSchedule();
+        // Grade semanal independente em schedule.js e schedule-ui.js.
 
         // --- 3. PixiJS Engine (Âncora/Hélice) ---
         let aVis = true, aSpeed = 1, aSync = false, isAnchor = true, audioCtx, analyser, dataA, source;
+        let anchor, fanMain, propeller, mainObj;
+        if (window.PIXI) {
         const app = new PIXI.Application({ width: window.innerWidth, height: window.innerHeight, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1 });
         document.getElementById('global-anchor-overlay').appendChild(app.view);
         window.addEventListener('resize', () => app.renderer.resize(window.innerWidth, window.innerHeight));
 
-        const mainObj = new PIXI.Container();
+        mainObj = new PIXI.Container();
         mainObj.x = window.innerWidth / 2; mainObj.y = window.innerHeight / 2;
         app.stage.addChild(mainObj);
 
-        const anchor = new PIXI.Text('⚓', { fontSize: 80, fill: '#0ea5e9', fontFamily: ['Arial', 'sans-serif'] });
+        anchor = new PIXI.Text('⚓', { fontSize: 80, fill: '#0ea5e9', fontFamily: ['Arial', 'sans-serif'] });
         anchor.anchor.set(0.5); 
         mainObj.addChild(anchor);
 
         const fanSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23FFFFFF" d="M50,35 C75,35 85,10 50,5 C35,5 30,20 50,35 Z M65,50 C65,75 90,85 95,50 C95,35 80,30 65,50 Z M50,65 C25,65 15,90 50,95 C65,95 70,80 50,65 Z M35,50 C35,25 10,15 5,50 C5,65 20,70 35,50 Z"/></svg>`;
         const propTex = PIXI.Texture.from(fanSvg);
         
-        const fanMain = new PIXI.Sprite(propTex);
+        fanMain = new PIXI.Sprite(propTex);
         fanMain.anchor.set(0.5); fanMain.scale.set(0.8); fanMain.tint = 0x0ea5e9;
 
-        const propeller = new PIXI.Container();
+        propeller = new PIXI.Container();
         propeller.addChild(fanMain);
         propeller.visible = false;
         mainObj.addChild(propeller);
@@ -451,44 +439,50 @@
                 mainObj.rotation += (aSpeed * 0.05 + 0.05) * delta;
             }
         });
+        } else {
+            document.querySelectorAll('.anchor-controls button, .anchor-controls input').forEach(control => {
+                control.disabled = true;
+                control.title = 'Animação indisponível. A rádio continua disponível.';
+            });
+        }
 // --- 4. Player & Web Audio Logic ---
         const audio = document.getElementById('radio-stream');
         const btnPlay = document.getElementById('btn-play');
         const playText = document.getElementById('play-text');
         const badge = document.getElementById('badge-live');
         const statusText = document.getElementById('status-text');
-        const visualizer = document.getElementById('visualizer');
         const iconSvg = document.getElementById('icon-svg');
 
-        const initAudioEngine = () => {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioCtx.createAnalyser();
-                source = audioCtx.createMediaElementSource(audio);
-                source.connect(analyser);
-                analyser.connect(audioCtx.destination);
-                dataA = new Uint8Array(analyser.frequencyBinCount);
-            }
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+        const initAudioEngine = async () => {
+            const engine = await RadioAudio.prepare(audio);
+            if (engine) { audioCtx = engine.context; analyser = engine.analyser; dataA = engine.data; }
+            return engine;
         };
 
         const updateUI = (isPlaying) => {
+            btnPlay.setAttribute("aria-label", isPlaying ? "Pausar rádio" : "Ouvir rádio");
             if(isPlaying) {
                 badge.classList.add('is-on'); badge.querySelector('span:last-child').innerText = 'Ao Vivo';
                 statusText.innerText = 'Sintonizado...'; playText.innerText = 'Pausar';
-                btnPlay.classList.add('playing'); visualizer.classList.add('active');
+                btnPlay.classList.add('playing');
                 iconSvg.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
             } else {
                 badge.classList.remove('is-on'); badge.querySelector('span:last-child').innerText = 'Standby';
                 statusText.innerText = 'Toque para iniciar transmissão.'; playText.innerText = 'Ouça Agora';
-                btnPlay.classList.remove('playing'); visualizer.classList.remove('active');
+                btnPlay.classList.remove('playing');
                 iconSvg.innerHTML = '<path d="M8 5v14l11-7z"/>';
             }
         };
 
-        btnPlay.addEventListener('click', () => {
-            initAudioEngine();
-            if (audio.paused) { audio.load(); audio.play().catch(e => console.error(e)); }
+        btnPlay.addEventListener('click', async () => {
+            if (btnPlay.disabled) return;
+            if (audio.paused) {
+                btnPlay.disabled = true;
+                statusText.textContent = 'Conectando…';
+                await initAudioEngine();
+                btnPlay.disabled = false;
+            }
+            if (audio.paused) { audio.load(); audio.play().catch(() => { statusText.textContent = "Não foi possível conectar. Toque para tentar novamente."; audio.dispatchEvent(new Event("error")); }); }
             else { audio.pause(); }
         });
 
@@ -503,7 +497,7 @@
         const refreshNowPlaying = async () => {
             try {
                 const r = await fetch(BRLOGIC_STATUS, { cache: 'no-store' });
-                if (!r.ok) return;
+                if (!r.ok) throw new Error('Status unavailable');
                 const d = await r.json();
                 const track = (d.currentTrack || d.current_track || '').trim();
                 if (!track) {
@@ -515,7 +509,7 @@
                 if (audio && !audio.paused && statusText) {
                     statusText.innerText = 'Agora: ' + track;
                 }
-            } catch (e) { /* silencioso */ }
+            } catch (e) { if (npLabel) npLabel.textContent = 'Faixa indisponível no momento. Você pode continuar ouvindo a rádio.'; }
         };
         refreshNowPlaying();
         setInterval(refreshNowPlaying, 20000);
@@ -535,7 +529,7 @@
             anchor.tint = colorHex; 
             fanMain.tint = colorHex;
         };
-        document.getElementById('toggle-sync').onclick = (e) => { if(!audioCtx) { showModal("Inicie a rádio primeiro para calibrar os instrumentos!"); return; } aSync = !aSync; e.target.classList.toggle('active', aSync); e.target.innerText = aSync ? "SIM" : "NÃO"; };
+        document.getElementById('toggle-sync').onclick = (e) => { if(audio.paused) { showModal("Inicie a rádio primeiro para calibrar os instrumentos!"); return; } initAudioEngine(); aSync = !aSync; e.target.classList.toggle('active', aSync); e.target.innerText = aSync ? "SIM" : "NÃO"; };
 
         // --- 5. O Slider de Portos ---
         const ports = [
@@ -564,7 +558,7 @@
             const url = actMap === 'marinetraffic' 
                 ? `https://www.marinetraffic.com/en/ais/embed/zoom:${p.z}/centerx:${p.lon}/centery:${p.lat}/maptype:0/shownames:true/showmenu:false`
                 : `https://embed.windy.com/embed.html?type=map&location=coordinates&zoom=${p.z}&lat=${p.lat}&lon=${p.lon}&metricWind=kt`;
-            mapView.innerHTML = `<iframe src="${url}"></iframe>`;
+            mapView.innerHTML = `<iframe title="Mapa de portos e clima" loading="lazy" src="${url}"></iframe>`;
         };
 
         ports.forEach((p, i) => {
@@ -579,7 +573,7 @@
             btn.onclick = () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); actMap = btn.dataset.map; updateMap(); };
         });
 
-        updateMap();
+        document.getElementById("mariner-panel").addEventListener("toggle", (event) => { if (event.target.open && !mapView.children.length) updateMap(); });
     });
 </script>
 </body>
