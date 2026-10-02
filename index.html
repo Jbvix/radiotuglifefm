@@ -303,6 +303,11 @@
         <p id="now-playing-brlogic" style="margin:10px 4px 0; font-size:0.75rem; color:var(--text-muted); min-height:1.2em;" role="status">Consultando a faixa atual…</p>
     </section>
 
+    <section class="card" id="card-charlie" hidden>
+        <div style="font-family:'Orbitron'; font-size:0.7rem; color:var(--accent); margin:0 0 8px 4px; letter-spacing:1px;">CHARLIE</div>
+        <p id="charlie-line" style="margin:0 4px; font-size:0.95rem; line-height:1.45;"></p>
+    </section>
+
 <!-- Programação -->
     <section class="card" id="card-prog">
         <div class="digital-clock-container">
@@ -514,6 +519,27 @@
         };
         refreshNowPlaying();
         setInterval(refreshNowPlaying, 20000);
+
+        const charlieCard = document.getElementById('card-charlie');
+        const charlieLine = document.getElementById('charlie-line');
+        const refreshCharlie = async () => {
+            try {
+                const r = await fetch('https://tuglifefmcontrol.netlify.app/api/studio?role=public', { cache: 'no-store' });
+                if (!r.ok) throw new Error('sem frase');
+                const d = await r.json();
+                const text = String((d && d.text) || '').trim();
+                if (!text || !charlieCard || !charlieLine) {
+                    if (charlieCard) charlieCard.hidden = true;
+                    return;
+                }
+                charlieLine.textContent = text;
+                charlieCard.hidden = false;
+            } catch (e) {
+                if (charlieCard) charlieCard.hidden = true;
+            }
+        };
+        refreshCharlie();
+        setInterval(refreshCharlie, 15000);
 
         document.getElementById('toggle-shape').onclick = (e) => { 
             isAnchor = !isAnchor; 
