@@ -135,3 +135,15 @@ body.light-theme .nautical-cover {--amber:#f1bd70;}
  *,*::before,*::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}
  #global-anchor-overlay {display:none;}
 }
+
+/* SPRINT 14 · v2.6.0 · Jossian Brito · Tripulação a bordo (listeners.js) */
+.crew-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:-12px 0 18px; }
+.crew-row[hidden], .crew-peak[hidden] { display:none; }
+.crew-badge, .crew-peak { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:999px;
+  border:1px solid var(--glass-border); background:var(--bg-card); font-size:0.75rem; color:var(--text-muted); }
+.crew-badge { border-color:var(--accent); }
+.crew-badge strong { color:var(--accent); font-size:0.9rem; }
+.crew-peak strong { color:var(--text-main); }
+.crew-bump strong { animation:crew-bump .45s ease; }
+@keyframes crew-bump { 40% { transform:scale(1.4); } }
+@media (prefers-reduced-motion: reduce) { .crew-bump strong { animation:none; } }

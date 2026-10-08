@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v2.5.1 · Rádio</title>
+    <title>TugLife FM • App Mobile v2.6.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,12 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v2.5.1
-           Data: 2026-09-29T00:04:15-03:00
+           Versão: v2.6.0
+           Data: 2026-10-08T15:55:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v2.6.0 (SPRINT 14): selo "👥 N a bordo" e "📈 Pico hoje"
+             (listeners.js + Supabase Realtime Presence).
            - Implementado Switch Dia/Noite (Theme Toggle).
            - Adicionado Comando Alexa no Footer Actions.
            - Refinamento de contraste para Modo Claro.
@@ -210,6 +212,8 @@
     <script src="experience.js" defer></script>
     <script src="equalizer.js" defer></script>
     <script src="pwa.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="listeners.js" defer></script>
 </head>
 <body>
 
@@ -243,6 +247,11 @@
             <div class="now-playing-label" id="status-text">
                 Rádio Marujo pronta para navegar.
             </div>
+        </div>
+        <!-- SPRINT 14 · v2.6.0: tripulação a bordo (listeners.js) -->
+        <div class="crew-row" id="crew-row" hidden>
+            <span class="crew-badge" id="crew-badge" title="Ouvintes conectados agora">👥 <strong id="crew-count">0</strong> <span id="crew-label">a bordo</span></span>
+            <span class="crew-peak" id="crew-peak" hidden>📈 Pico hoje: <strong id="crew-peak-count">0</strong></span>
         </div>
 
         <section class="spectrum" aria-label="Espectro circular do áudio da rádio">
@@ -344,7 +353,7 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v2.5.1</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v2.6.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
         © 2026 • Rádio TugLife FM · Atualização: 2026-09-29T00:04:15-03:00
     </footer>
@@ -370,7 +379,7 @@
 <aside class="mini-player" aria-label="Player compacto"><span class="mini-symbol" aria-hidden="true">✦</span><div><small>TUGLIFE FM · AO VIVO</small><strong id="mini-title">O som do mar</strong><span id="mini-status">Pronto para ouvir</span></div><button id="mini-play" aria-label="Ouvir rádio">▶</button></aside>
 <script>
     /**
-     * TugLife FM Engine v2.5.1
+     * TugLife FM Engine v2.6.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

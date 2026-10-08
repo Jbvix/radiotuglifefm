@@ -1,6 +1,6 @@
 // Only the app shell is cached. Never cache the live stream or third-party APIs.
-const CACHE = 'tuglife-shell-v2.5.2';
-const FILES = ['./','./index.html','./refresh.css','./schedule.js','./schedule-ui.js','./experience.js','./equalizer.js','./pwa.js','./manifest.webmanifest','./assets/icon-192.png','./assets/icon-512.png','./assets/apple-touch-icon.png','./assets/brand.png','./assets/share-qr.png'];
+const CACHE = 'tuglife-shell-v2.6.0';
+const FILES = ['./','./index.html','./refresh.css','./schedule.js','./schedule-ui.js','./experience.js','./equalizer.js','./pwa.js','./listeners.js','./manifest.webmanifest','./assets/icon-192.png','./assets/icon-512.png','./assets/apple-touch-icon.png','./assets/brand.png','./assets/share-qr.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))));
 self.addEventListener('activate', event => event.waitUntil((async () => {
   const keys = await caches.keys();
