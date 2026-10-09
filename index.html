@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v2.7.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v2.8.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,11 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v2.7.0
-           Data: 2026-10-08T18:30:00-03:00
+           Versão: v2.8.0
+           Data: 2026-10-08T22:30:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v2.8.0 (SPRINT 16): marés calibradas com a Tábua DHN 2026.
            - v2.7.0 (SPRINT 15): card "Tábua de Maré" com 13 portos
              (tides.js + tide-data.js + vendor/tide-engine.js).
            - v2.6.0 (SPRINT 14): selo "👥 N a bordo" e "📈 Pico hoje"
@@ -358,7 +359,7 @@
         <svg class="tide-chart" id="tide-chart" role="img" aria-label="Curva da maré nas 24 horas do dia"></svg>
         <ul class="tide-list" id="tide-list"></ul>
         <p class="tide-note" id="tide-note"></p>
-        <p class="tide-disclaimer">Previsão astronômica informativa, alturas acima do MLWS (≈ nível de redução). <strong>Não substitui a Tábua de Marés da DHN para navegação.</strong> Dados: TICON-4 (CC BY 4.0) via Neaps.</p>
+        <p class="tide-disclaimer">Previsão astronômica informativa, calibrada com a Tábua das Marés DHN 2026; alturas sobre o nível de redução. <strong>Não substitui a Tábua de Marés da DHN para navegação.</strong> Base: TICON-4 (CC BY 4.0) via Neaps.</p>
     </section>
 
     <!-- Monitoramento AIS -->
@@ -385,9 +386,9 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v2.7.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v2.8.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-08T18:30:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-08T22:30:00-03:00
     </footer>
 </div>
 <dialog id="share-dialog" aria-labelledby="share-title">
@@ -411,7 +412,7 @@
 <aside class="mini-player" aria-label="Player compacto"><span class="mini-symbol" aria-hidden="true">✦</span><div><small>TUGLIFE FM · AO VIVO</small><strong id="mini-title">O som do mar</strong><span id="mini-status">Pronto para ouvir</span></div><button id="mini-play" aria-label="Ouvir rádio">▶</button></aside>
 <script>
     /**
-     * TugLife FM Engine v2.7.0
+     * TugLife FM Engine v2.8.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

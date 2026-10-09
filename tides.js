@@ -2,8 +2,8 @@
    TugLife FM — Módulo "Tábua de Maré"
    ------------------------------------------------------------
    Arquivo   : tides.js
-   Versão    : 2.7.0 (SPRINT 15)
-   Data/Hora : 2026-10-08T18:30:00-03:00
+   Versão    : 2.8.0 (SPRINT 16)
+   Data/Hora : 2026-10-08T22:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
@@ -11,6 +11,9 @@
            próxima preamar/baixa-mar, extremos do dia e curva 24 h
            [NOVO] Navegação por dia (◀ Hoje ▶) e porto lembrado
            [NOVO] Selo de confiabilidade da estação de referência
+   v2.8.0  [MOD] Selo mostra "Calibrado DHN · ±X min" com o erro
+           típico medido contra a Tábua das Marés DHN 2026
+           [MOD] Alturas sobre o Nível de Redução da DHN
    ------------------------------------------------------------
    COMO A MARÉ É CALCULADA (previsão harmônica)
    A maré astronômica é a soma de ondas senoidais, uma por
@@ -23,8 +26,8 @@
      ωᵢ       velocidade angular (M2 = 28,984°/h → 12h25min)
      V0ᵢ      argumento astronômico no instante de referência
      fᵢ, uᵢ   correções nodais (ciclo lunar de 18,6 anos)
-     Z0       MSL − MLWS: refere as alturas ao MLWS, como o
-              Nível de Redução das Tábuas da DHN
+     Z0       nível médio sobre o Nível de Redução da DHN
+              (calibrado com a Tábua das Marés DHN 2026)
 
    Exemplo de batimento: M2 (12h25) e S2 (12h00) entram e saem de
    fase a cada ~14,8 dias. Em fase somam (sizígia, marés grandes);
@@ -139,13 +142,19 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.date.textContent = dateText.charAt(0).toUpperCase() + dateText.slice(1);
     ui.today.disabled = isToday;
 
-    // Selo de confiabilidade da estação
+    // Selo de confiabilidade: calibrado com DHN (erro típico medido)
+    // ou, sem calibração, o nível da estação de referência.
     const r = port.ref;
-    const levelText = { 'direta': 'Estação no porto', 'próxima': 'Estação próxima', 'aproximada': 'Estimativa aproximada' }[r.level];
-    ui.ref.textContent = r.level === 'direta'
-      ? `${levelText} · ${r.name}`
-      : `${levelText} · ref. ${r.name}, ${r.km} km`;
-    ui.ref.dataset.level = r.level;
+    const c = port.calib;
+    if (c) {
+      ui.ref.textContent = `Calibrado com Tábua DHN · ±${c.dtRms} min · ±${c.dhRms} cm`;
+      ui.ref.dataset.level = c.dtRms <= 8 && c.dhRms <= 8 ? 'direta' : 'próxima';
+      ui.ref.title = `Método ${c.method}; ajuste ${c.fit}, validação ${c.validation} (${c.n}/${c.of} marés). Erro típico = RMS.`;
+    } else {
+      ui.ref.textContent = `Estação no porto · ${r.name} · nível estimado`;
+      ui.ref.dataset.level = 'aproximada';
+      ui.ref.title = 'Sem tábua DHN para calibrar: horários da estação local; altura de referência estimada.';
+    }
 
     // Altura agora + tendência (derivada numérica em ±10 min)
     if (isToday) {
@@ -189,11 +198,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     drawChart(start, end, day, isToday ? now : null);
 
-    ui.note.textContent = r.level === 'aproximada'
-      ? `Sem marégrafo público neste porto: usamos ${r.name} (${r.km} km). Horários e alturas podem diferir bastante.`
-      : port.id === 'rio-grande'
-        ? 'Em Rio Grande o nível é dominado por vento e vazão da Lagoa dos Patos; a maré astronômica é de poucos centímetros.'
-        : '';
+    const COMPLEX = ['santos', 'paranagua', 'itajai', 'sepetiba', 'rio-grande'];
+    ui.note.textContent = port.id === 'rio-grande'
+      ? 'Em Rio Grande o nível é dominado por vento e vazão da Lagoa dos Patos; a maré astronômica é de poucos centímetros.'
+      : COMPLEX.includes(port.id)
+        ? 'Porto com marés de águas rasas: a tábua DHN pode listar preamares/baixa-mares duplas de poucos centímetros que aqui aparecem fundidas.'
+        : !c
+          ? 'Sem tábua DHN deste porto para calibrar: altura de referência estimada.'
+          : '';
   }
 
   /* ---------- 5. Curva das 24 h em SVG ----------
