@@ -1,0 +1,17 @@
+# ============================================================
+# TugLife FM — Configuração Netlify
+# Versão 2.9.0 (SPRINT 17) · 2026-10-12 · Autor: Jossian Brito
+# Ponte (proxy) para os JSON públicos do Monitoramento
+# Hidrodinâmico CIEX-FURG. O servidor de origem não envia CORS;
+# pedindo pelo mesmo domínio do app, o navegador aceita.
+# ============================================================
+[[redirects]]
+  from   = "/ciex/*"
+  to     = "https://hidrodinamica.ciex.org.br/data/:splat"
+  status = 200
+  force  = true
+
+[[headers]]
+  for = "/ciex/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"

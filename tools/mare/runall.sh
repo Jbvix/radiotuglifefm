@@ -12,9 +12,10 @@ declare -A REFS=(
  [vila-do-conde]="belem_uscgs-229a-bra-uhslc_rq"
  [rio-grande]="rio_grande-714a-bra-uhslc_rq"
  [itajai]="imbituba-718a-bra-uhslc_rq cananeia-281-bra-uhslc_fd"
+ [amapa]="santana-716e-bra-uhslc_rq santana_ssn-717b-bra-uhslc_rq"
  [sepetiba]="ilha_fiscal_rj-280-bra-uhslc_fd rio_de_janeiro_cg-709a-bra-uhslc_rq ubatuba-282a-bra-uhslc_rq"
 )
-for p in suape salvador santos paranagua rio-de-janeiro itaqui vitoria pecem vila-do-conde rio-grande itajai sepetiba; do
+for p in suape salvador santos paranagua rio-de-janeiro itaqui vitoria pecem vila-do-conde rio-grande itajai sepetiba amapa; do
   for r in ${REFS[$p]}; do
     out=$(node calib.mjs dhn/$p.txt ticon/$r 10 11 2>&1)
     cp dhn/$p.fit.json fit/${p}__${r%%-*}.json

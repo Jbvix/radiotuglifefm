@@ -2,8 +2,8 @@
    TugLife FM — Módulo "Tábua de Maré"
    ------------------------------------------------------------
    Arquivo   : tides.js
-   Versão    : 2.8.0 (SPRINT 16)
-   Data/Hora : 2026-10-08T22:30:00-03:00
+   Versão    : 2.9.0 (SPRINT 17)
+   Data/Hora : 2026-10-12T15:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
@@ -14,6 +14,11 @@
    v2.8.0  [MOD] Selo mostra "Calibrado DHN · ±X min" com o erro
            típico medido contra a Tábua das Marés DHN 2026
            [MOD] Alturas sobre o Nível de Redução da DHN
+   v2.9.0  [NOVO] Rio Grande em modo "nível real": medido + previsão
+           hidrodinâmica CIEX-FURG (vento + vazão + maré), em cm na
+           régua CCMar, com faixa de erro e cota de alerta de 80 cm.
+           Sem rede, volta à maré astronômica.
+           [MOD] Amapá (Santana) calibrado com a Tábua DHN 2026
    ------------------------------------------------------------
    COMO A MARÉ É CALCULADA (previsão harmônica)
    A maré astronômica é a soma de ondas senoidais, uma por
@@ -142,6 +147,14 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.date.textContent = dateText.charAt(0).toUpperCase() + dateText.slice(1);
     ui.today.disabled = isToday;
 
+    // v2.9.0: Rio Grande usa o nível real do CIEX-FURG quando houver dado
+    // para o dia exibido; caso contrário segue a maré astronômica abaixo.
+    const ciex = window.TugCiex && window.TugCiex.data;
+    if (port.id === 'rio-grande' && ciex && covers(ciex, start, end)) {
+      renderCiex(ciex, start, end, now, isToday);
+      return;
+    }
+
     // Selo de confiabilidade: calibrado com DHN (erro típico medido)
     // ou, sem calibração, o nível da estação de referência.
     const r = port.ref;
@@ -200,12 +213,143 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const COMPLEX = ['santos', 'paranagua', 'itajai', 'sepetiba', 'rio-grande'];
     ui.note.textContent = port.id === 'rio-grande'
-      ? 'Em Rio Grande o nível é dominado por vento e vazão da Lagoa dos Patos; a maré astronômica é de poucos centímetros.'
+      ? 'Em Rio Grande o nível é dominado por vento e vazão da Lagoa dos Patos; a maré astronômica é de poucos centímetros. '
+        + (ciex ? 'A previsão CIEX-FURG não cobre este dia.' : 'Nível real do CIEX-FURG indisponível agora (sem conexão).')
       : COMPLEX.includes(port.id)
         ? 'Porto com marés de águas rasas: a tábua DHN pode listar preamares/baixa-mares duplas de poucos centímetros que aqui aparecem fundidas.'
         : !c
           ? 'Sem tábua DHN deste porto para calibrar: altura de referência estimada.'
           : '';
+  }
+
+
+  /* ---------- 4b. Rio Grande: nível real CIEX-FURG (v2.9.0) ----------
+     Unidade: cm na régua CCMar-FURG (referencial próprio do sensor).
+     "Agora" = último valor MEDIDO se tiver até 90 min; senão, a
+     previsão interpolada para este instante.                          */
+  const fmtCm = (v) => Math.round(v) + ' cm';
+  // "seg 12/10 às 11:00"
+  const fmtDayHour = (t) => {
+    const d = new Date(t), tz = state.port.tz;
+    const wd = d.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'short' }).replace('.', '');
+    const dm = d.toLocaleDateString('pt-BR', { timeZone: tz, day: '2-digit', month: '2-digit' });
+    return `${wd} ${dm} às ${fmtTime(d)}`;
+  };
+
+  function covers(d, start, end) {
+    const all = d.obs.concat(d.prv);
+    return all.some((p) => p.t >= start.getTime() && p.t < end.getTime());
+  }
+
+  function renderCiex(d, start, end, now, isToday) {
+    const C = window.TugCiex;
+    const t0 = start.getTime(), t1 = end.getTime(), tn = now.getTime();
+    const lastObs = d.obs[d.obs.length - 1];
+    const fresh = lastObs && tn - lastObs.t <= 90 * 60000;
+
+    ui.ref.textContent = d.errCm != null
+      ? `Medido + previsto · CIEX-FURG · ±${d.errCm} cm`
+      : 'Medido + previsto · CIEX-FURG';
+    ui.ref.dataset.level = 'direta';
+    ui.ref.title = 'Monitoramento Hidrodinâmico CIEX-FURG, estação FURG/CCMar. Modelo com vento, vazão e maré.';
+
+    // Agora + tendência (variação da última hora medida, em cm/h)
+    if (isToday) {
+      let v = null, label = '';
+      if (fresh) {
+        v = lastObs.cm;
+        const before = C.valueAt(d.obs, lastObs.t - 3600000);
+        const rate = before == null ? 0 : lastObs.cm - before;
+        label = `medido ${fmtTime(new Date(lastObs.t))} · ` + (Math.abs(rate) < 1 ? '⇆ estável' : rate > 0 ? '↑ subindo' : '↓ baixando');
+      } else {
+        v = C.valueAt(d.prv, tn);
+        label = 'previsto (sensor sem leitura recente)';
+      }
+      ui.now.parentElement.hidden = v == null;
+      if (v != null) { ui.now.textContent = fmtCm(v); ui.trend.textContent = label; }
+    } else {
+      ui.now.parentElement.hidden = true;
+    }
+
+    // Alerta: primeira hora prevista ≥ cota nas próximas 72 h
+    const future = d.prv.filter((p) => p.t > tn && p.t <= tn + 72 * 3600000);
+    const over = future.find((p) => p.cm >= d.alertCm);
+    const peak = future.reduce((a, p) => (!a || p.cm > a.cm ? p : a), null);
+    ui.upcoming.textContent = isToday
+      ? (over
+        ? `⚠ Modelo CIEX prevê nível acima da cota de alerta (${d.alertCm} cm) a partir de ${fmtDayHour(over.t)} · máx. ${fmtCm(peak.cm)} em ${fmtDayHour(peak.t)}`
+        : peak ? `Máximo previsto (72 h): ${fmtCm(peak.cm)} · ${fmtDayHour(peak.t)}` : '')
+      : '';
+    ui.upcoming.classList.toggle('tide-alert', isToday && !!over);
+
+    // Lista: picos e vales previstos do dia (proeminência ≥ 3 cm)
+    const ex = C.extremes(d.prv, t0, t1);
+    ui.list.replaceChildren();
+    ex.forEach((e) => {
+      const li = document.createElement('li');
+      li.className = 'tide-item ' + (e.high ? 'is-high' : 'is-low') + (e.high && e.cm >= d.alertCm ? ' is-alert' : '');
+      li.innerHTML = `<span class="tide-kind">${e.high ? '▲ PICO' : '▼ VALE'}</span>`
+        + `<span class="tide-time">${fmtTime(new Date(e.t))}</span>`
+        + `<span class="tide-level">${fmtCm(e.cm)}</span>`;
+      ui.list.append(li);
+    });
+    if (!ex.length) {
+      const li = document.createElement('li');
+      li.className = 'tide-item';
+      li.textContent = d.prv.some((p) => p.t >= t0 && p.t < t1) ? 'Nível previsto quase constante neste dia.' : 'Só há medição para este dia.';
+      ui.list.append(li);
+    }
+
+    drawCiexChart(d, start, end, isToday ? now : null);
+
+    const age = d.generatedAt ? Math.round((tn - d.generatedAt) / 3600000) : null;
+    ui.note.textContent = 'Nível na régua CCMar-FURG (referencial próprio, diferente do nível de redução DHN). '
+      + 'Inclui vento, vazão dos rios e maré. '
+      + (age != null && age > 36 ? `Previsão gerada há ${age} h. ` : '')
+      + 'Fonte: Monitoramento Hidrodinâmico CIEX-FURG.';
+  }
+
+  /* Gráfico CIEX: linha cheia = medido; tracejada = previsão; faixa =
+     previsão ± erro médio; linha vermelha = cota de alerta.            */
+  function drawCiexChart(d, start, end, now) {
+    const W = Math.max(280, Math.round(ui.chart.clientWidth || 600));
+    const H = 150, pad = 16;
+    const t0 = start.getTime(), t1 = end.getTime();
+    const inDay = (p) => p.t >= t0 - 3600000 && p.t <= t1 + 3600000;
+    const obs = d.obs.filter(inDay), prv = d.prv.filter(inDay);
+    const e = d.errCm || 0;
+    const vals = obs.map((p) => p.cm).concat(prv.map((p) => p.cm + e), prv.map((p) => p.cm - e), [d.alertCm]);
+    let min = Math.min(...vals), max = Math.max(...vals);
+    const span = Math.max(max - min, 20);
+    min -= span * 0.1; max = min + span * 1.2;
+    const x = (t) => ((t - t0) / (t1 - t0)) * W;
+    const y = (v) => H - pad - ((v - min) / (max - min)) * (H - 2 * pad);
+    const path = (s, f) => s.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(f(p)).toFixed(1)}`).join(' ');
+
+    let svg = '';
+    if (prv.length > 1 && e) {
+      const up = path(prv, (p) => p.cm + e);
+      const dn = prv.slice().reverse().map((p) => `L${x(p.t).toFixed(1)},${y(p.cm - e).toFixed(1)}`).join(' ');
+      svg += `<path class="ciex-band" d="${up} ${dn} Z"/>`;
+    }
+    svg += `<line class="ciex-alert" x1="0" x2="${W}" y1="${y(d.alertCm)}" y2="${y(d.alertCm)}"/>`
+      + `<text class="ciex-alert-label" x="${W - 4}" y="${y(d.alertCm) - 4}">cota ${d.alertCm} cm</text>`;
+    [6, 12, 18].forEach((hh) => {
+      const xx = (hh / 24) * W;
+      svg += `<line class="tide-grid" x1="${xx}" x2="${xx}" y1="0" y2="${H}"/><text class="tide-axis" x="${xx}" y="${H - 3}">${hh}h</text>`;
+    });
+    if (prv.length > 1) svg += `<path class="ciex-forecast" d="${path(prv, (p) => p.cm)}"/>`;
+    // observado: quebra a linha onde houver lacuna > 1 h
+    let seg = [];
+    const flush = () => { if (seg.length > 1) svg += `<path class="tide-line" d="${path(seg, (p) => p.cm)}"/>`; seg = []; };
+    obs.forEach((p, i) => { if (i && p.t - obs[i - 1].t > 3600000) flush(); seg.push(p); });
+    flush();
+    if (now) {
+      const nx = x(now.getTime());
+      svg += `<line class="tide-now" x1="${nx}" x2="${nx}" y1="0" y2="${H}"/>`;
+    }
+    ui.chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    ui.chart.innerHTML = svg;
   }
 
   /* ---------- 5. Curva das 24 h em SVG ----------
@@ -272,6 +416,9 @@ document.addEventListener('DOMContentLoaded', () => {
   try { saved = localStorage.getItem(STORE_KEY); } catch (e) { /* sem storage */ }
   selectPort(saved);
   card.hidden = false;
+
+  // Quando os dados do CIEX chegam (ou atualizam), redesenha Rio Grande
+  if (window.TugCiex) window.TugCiex.onUpdate(() => { if (state.port && state.port.id === 'rio-grande') render(); });
 
   // Redesenha ao girar o celular ou redimensionar a janela
   let resizeTimer;

@@ -166,7 +166,7 @@ body.light-theme .nautical-cover {--amber:#f1bd70;}
 .tide-now-box {display:flex;align-items:baseline;gap:8px;}
 .tide-now-box[hidden] {display:none;}
 .tide-now-box span {font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;}
-.tide-now-box strong {font-size:1.6rem;color:var(--accent);font-variant-numeric:tabular-nums;}
+.tide-now-box strong {white-space:nowrap;font-size:1.6rem;color:var(--accent);font-variant-numeric:tabular-nums;}
 .tide-now-box em {font-style:normal;font-size:.8rem;color:var(--text-muted);}
 .tide-upcoming {font-size:.85rem;margin:0;}
 .tide-chart {width:100%;height:150px;display:block;margin:6px 0 10px;}
@@ -189,3 +189,12 @@ body.light-theme .nautical-cover {--amber:#f1bd70;}
 .tide-note {font-size:.78rem;color:#f59e0b;margin:10px 0 0;}
 .tide-note:empty {display:none;}
 .tide-disclaimer {font-size:.7rem;color:var(--text-muted);line-height:1.5;margin:10px 0 0;}
+
+/* SPRINT 17 · v2.9.0 · Jossian Brito · Rio Grande CIEX-FURG */
+.ciex-band {fill:var(--accent-glow);opacity:.7;}
+.ciex-forecast {fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;}
+.ciex-alert {stroke:#ef4444;stroke-width:1.5;stroke-dasharray:3 3;vector-effect:non-scaling-stroke;}
+.ciex-alert-label {fill:#ef4444;font-size:10px;text-anchor:end;}
+.tide-upcoming.tide-alert {color:#ef4444;font-weight:600;}
+.tide-item.is-alert {border-color:#ef4444;}
+.tide-item.is-alert .tide-kind {color:#ef4444;}
