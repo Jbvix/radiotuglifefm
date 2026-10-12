@@ -1,3 +1,20 @@
+# SPRINT 21 — Grade semanal recolhível — v3.3.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-12T17:30:00-03:00
+
+Implementação:
+- Na aba Rádio, a grade semanal (dias, "Hoje" e lista) foi para um painel recolhível **"Grade da semana · Ver programação"**, no mesmo estilo dos outros painéis. Fechado no celular, aberto no computador. Ao abrir, volta para o dia de hoje e rola até o programa no ar. Relógio e data continuam sempre visíveis.
+- Manual de bordo: item "Grade semanal" atualizado e novidade da v3.3.0. Novo campo `tourVersao` em `manual.js`: o tour só reaparece quando ele mudar (segue em 3.2.0), não a cada ajuste de texto. README regenerado.
+
+Verificação: grade fechada no celular e aberta no computador; ao abrir, lista preenchida com o programa no ar visível; sem erros de JavaScript. Rolagem extra da aba Rádio em 390×844 caiu de 1.093 px para 572 px; o botão "Ouça Agora" termina a 666 px (dentro da primeira tela). Regressões: schedule.test, tabs, tide, crew, saam, browser (8 rodadas seguidas), pwa, equalizer e manual passaram.
+
+Confirmação em campo: **push SAAM testado em celular real pelo Comandante — resultado satisfatório** (pendência da v3.0.0 encerrada).
+
+Bugs encontrados e corrigidos:
+- `browser-check.cjs` falhava de forma intermitente (1 em 5): checava `playCalls` logo após tocar no mini-player, mas o play passa pela preparação assíncrona do áudio. Agora espera a chamada (até 3 s).
+
+Limitações: a aba Rádio ainda rola cerca de 570 px para mostrar o card do relógio, a faixa atual, os links (Store, Deezer, Alexa), Instalar/Compartilhar e o rodapé — tudo abaixo do player.
+
 # SPRINT 20 — Manual de bordo (botão ?) e Tour guiado — v3.2.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-12T17:00:00-03:00

@@ -2,11 +2,15 @@
    TugLife FM — Manual de bordo (botão ?) e Tour guiado
    ------------------------------------------------------------
    Arquivo   : manual.js
-   Versão    : 3.2.0 (SPRINT 20)
-   Data/Hora : 2026-10-12T17:00:00-03:00
+   Versão    : 3.3.0 (SPRINT 21)
+   Data/Hora : 2026-10-12T17:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.3.0  [MOD] Item "Grade semanal" descreve o painel recolhível.
+           [NOVO] tourVersao separado de versao: o tour só volta a
+                  aparecer quando tourVersao mudar (funcionalidade nova
+                  que mereça o passeio), não a cada ajuste de texto.
    v3.2.0  [NOVO] Botão ? no cabeçalho abre o "Manual de bordo":
                   novidades da versão + funcionalidades por seção
                   (Rádio, Maré, Manobras, Portos, App) em sanfona,
@@ -34,8 +38,10 @@
 
 (function () {
   const MANUAL = {
-    versao: '3.2.0',
+    versao: '3.3.0',
+    tourVersao: '3.2.0',   // mude só quando o tour precisar ser revisto pela tripulação
     novidades: [
+      { versao: '3.3.0', texto: 'Grade da semana recolhida na aba Rádio: o essencial cabe numa tela só.' },
       { versao: '3.2.0', texto: 'Botão ? com este manual e tour guiado na primeira abertura.' },
       { versao: '3.1.0', texto: 'App em abas no celular, selo de alerta em Manobras e mapa só ao abrir Portos.' }
     ],
@@ -43,7 +49,7 @@
       { id: 'radio', label: 'Rádio', aba: 'radio', resumo: 'Ouvir a TugLife FM e acompanhar a programação.', itens: [
         ['Ouvir ao vivo', 'Toque no botão grande da aba Rádio. Nas outras abas, use a faixa ao vivo logo acima da barra de abas.'],
         ['No ar agora e próximo', 'Mostra o programa da grade neste momento, quanto falta para acabar e o que vem em seguida.'],
-        ['Grade semanal', 'Escolha o dia para ver a programação; "Hoje" volta para o dia atual. Funciona mesmo sem internet.'],
+        ['Grade semanal', 'Toque em "Grade da semana" para abrir. Escolha o dia; "Hoje" volta para o dia atual. Funciona mesmo sem internet.'],
         ['Faixa atual', 'Nome da música que está tocando, atualizado sozinho.'],
         ['Tripulação a bordo', 'Quantos ouvintes estão conectados agora e o pico do dia.']
       ]},
@@ -202,7 +208,7 @@
     }
     function fecharTour() {
       camada.hidden = true; document.body.classList.remove('tour-on');
-      store.set(KEY_TOUR, MANUAL.versao);
+      store.set(KEY_TOUR, MANUAL.tourVersao);
       if (window.TugTabs) window.TugTabs.abrir('radio');
     }
     bProx.addEventListener('click', () => { if (i < MANUAL.tour.length - 1) { i += 1; desenhar(); } else fecharTour(); });
@@ -214,7 +220,7 @@
 
     // 1ª abertura após atualizar: só no celular, sem atrapalhar quem
     // chegou pela notificação de manobra ou pelo link do manual.
-    const novo = store.get(KEY_TOUR) !== MANUAL.versao;
+    const novo = store.get(KEY_TOUR) !== MANUAL.tourVersao;
     if (novo && !location.hash && window.matchMedia('(max-width: 760px)').matches) setTimeout(iniciarTour, 1200);
   });
 })();

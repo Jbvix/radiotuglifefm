@@ -29,6 +29,8 @@ const assert = require('node:assert/strict');
  // v3.1.0: no celular o mini-player aparece fora da aba Rádio (layout em abas)
  await page.locator('.tabbar [data-aba="mare"]').click();
  await page.locator('#mini-play').click();
+ // v3.3.0: o play passa pela preparação assíncrona do áudio — espera em vez de checar na hora
+ await page.waitForFunction(()=>window.playCalls===1,null,{timeout:3000});
  assert.equal(await page.evaluate(()=>window.playCalls),1);
  assert.equal(await page.locator('#mini-status').textContent(),'Você está ouvindo');
  await page.evaluate(()=>document.getElementById('radio-stream').dispatchEvent(new Event('error')));

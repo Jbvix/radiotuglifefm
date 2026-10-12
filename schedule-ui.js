@@ -1,3 +1,14 @@
+/* ============================================================
+   TugLife FM — Grade semanal (interface)
+   Arquivo   : schedule-ui.js
+   Versão    : 3.3.0 (SPRINT 21) · 2026-10-12T17:30:00-03:00
+   Autor     : Jossian Brito
+   HISTÓRICO DE MODIFICAÇÕES
+   v3.3.0  [NOVO] Grade dentro de <details id="schedule-panel">:
+           fechada no celular (aba Rádio cabe sem rolar), aberta no
+           computador. Ao abrir, volta para o dia de hoje e rola até
+           o programa no ar — como abrir a carta já no ponto do navio.
+   ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const {days, schedule, timeZone, getState} = RadioSchedule;
   let selected = null;
@@ -45,5 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const focusCurrent = () => {const list = document.getElementById('schedule-list');const item = list.querySelector('.is-current');if(item) list.scrollTop = item.offsetTop - list.offsetTop;};
   requestAnimationFrame(focusCurrent);
   document.getElementById('schedule-today').addEventListener('click', focusCurrent);
+  // v3.3.0: painel recolhível — aberto só em telas largas
+  const panel = document.getElementById('schedule-panel');
+  if (panel) {
+    if (!window.matchMedia('(max-width: 760px)').matches) panel.open = true;
+    panel.addEventListener('toggle', () => { if (panel.open) { selected = null; render(true); requestAnimationFrame(focusCurrent); } });
+  }
   setInterval(render, 1000);
 });

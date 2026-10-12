@@ -348,3 +348,14 @@ dialog .manual-item p {margin:0; padding:0 12px 12px 30px; font-size:.85rem;}
 .tour-voltar:disabled {opacity:.4; cursor:default;}
 .tour-prox {border:0; background:#0369a1; color:#fff; font-weight:700;}
 @media (prefers-reduced-motion: reduce) {.tour-foco, .tour-caixa {transition:none;}}
+
+/* ============================================================
+   SPRINT 21 · v3.3.0 · 2026-10-12T17:30-03:00 · Jossian Brito
+   Grade semanal recolhível (mesmo estilo dos outros painéis)
+   ============================================================ */
+.schedule-panel {margin-top:14px; border-top:1px solid var(--glass-border); padding-top:6px;}
+.schedule-panel>summary {min-height:48px;}
+.schedule-panel[open]>summary {margin-bottom:8px;}
+@media(max-width:760px) {
+ body[data-aba="radio"] #card-prog .digital-clock-container {padding:6px 0;}
+}

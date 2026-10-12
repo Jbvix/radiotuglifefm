@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.2.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.3.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,12 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.2.0
-           Data: 2026-10-12T17:00:00-03:00
+           Versão: v3.3.0
+           Data: 2026-10-12T17:30:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.3.0 (SPRINT 21): grade semanal recolhível na aba Rádio
+             (fechada no celular, aberta no computador).
            - v3.2.0 (SPRINT 20): botão ? com o "Manual de bordo" e tour
              guiado de 6 passos na 1ª abertura (manual.js, fonte única
              também do README).
@@ -315,9 +317,13 @@
             <span style="font-size:0.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Horário de Brasília · America/Sao_Paulo</span>
             <div id="digital-clock">00:00:00</div>
         </div>
+        <!-- SPRINT 21 · v3.3.0: grade recolhível (fechada no celular, aberta no computador) -->
+        <details class="schedule-panel" id="schedule-panel">
+        <summary>Grade da semana <span>Ver programação</span></summary>
         <div class="schedule-toolbar"><h2 id="schedule-heading">Programação semanal</h2><button id="schedule-today">Hoje</button></div>
         <div id="schedule-days" class="schedule-days" role="group" aria-label="Dia da programação"></div>
         <ul class="schedule-list" id="schedule-list" aria-labelledby="schedule-heading"></ul>
+        </details>
     </section>
 
     <!-- SPRINT 15 · v2.7.0: Tábua de Maré (tides.js) -->
@@ -407,9 +413,9 @@
     </div>
 
     <footer data-tab="radio">
-        <strong>TugLife FM v3.2.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.3.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T17:00:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T17:30:00-03:00
     </footer>
 </div>
 <!-- SPRINT 20 · v3.2.0: Manual de bordo (manual.js preenche) -->
@@ -455,7 +461,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.2.0
+     * TugLife FM Engine v3.3.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

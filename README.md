@@ -9,7 +9,7 @@ App mobile da webrádio TugLife FM.
 - Repo: https://github.com/Jbvix/radiotuglifefm
 
 <!-- manual:inicio -->
-## Manual de bordo (v3.2.0)
+## Manual de bordo (v3.3.0)
 
 _Gerado de `manual.js` por `tools/manual/gerar-readme.mjs` — edite lá, não aqui._
 
@@ -17,6 +17,7 @@ No app: botão **?** no topo. No celular, a barra de abas embaixo leva a cada se
 
 **Novidades**
 
+- v3.3.0: Grade da semana recolhida na aba Rádio: o essencial cabe numa tela só.
 - v3.2.0: Botão ? com este manual e tour guiado na primeira abertura.
 - v3.1.0: App em abas no celular, selo de alerta em Manobras e mapa só ao abrir Portos.
 
@@ -26,7 +27,7 @@ Ouvir a TugLife FM e acompanhar a programação.
 
 - **Ouvir ao vivo** — Toque no botão grande da aba Rádio. Nas outras abas, use a faixa ao vivo logo acima da barra de abas.
 - **No ar agora e próximo** — Mostra o programa da grade neste momento, quanto falta para acabar e o que vem em seguida.
-- **Grade semanal** — Escolha o dia para ver a programação; "Hoje" volta para o dia atual. Funciona mesmo sem internet.
+- **Grade semanal** — Toque em "Grade da semana" para abrir. Escolha o dia; "Hoje" volta para o dia atual. Funciona mesmo sem internet.
 - **Faixa atual** — Nome da música que está tocando, atualizado sozinho.
 - **Tripulação a bordo** — Quantos ouvintes estão conectados agora e o pico do dia.
 
