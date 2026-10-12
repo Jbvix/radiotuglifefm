@@ -3,14 +3,15 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.3.0 (SPRINT 21) |
-| **Documento** | 1.0.0 · 2026-10-12T17:45:00-03:00 |
+| **Versão do app** | 3.4.0 (SPRINT 22) |
+| **Documento** | 1.1.0 · 2026-10-12T18:30:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
 | **Repositório** | https://github.com/Jbvix/radiotuglifefm |
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
+> - 1.1.0 (2026-10-12) — Nível medido ao vivo (SiMCosta/FURG): `tide-live.js`, fluxo §6.4, calibração do zero do radar, teste e ferramenta novos.
 > - 1.0.0 (2026-10-12) — Primeira edição: diretórios, módulos, backend, fluxos, deploy, testes e convenções, cobrindo até a v3.3.0.
 
 **Como ler.** O §2 é a carta náutica (onde está cada arquivo). Os §3–§7 são o plano de máquinas (como as peças se ligam). Os §8–§11 são a rotina de bordo (versão, deploy, testes, convenções). O manual de uso do tripulante fica no `README.md` (seção "Manual de bordo"), gerado a partir de `manual.js`.
@@ -29,7 +30,7 @@ A TugLife FM é uma webrádio 24/7 (stream BRLOGIC). O app começou como um play
 | **Programação SAAM · Suape** | Manobras SAAM com PIN, 3 alertas sonoros e notificação push | v3.0.0 |
 | **Painel do Marujo** | Mapa AIS (MarineTraffic) e clima (Windy) por porto | v2.x |
 
-E ainda: layout em abas no celular (v3.1.0), Manual de bordo e tour guiado (v3.2.0), grade recolhível (v3.3.0).
+E ainda: layout em abas no celular (v3.1.0), Manual de bordo e tour guiado (v3.2.0), grade recolhível (v3.3.0), nível do mar **medido** ao vivo em Rio Grande (v3.4.0).
 
 ### Princípios de projeto
 
@@ -58,6 +59,7 @@ radiotuglifefm/
 ├── listeners.js            "Tripulação a bordo": ouvintes ao vivo e pico do dia (Supabase)
 ├── tide-data.js            Constantes harmônicas calibradas dos 13 portos
 ├── tides.js                Card "Tábua de Maré": cálculo, curva 24 h, extremos, navegação
+├── tide-live.js            Nível MEDIDO ao vivo (marégrafo SiMCosta/FURG) e maré meteorológica
 ├── saam.js                 Card "Programação SAAM · Suape": PIN, lista, alertas, push
 ├── tabs.js                 Navegação por abas no celular + selo de alerta em Manobras
 ├── manual.js               Manual de bordo + tour guiado (fonte única dos textos)
@@ -79,7 +81,8 @@ radiotuglifefm/
 │   │   ├── README.md         Passo a passo da calibração anual
 │   │   ├── calib.mjs         Ajusta e valida cada porto (4 métodos × estações candidatas)
 │   │   ├── assemble.mjs      Escolhe a melhor combinação por porto → tides-data-v2.json
-│   │   └── runall.sh         Roda a calibração de todos os portos
+│   │   ├── runall.sh         Roda a calibração de todos os portos
+│   │   └── simcosta-offset.mjs Recalcula o zero do marégrafo SiMCosta → NR (usa a API)
 │   └── saam/               Coletor da programação SAAM (backend)
 │       ├── README.md         Papel de cada arquivo, agendamento, troca de PIN
 │       ├── index.ts          Edge Function "saam-suape-sync" (Supabase, Deno)
@@ -95,6 +98,7 @@ radiotuglifefm/
 ├── pwa-check.cjs           Teste de navegador: manifesto, QR, instalação, offline
 ├── equalizer-check.cjs     Teste de navegador: espectro, pausa, movimento reduzido, CORS
 ├── manual-check.cjs        Teste de navegador: manual, tour, #manual, desktop
+├── tide-live-check.cjs     Teste de navegador: nível medido (API simulada) em 6 cenários
 ├── schedule.test.cjs       Teste unitário da grade (node:test)
 ├── server.py               Servidor local (porta 8787) para desenvolvimento e testes
 │
@@ -133,6 +137,7 @@ flowchart LR
   SP["SharePoint<br/>planilha da praticagem"]
   EXT["MarineTraffic · Windy<br/>(mapas embutidos)"]
   CT["tuglifefmcontrol<br/>(frase do Charlie)"]
+  SIM["SiMCosta / FURG<br/>marégrafo São José do Norte"]
   NET["Netlify<br/>hospedagem estática"]
 
   NET -->|"git push main"| UI
@@ -145,6 +150,7 @@ flowchart LR
   EF -->|"Web Push (VAPID)"| SW
   M --> EXT
   M --> CT
+  M -->|"nível medido (5 min)"| SIM
 ```
 
 **Leitura do diagrama.** O app é só "casco": arquivos estáticos servidos pelo Netlify. Tudo o que é dinâmico vem de serviços externos. O único serviço com regra de negócio própria é o Supabase: um "marinheiro de vigia" (pg_cron) acorda a cada 2 minutos, lê a planilha da praticagem, compara com a leitura anterior e, se algo mudou, grava o evento e dispara o push.
@@ -160,10 +166,10 @@ flowchart LR
 | 5 | `pwa.js` | Instalar/compartilhar e registro do service worker |
 | 6 | `supabase-js@2` (CDN) | Cliente Realtime para o módulo de ouvintes |
 | 7 | `listeners.js` | Ouvintes (precisa de 6) |
-| 8–10 | `vendor/tide-engine.js` → `tide-data.js` → `tides.js` | Motor → constantes → card |
-| 11 | `saam.js` | Card SAAM; emite o evento `saam:alerta` |
-| 12 | `tabs.js` | Abas; ouve `saam:alerta`; expõe `window.TugTabs` |
-| 13 | `manual.js` | Manual e tour; usa `window.TugTabs` |
+| 8–11 | `vendor/tide-engine.js` → `tide-data.js` → `tides.js` → `tide-live.js` | Motor → constantes → card → nível medido (usa `window.TugTides`) |
+| 12 | `saam.js` | Card SAAM; emite o evento `saam:alerta` |
+| 13 | `tabs.js` | Abas; ouve `saam:alerta`; expõe `window.TugTabs` |
+| 14 | `manual.js` | Manual e tour; usa `window.TugTabs` |
 | — | script inline no fim do `index.html` | Tema, player (play/pausa, estado), faixa atual, frase do Charlie, mapa |
 
 ---
@@ -180,11 +186,12 @@ flowchart LR
 | `pwa.js` | Instalar app, diálogo de compartilhamento/QR, copiar link, aviso offline, registro do SW | `#install-app`, `#share-radio`, `#share-dialog`, `#network-status` | — | SPRINTS 09–10 |
 | `listeners.js` | Presença em tempo real ("N a bordo") e pico do dia; só observa os eventos do `<audio>` | `#crew-row`, `#crew-count`, `#crew-peak` | Supabase Realtime + RPC `registrar_pico`, `pico_hoje` | 2.6.0 |
 | `tide-data.js` | Constantes harmônicas por porto, método de calibração e erro típico | — (só dados) | — | 2.9.0 |
-| `tides.js` | Altura agora, tendência, extremos do dia, curva SVG 24 h, navegação por dia, porto lembrado | `#card-mare`, `#tide-port`, `#tide-chart`, `#tide-list` | `NeapsTide`, `TUGLIFE_TIDES` | 2.9.2 |
+| `tides.js` | Altura agora, tendência, extremos do dia, curva SVG 24 h, navegação por dia, porto lembrado | `#card-mare`, `#tide-port`, `#tide-chart`, `#tide-list` | `NeapsTide`, `TUGLIFE_TIDES` | 3.4.0 |
+| `tide-live.js` | Nível medido agora (mediana 10 min), tendência (reta de 30 min), maré meteorológica, série de 6 h no gráfico, busca incremental a cada 5 min, volta à previsão se o dado tiver > 30 min | `#tide-live`, `.tide-real` | API SiMCosta; `window.TugTides` | 3.4.0 |
 | `saam.js` | PIN, lista por dia, sincronização a cada 60 s, 3 sons sintetizados + vibração, faixa de alerta, push | `#card-saam`, `#saam-pin`, `#saam-list`, `#saam-events`, `#saam-banner` | RPC `saam_programacao`, `saam_push_registrar`; SW | 3.1.0 |
 | `tabs.js` | Barra de abas (≤ 760 px), aba lembrada, selo de alertas, `#card-saam` abre Manobras | `#tabbar`, `#tab-badge`, `body[data-aba]` | evento `saam:alerta` | 3.2.0 |
-| `manual.js` | Botão ?, Manual de bordo (seções, sanfona, "Abrir a aba"), tour de 6 passos, `#manual` | `#help-btn`, `#manual-dialog`, `.tour-camada` | `TugTabs` | 3.3.0 |
-| `sw.js` | Cache versionado só do app (nunca do stream nem de APIs); push SAAM com vibração por tipo; clique abre `#card-saam` | — | Web Push | 3.3.0 |
+| `manual.js` | Botão ?, Manual de bordo (seções, sanfona, "Abrir a aba"), tour de 6 passos, `#manual` | `#help-btn`, `#manual-dialog`, `.tour-camada` | `TugTabs` | 3.4.0 |
+| `sw.js` | Cache versionado só do app (nunca do stream nem de APIs); push SAAM com vibração por tipo; clique abre `#card-saam` | — | Web Push | 3.4.0 |
 
 ### Contratos entre módulos
 
@@ -196,6 +203,8 @@ flowchart LR
 | `window.TugTabs.abrir(aba)` | `tabs.js` | `manual.js` | Trocar de aba pelo manual/tour |
 | evento `saam:alerta` | `saam.js` | `tabs.js` | Acender o selo de Manobras |
 | mensagem SW `saam-push` | `sw.js` | `saam.js` | Tocar o som próprio com o app aberto |
+| `window.TugTides` (`render`, `porto`, `preditor`, `hoje`) | `tides.js` | `tide-live.js` | Redesenhar e comparar medido × previsto |
+| `window.TugTideLive` (`ativo`, `serie`, `aoDesenhar`) | `tide-live.js` | `tides.js` | Caixa "Ao vivo", linha verde, rótulo "Previsto agora" |
 | `data-tab="…"` em cada bloco | `index.html` | `refresh.css` | Qual bloco pertence a qual aba |
 
 ### Dados guardados no aparelho (`localStorage`)
@@ -303,6 +312,17 @@ A calibração (`tools/mare/`) ajusta esses números para casar com a Tábua DHN
 
 Cada app tocando entra num canal de presença do Supabase e o contador mostra quantos estão ali. Os apps enviam a contagem para `registrar_pico`, e o banco guarda por hora `pico_da_hora = MAX(pico_atual, enviado)` (teto de 1000, contra valores absurdos) — o maior valor da hora nunca diminui, como o ponteiro de arraste de um manômetro. `pico_hoje` devolve o maior pico do dia.
 
+
+### 6.4 Nível medido ao vivo (Rio Grande · SiMCosta/FURG)
+
+Em Rio Grande a maré astronômica é pequena e quem manda é o vento e a descarga da Lagoa dos Patos. Por isso o card mostra também o nível **real** do marégrafo radar de São José do Norte (SiMCosta id 332, na entrada do canal).
+
+- **Fonte:** API pública e documentada (https://simcosta.furg.br/q/docs/) — `GET /api/intrans_data?boiaID=332&type=json&time1=&time2=&params=avg_water_level_arbitrary_zero`. 1 leitura/min, CORS liberado, sem login. 1ª carga ~50 KB (6 h); depois só o que chegou (~1 KB a cada 5 min).
+- **Do zero do radar ao NR:** `nível_NR ≈ leitura − 12,374 m`. O offset é a média de (leitura − previsão) em 706 horas (12/09 a 12/10/2026); a média semanal oscilou ±7 cm, por isso o valor aparece como "estimado ±7 cm". Recalcular com `node tools/mare/simcosta-offset.mjs` quando a FURG amarrar o radar à rede do IBGE ou o sensor for reinstalado.
+- **Maré meteorológica:** `surge = nível_NR − previsão`. Em 30 dias variou de −34 a +29 cm (típico 12,5 cm), mais que a maré astronômica local. Destaque laranja a partir de ±15 cm.
+- **Validação (7 dias):** correlação medido × previsto de só 0,39 (0,54 no melhor ajuste de fase) — a previsão sozinha explica pouco em Rio Grande.
+- **Segurança da informação:** dado com mais de 30 min ou falha da API → a caixa avisa e o app volta só à previsão. Crédito obrigatório: "Dados cortesia do SiMCosta/FURG".
+
 ---
 
 ## 7. Interface
@@ -357,6 +377,7 @@ python3 server.py          # http://localhost:8787/
 | Navegador · PWA | `node pwa-check.cjs` | Manifesto, ícones, QR, copiar link, instalação, offline |
 | Navegador · espectro | `node equalizer-check.cjs` | Pausa/retomada, movimento reduzido, falha de CORS mantém o áudio |
 | Navegador · manual | `node manual-check.cjs` | Tour automático, manual por seção, "Abrir a aba", `#manual`, desktop |
+| Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha |
 | README em dia | `node tools/manual/gerar-readme.mjs --check` | Manual do README igual ao `manual.js` |
 | Coletor SAAM | `cd tools/saam && npm i xlsx fflate && node test.mjs` | Leitor da planilha e regras de alerta (planilha sintética) |
 
@@ -369,7 +390,7 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 | Pasta | Quando usar |
 |---|---|
 | `tools/manual/` | Sempre que mudar `manual.js` — regenera o README |
-| `tools/mare/` | Uma vez por ano, com a nova Tábua DHN (os PDFs da DHN não ficam no repositório) |
+| `tools/mare/` | Uma vez por ano, com a nova Tábua DHN (os PDFs da DHN não ficam no repositório); `simcosta-offset.mjs` quando o marégrafo SiMCosta mudar de referência |
 | `tools/saam/` | Ao alterar o coletor; o código publicado fica na Edge Function do Supabase |
 
 ---
@@ -396,6 +417,7 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 | Cliente Supabase | supabase-js@2 (CDN jsDelivr) | MIT |
 | Fontes | Inter, Orbitron (Google Fonts) | SIL OFL |
 | Mapas | MarineTraffic e Windy (embutidos) | Termos de cada serviço |
+| Nível do mar medido | SiMCosta — Sistema de Monitoramento da Costa Brasileira (FURG) | Uso com crédito: "cortesia do SiMCosta" |
 | Código próprio | Jossian Brito | CC BY-NC 4.0 |
 
 ---
@@ -406,4 +428,5 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 - **SAAM** depende do link público da planilha da praticagem; só Suape por enquanto.
 - **Push com tela apagada** usa o som padrão do celular; no iPhone exige o app instalado.
 - **Maré** é previsão astronômica: não considera vento, pressão ou vazão de rio. Informativa — não substitui a Tábua DHN na navegação.
+- **Nível medido** só em Rio Grande por enquanto; referência ao NR é estimada (±7 cm) até a FURG amarrar o radar à rede do IBGE; depende da estação estar no ar.
 - **Mapas e frase do Charlie** dependem de serviços externos; quando caem, o card mostra aviso e o resto segue.

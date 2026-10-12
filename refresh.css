@@ -359,3 +359,31 @@ dialog .manual-item p {margin:0; padding:0 12px 12px 30px; font-size:.85rem;}
 @media(max-width:760px) {
  body[data-aba="radio"] #card-prog .digital-clock-container {padding:6px 0;}
 }
+
+/* ============================================================
+   SPRINT 22 · v3.4.0 · 2026-10-12T18:30-03:00 · Jossian Brito
+   Nível medido ao vivo (tide-live.js) — Rio Grande / SiMCosta
+   Verde = medido (mesma cor da linha no gráfico); laranja = alerta
+   ============================================================ */
+.tide-live {margin:4px 0 10px; padding:10px 12px; border:1px solid #22c55e; border-radius:14px; background:rgba(34,197,94,.07); display:flex; flex-direction:column; gap:4px;}
+.tide-live[hidden] {display:none;}
+.tide-live p {margin:0;}
+.tide-live-head {font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:#22c55e; font-weight:700; display:flex; align-items:center; gap:6px;}
+.tide-live-dot {width:8px; height:8px; border-radius:50%; background:#22c55e; animation:tide-pulso 2s ease-in-out infinite;}
+@keyframes tide-pulso {50% {opacity:.35;}}
+.tide-live-valor {display:flex; align-items:baseline; gap:10px;}
+.tide-live-valor strong {font-size:1.6rem; font-variant-numeric:tabular-nums; color:var(--text-main);}
+.tide-live-valor sup {font-size:.7rem; color:var(--text-muted); margin-left:1px;}
+.tide-live-valor em {font-style:normal; font-size:.8rem; color:var(--text-muted);}
+.tide-live-surge {font-size:.85rem; font-weight:600;}
+.tide-live-surge[data-forte="sim"] {color:#f59e0b;}
+.tide-live-sub {font-size:.75rem; color:var(--text-muted);}
+.tide-live-cred {font-size:.68rem; color:var(--text-muted); line-height:1.45;}
+.tide-live.is-off {border-color:var(--glass-border); background:transparent;}
+.tide-live.is-off .tide-live-head {color:var(--text-muted);}
+.tide-real {fill:none; stroke:#22c55e; stroke-width:2.5; vector-effect:non-scaling-stroke;}
+body.light-theme .tide-live-head, body.light-theme .tide-real {color:#15803d; stroke:#15803d;}
+body.light-theme .tide-live {border-color:#15803d;}
+body.light-theme .tide-live-dot {background:#15803d;}
+body.light-theme .tide-live-surge[data-forte="sim"] {color:#b45309;}
+@media (prefers-reduced-motion: reduce) {.tide-live-dot {animation:none;}}

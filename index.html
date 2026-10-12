@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.3.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.4.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,13 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.3.0
-           Data: 2026-10-12T17:30:00-03:00
+           Versão: v3.4.0
+           Data: 2026-10-12T18:30:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.4.0 (SPRINT 22): Rio Grande com nível MEDIDO ao vivo
+             (marégrafo SiMCosta/FURG de São José do Norte) e maré
+             meteorológica (tide-live.js).
            - v3.3.0 (SPRINT 21): grade semanal recolhível na aba Rádio
              (fechada no celular, aberta no computador).
            - v3.2.0 (SPRINT 20): botão ? com o "Manual de bordo" e tour
@@ -228,6 +231,7 @@
     <script src="vendor/tide-engine.js" defer></script>
     <script src="tide-data.js" defer></script>
     <script src="tides.js" defer></script>
+    <script src="tide-live.js" defer></script>
     <script src="saam.js" defer></script>
     <script src="tabs.js" defer></script>
     <script src="manual.js" defer></script>
@@ -347,6 +351,8 @@
             <div class="tide-now-box"><span>Agora</span><strong id="tide-now">–</strong><em id="tide-trend"></em></div>
             <p class="tide-upcoming" id="tide-upcoming"></p>
         </div>
+        <!-- SPRINT 22 · v3.4.0: nível medido (tide-live.js · SiMCosta/FURG) -->
+        <div class="tide-live" id="tide-live" role="status" aria-live="polite" hidden></div>
         <svg class="tide-chart" id="tide-chart" role="img" aria-label="Curva da maré nas 24 horas do dia"></svg>
         <ul class="tide-list" id="tide-list"></ul>
         <p class="tide-note" id="tide-note"></p>
@@ -413,9 +419,9 @@
     </div>
 
     <footer data-tab="radio">
-        <strong>TugLife FM v3.3.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.4.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T17:30:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T18:30:00-03:00
     </footer>
 </div>
 <!-- SPRINT 20 · v3.2.0: Manual de bordo (manual.js preenche) -->
@@ -461,7 +467,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.3.0
+     * TugLife FM Engine v3.4.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

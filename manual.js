@@ -2,11 +2,12 @@
    TugLife FM — Manual de bordo (botão ?) e Tour guiado
    ------------------------------------------------------------
    Arquivo   : manual.js
-   Versão    : 3.3.0 (SPRINT 21)
-   Data/Hora : 2026-10-12T17:30:00-03:00
+   Versão    : 3.4.0 (SPRINT 22)
+   Data/Hora : 2026-10-12T18:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.4.0  [NOVO] Item "Nível medido (Rio Grande)" e novidade da v3.4.0.
    v3.3.0  [MOD] Item "Grade semanal" descreve o painel recolhível.
            [NOVO] tourVersao separado de versao: o tour só volta a
                   aparecer quando tourVersao mudar (funcionalidade nova
@@ -38,9 +39,10 @@
 
 (function () {
   const MANUAL = {
-    versao: '3.3.0',
+    versao: '3.4.0',
     tourVersao: '3.2.0',   // mude só quando o tour precisar ser revisto pela tripulação
     novidades: [
+      { versao: '3.4.0', texto: 'Rio Grande com nível do mar medido ao vivo (SiMCosta/FURG) e maré meteorológica.' },
       { versao: '3.3.0', texto: 'Grade da semana recolhida na aba Rádio: o essencial cabe numa tela só.' },
       { versao: '3.2.0', texto: 'Botão ? com este manual e tour guiado na primeira abertura.' },
       { versao: '3.1.0', texto: 'App em abas no celular, selo de alerta em Manobras e mapa só ao abrir Portos.' }
@@ -57,6 +59,7 @@
         ['Porto e dia', 'Escolha um dos 13 portos. As setas mudam o dia; "Hoje" volta para a data atual.'],
         ['Agora e tendência', 'Altura estimada neste instante e se a maré está enchendo ou vazando.'],
         ['Curva de 24 horas', 'A linha laranja marca o agora; os pontos marcam preamares e baixa-mares.'],
+        ['Nível medido (Rio Grande)', 'Faixa verde "Ao vivo": nível real do marégrafo de São José do Norte (SiMCosta/FURG), atualizado a cada 5 min, e a maré meteorológica — quanto o vento põe a água acima ou abaixo da previsão. Linha verde no gráfico = medido.'],
         ['Selo de calibração', 'Mostra o erro típico contra a Tábua DHN 2026. Informativo: não substitui a DHN na navegação.']
       ]},
       { id: 'manobras', label: 'Manobras', aba: 'manobras', resumo: 'Programação SAAM em Suape, exclusiva da tripulação.', itens: [

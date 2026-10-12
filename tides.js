@@ -2,8 +2,8 @@
    TugLife FM — Módulo "Tábua de Maré"
    ------------------------------------------------------------
    Arquivo   : tides.js
-   Versão    : 2.9.2 (SPRINT 17)
-   Data/Hora : 2026-10-12T14:35:00-03:00
+   Versão    : 3.4.0 (SPRINT 22)
+   Data/Hora : 2026-10-12T18:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
@@ -15,6 +15,11 @@
            típico medido contra a Tábua das Marés DHN 2026
            [MOD] Alturas sobre o Nível de Redução da DHN
    v2.9.0  [MOD] Amapá (Santana) calibrado com a Tábua DHN 2026
+   v3.4.0  [NOVO] Ganchos para o nível MEDIDO (tide-live.js):
+           window.TugTides expõe porto, preditor e render(); a
+           curva recebe a série medida (linha verde) e a escala
+           vertical passa a abranger também o medido. Com medição
+           ativa, a caixa "Agora" vira "Previsto agora".
    v2.9.2  [REM] Modo "nível real" CIEX-FURG de Rio Grande removido
            (cancelado por ora; código preservado no histórico git,
            commit 82af613). Rio Grande volta à maré astronômica.
@@ -162,6 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Altura agora + tendência (derivada numérica em ±10 min)
+    // v3.4.0: com nível medido ativo, este valor é rotulado como previsão
+    const live = window.TugTideLive;
+    const nowLabel = ui.now.parentElement.querySelector('span');
+    if (nowLabel) nowLabel.textContent = isToday && live && live.ativo(port.id) ? 'Previsto agora' : 'Agora';
     if (isToday) {
       const h = state.predictor.getWaterLevelAtTime({ time: now }).level;
       const h2 = state.predictor.getWaterLevelAtTime({ time: new Date(now.getTime() + 600000) }).level;
@@ -202,10 +211,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     drawChart(start, end, day, isToday ? now : null);
+    // v3.4.0: avisa o módulo de nível medido (troca de porto/dia)
+    if (live) live.aoDesenhar(port, state.predictor, isToday);
 
     const COMPLEX = ['santos', 'paranagua', 'itajai', 'sepetiba', 'rio-grande'];
     ui.note.textContent = port.id === 'rio-grande'
-      ? 'Em Rio Grande o nível é dominado por vento e vazão da Lagoa dos Patos; a maré astronômica é de poucos centímetros.'
+      ? 'Em Rio Grande o nível é dominado por vento e vazão da Lagoa dos Patos; a maré astronômica é de poucos centímetros. Confira o nível medido acima.'
       : COMPLEX.includes(port.id)
         ? 'Porto com marés de águas rasas: a tábua DHN pode listar preamares/baixa-mares duplas de poucos centímetros que aqui aparecem fundidas.'
         : !c
@@ -225,8 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const W = Math.max(280, Math.round(ui.chart.clientWidth || 600));
     const H = 150, pad = 16;
     const pts = state.predictor.getTimelinePrediction({ start, end, timeFidelity: 900 });
-    let min = Math.min(0, ...pts.map((p) => p.level));
-    let max = Math.max(...pts.map((p) => p.level));
+    // v3.4.0: série medida (tide-live.js), já no Nível de Redução; vazia se não houver
+    const real = window.TugTideLive ? window.TugTideLive.serie(state.port.id, start, end) : [];
+    const todos = pts.map((p) => p.level).concat(real.map((p) => p.level));
+    let min = Math.min(0, ...todos);
+    let max = Math.max(...todos);
     const span = Math.max(max - min, 0.3);   // evita "zoom" exagerado na micromaré
     min -= span * 0.1; max = min + span * 1.2;
 
@@ -245,6 +259,11 @@ document.addEventListener('DOMContentLoaded', () => {
     day.forEach((e) => {
       svg += `<circle class="tide-dot ${e.high ? 'is-high' : 'is-low'}" cx="${x(e.time)}" cy="${y(e.level)}" r="4"/>`;
     });
+    if (real.length > 1) {
+      // Linha verde contínua = nível medido (SiMCosta), sobre a curva prevista
+      const rl = real.map((p, i) => `${i ? 'L' : 'M'}${x(p.time).toFixed(1)},${y(p.level).toFixed(1)}`).join(' ');
+      svg += `<path class="tide-real" d="${rl}"/>`;
+    }
     if (now) {
       const nx = x(now);
       const ny = y(state.predictor.getWaterLevelAtTime({ time: now }).level);
@@ -286,6 +305,9 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(render, 200);
   });
+
+  // v3.4.0: interface para tide-live.js
+  window.TugTides = { render, porto: () => state.port, preditor: () => state.predictor, hoje: () => state.dayShift === 0 };
 
   // Atualiza "agora" a cada minuto (só quando o dia exibido é hoje)
   setInterval(() => { if (state.dayShift === 0) render(); }, 60000);

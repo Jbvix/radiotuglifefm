@@ -10,7 +10,7 @@ App mobile da webrádio TugLife FM.
 - **Documentação técnica:** [docs/PROJETO.md](docs/PROJETO.md) — diretórios, módulos, backend, fluxos, deploy e testes
 
 <!-- manual:inicio -->
-## Manual de bordo (v3.3.0)
+## Manual de bordo (v3.4.0)
 
 _Gerado de `manual.js` por `tools/manual/gerar-readme.mjs` — edite lá, não aqui._
 
@@ -18,6 +18,7 @@ No app: botão **?** no topo. No celular, a barra de abas embaixo leva a cada se
 
 **Novidades**
 
+- v3.4.0: Rio Grande com nível do mar medido ao vivo (SiMCosta/FURG) e maré meteorológica.
 - v3.3.0: Grade da semana recolhida na aba Rádio: o essencial cabe numa tela só.
 - v3.2.0: Botão ? com este manual e tour guiado na primeira abertura.
 - v3.1.0: App em abas no celular, selo de alerta em Manobras e mapa só ao abrir Portos.
@@ -39,6 +40,7 @@ Previsão de maré de 13 portos, calibrada com a DHN 2026.
 - **Porto e dia** — Escolha um dos 13 portos. As setas mudam o dia; "Hoje" volta para a data atual.
 - **Agora e tendência** — Altura estimada neste instante e se a maré está enchendo ou vazando.
 - **Curva de 24 horas** — A linha laranja marca o agora; os pontos marcam preamares e baixa-mares.
+- **Nível medido (Rio Grande)** — Faixa verde "Ao vivo": nível real do marégrafo de São José do Norte (SiMCosta/FURG), atualizado a cada 5 min, e a maré meteorológica — quanto o vento põe a água acima ou abaixo da previsão. Linha verde no gráfico = medido.
 - **Selo de calibração** — Mostra o erro típico contra a Tábua DHN 2026. Informativo: não substitui a DHN na navegação.
 
 ### Manobras

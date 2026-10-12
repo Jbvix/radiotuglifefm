@@ -1,3 +1,25 @@
+# SPRINT 22 — Rio Grande com nível do mar medido ao vivo — v3.4.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-12T18:30:00-03:00
+
+Validação da fonte:
+- SiMCosta/FURG tem API pública e documentada (`/q/docs/`, Swagger 1.0.0), não divulgada na área de download. Sem login, CORS liberado, 1 leitura/min.
+- Estação útil: marégrafo radar de **São José do Norte (id 332)**, ativo (dado com ~4 min). Rio Grande 2 (303) parado desde 16/09/2026; Rio Grande 1 e ENRG-2 desativados.
+- Medido × previsão do app em 7 dias: correlação 0,39 (0,54 com a melhor defasagem), amplitude real 44% da prevista. Em Rio Grande a maré astronômica explica pouco; o dado medido vale mais.
+
+Implementação:
+- `tide-live.js` (novo): faixa verde "Ao vivo · nível medido · São José do Norte" no card de Maré quando o porto é Rio Grande e o dia é hoje — nível agora (mediana de 10 min, no NR estimado ±7 cm), tendência (reta de mínimos quadrados de 30 min), **maré meteorológica** (medido − previsto; laranja a partir de ±15 cm), idade do dado e crédito SiMCosta/FURG. Linha verde com as últimas 6 h sobre a curva prevista; a caixa "Agora" passa a "Previsto agora".
+- Busca: 6 h na 1ª carga (~52 KB), depois incremental a cada 5 min (~1 KB), só com a página visível. Dado > 30 min ou falha → aviso e volta só à previsão.
+- Zero do radar → NR: offset 12,374 m pela média de 706 h (12/09–12/10/2026); semanas entre 12,30 e 12,44 m. Nova ferramenta `tools/mare/simcosta-offset.mjs` recalcula a partir da API.
+- `tides.js` 3.4.0: ganchos `window.TugTides` e chamada a `TugTideLive`; escala do gráfico inclui o medido. Manual de bordo com o item "Nível medido (Rio Grande)"; `docs/PROJETO.md` 1.1.0 (§6.4).
+
+Verificação: `tide-live-check.cjs` (novo) com a API simulada — nível exibido = previsão + 12 cm (erro ≤ 1 cm), texto "+12 cm acima da previsão", 1ª busca de 6 h e a 2ª incremental (575 s), some em outro dia e em outro porto, "Sem dado novo" com 45 min de atraso, aviso na falha da API com a previsão intacta; sem erros de JavaScript. API real conferida do PC: 6 h = 51.735 bytes, 10 min = 725 bytes, janela vazia = `[]`, CORS `*`. Ferramenta de offset testada com API simulada (recupera 12,374 m). Regressões: schedule, tabs, tide, crew, saam, grade, browser, pwa, equalizer e manual passaram.
+
+Bugs encontrados e corrigidos:
+- A ferramenta de calibração reaproveita `tide-live.js` no Node, que não tem `document`; o módulo agora sai antes de registrar eventos de página.
+
+Limitações: só Rio Grande nesta etapa (Etapa 2: Pecém, Paranaguá, Rio de Janeiro, Itaqui, Suape). Nível absoluto estimado (±7 cm) até a amarração oficial do radar.
+
 # Documentação do projeto — docs/PROJETO.md 1.0.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-12T17:45:00-03:00
