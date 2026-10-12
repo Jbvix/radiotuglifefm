@@ -2,11 +2,16 @@
    TugLife FM — Módulo "Nível Real de Rio Grande" (CIEX-FURG)
    ------------------------------------------------------------
    Arquivo   : ciex.js
-   Versão    : 2.9.0 (SPRINT 17)
+   Versão    : 2.9.1 (SPRINT 17)
    Data/Hora : 2026-10-12T15:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v2.9.1  [MOD] O Cloudflare do CIEX desafia (403) pedidos vindos
+           do proxy Netlify. Recuo exponencial: após falha, nova
+           tentativa em 30 min, 1 h, 2 h… até 6 h — sem martelar o
+           servidor deles. Acesso definitivo depende de liberação
+           (CORS ou allowlist) pelo CIEX-FURG.
    v2.9.0  [NOVO] Lê o nível medido (a cada 30 min) e a previsão
            hidrodinâmica (horária, ~72 h) da estação FURG_CCMAR do
            sistema de Monitoramento Hidrodinâmico CIEX-FURG
@@ -46,6 +51,8 @@
   const ALERT_CM = 80;
 
   let cache = null;      // último conjunto válido
+  let failures = 0;      // falhas seguidas → recuo exponencial
+  let nextTry = 0;
   let loading = null;    // promessa em andamento (evita pedidos duplicados)
   const listeners = [];
 
@@ -61,8 +68,11 @@
     return r.json();
   }
 
+  /* Recuo exponencial: espera = min(30 min · 2^(falhas−1), 6 h)
+       1ª falha → 30 min · 2ª → 1 h · 3ª → 2 h · 4ª → 4 h · depois 6 h */
   async function load() {
     if (loading) return loading;
+    if (Date.now() < nextTry) return cache;
     loading = (async () => {
       try {
         const [obsRaw, prvRaw, cor] = await Promise.all([
@@ -88,8 +98,11 @@
           alertCm: ALERT_CM,
           fetchedAt: Date.now()
         };
+        failures = 0;
         listeners.forEach((fn) => fn(cache));
       } catch (e) {
+        failures++;
+        nextTry = Date.now() + Math.min(30 * 60000 * 2 ** (failures - 1), 6 * 3600000);
         // Sem rede ou proxy indisponível: o card segue com a maré astronômica.
         console.warn('[TugLife] CIEX indisponível:', e.message);
       } finally {

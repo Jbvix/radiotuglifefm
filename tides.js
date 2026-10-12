@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const COMPLEX = ['santos', 'paranagua', 'itajai', 'sepetiba', 'rio-grande'];
     ui.note.textContent = port.id === 'rio-grande'
       ? 'Em Rio Grande o nível é dominado por vento e vazão da Lagoa dos Patos; a maré astronômica é de poucos centímetros. '
-        + (ciex ? 'A previsão CIEX-FURG não cobre este dia.' : 'Nível real do CIEX-FURG indisponível agora (sem conexão).')
+        + (ciex ? 'A previsão CIEX-FURG não cobre este dia.' : 'Nível real do CIEX-FURG indisponível no momento; exibindo a maré astronômica.')
       : COMPLEX.includes(port.id)
         ? 'Porto com marés de águas rasas: a tábua DHN pode listar preamares/baixa-mares duplas de poucos centímetros que aqui aparecem fundidas.'
         : !c
