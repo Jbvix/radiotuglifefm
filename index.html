@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.1.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.2.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,13 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.1.0
-           Data: 2026-10-12T19:30:00-03:00
+           Versão: v3.2.0
+           Data: 2026-10-12T17:00:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.2.0 (SPRINT 20): botão ? com o "Manual de bordo" e tour
+             guiado de 6 passos na 1ª abertura (manual.js, fonte única
+             também do README).
            - v3.1.0 (SPRINT 19): layout B "tela única com abas" no
              celular (Rádio | Maré | Manobras | Portos, tabs.js) com selo
              de alerta SAAM; âncora/hélice flutuante (PixiJS) e painel
@@ -225,6 +228,7 @@
     <script src="tides.js" defer></script>
     <script src="saam.js" defer></script>
     <script src="tabs.js" defer></script>
+    <script src="manual.js" defer></script>
 </head>
 <body>
 
@@ -238,6 +242,7 @@
 
 <div class="app-shell">
     <header class="app-header">
+        <button class="help-btn" id="help-btn" type="button" aria-label="Manual do app" aria-haspopup="dialog">?</button>
         <button class="theme-toggle-btn" id="theme-toggle" aria-label="Alternar tema claro e escuro">🌙</button>
         <div class="brand-lockup"><img src="assets/icon-192.png" alt="" width="52" height="52"><div class="brand-title">TUGLIFE FM</div></div>
         <div class="brand-tagline">O Som do Mar • 24/7/365</div>
@@ -402,11 +407,26 @@
     </div>
 
     <footer data-tab="radio">
-        <strong>TugLife FM v3.1.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.2.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T19:30:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T17:00:00-03:00
     </footer>
 </div>
+<!-- SPRINT 20 · v3.2.0: Manual de bordo (manual.js preenche) -->
+<dialog id="manual-dialog" class="manual-dialog" aria-labelledby="manual-titulo">
+    <div class="manual-topo">
+        <div><span class="eyebrow">Manual de bordo</span><h2 id="manual-titulo">O que este app faz</h2></div>
+        <button class="dialog-close" data-close-dialog aria-label="Fechar manual">×</button>
+    </div>
+    <div class="manual-novidades" id="manual-novidades"></div>
+    <nav class="manual-chips" id="manual-chips" aria-label="Seções do manual"></nav>
+    <p class="manual-resumo" id="manual-resumo"></p>
+    <div class="manual-lista" id="manual-lista"></div>
+    <div class="manual-rodape">
+        <button type="button" id="manual-ir" class="manual-ir">Abrir a aba</button>
+        <button type="button" id="manual-tour" class="manual-tour">Rever o tour</button>
+    </div>
+</dialog>
 <dialog id="share-dialog" aria-labelledby="share-title">
     <button class="dialog-close" data-close-dialog aria-label="Fechar compartilhamento">×</button>
     <h2 id="share-title">Leve o som do mar com você</h2>
@@ -435,7 +455,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.1.0
+     * TugLife FM Engine v3.2.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

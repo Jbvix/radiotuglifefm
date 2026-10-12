@@ -1,3 +1,20 @@
+# SPRINT 20 — Manual de bordo (botão ?) e Tour guiado — v3.2.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-12T17:00:00-03:00
+
+Implementação:
+- Botão **?** no cabeçalho (todas as abas, celular e computador) abre o **Manual de bordo**: faixa de novidades da versão, chips Rádio · Maré · Manobras · Portos · App, funcionalidades em sanfona (22 itens) e atalho "Abrir a aba …" (em App, "Instalar na tela inicial"). No celular é uma folha em tela cheia; abre já na seção da aba em que o usuário está.
+- **Tour guiado** de 6 passos (Rádio → Ouvir ao vivo → Maré → Manobras → Portos → botão ?) com destaque recortado sobre o elemento real; a caixa de texto vai para o lado com mais espaço. Aparece sozinho na 1ª abertura após cada nova versão do manual, só no celular e nunca quando o app é aberto pela notificação de manobra ou pelo link `#manual`. "Pular", "Voltar" e "Rever o tour" (no manual). No computador o tour destaca os cards.
+- **Fonte única:** `manual.js` guarda textos do manual, novidades e passos do tour. `tools/manual/gerar-readme.mjs` gera a seção "Manual de bordo" do `README.md` (`--check` confere se está em dia).
+- `tabs.js` expõe `window.TugTabs.abrir()`; link direto `#manual`; manual disponível offline (service worker).
+
+Verificação: `manual-check.cjs` (novo, no repositório) em 390×844 e 1280×900 — tour automático com 6 passos e caixa sempre dentro da tela, só uma vez por versão, manual na seção da aba atual, chips, sanfona, "Abrir a aba Manobras", "Rever o tour", `#manual`, tema claro, computador sem tour automático; sem erros de JavaScript. Regressões: schedule.test, tabs, tide, crew, saam, browser, pwa e equalizer passaram. README conferido com `--check`.
+
+Bugs encontrados e corrigidos:
+- Os testes de celular que tocam na tela depois de 1,2 s esbarravam no tour automático (sobreposição intercepta o toque). Os testes agora marcam o tour como visto antes de abrir a página; os de maré e SAAM só passavam por chegarem antes do tour.
+
+Limitações: os textos do manual são estáticos (editar `manual.js` e rodar o gerador). Sem busca no manual — com ~20 itens, os chips bastam.
+
 # SPRINT 19 — Layout B: tela única com abas — v3.1.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-12T19:30:00-03:00

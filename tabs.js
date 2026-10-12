@@ -2,11 +2,13 @@
    TugLife FM — Navegação por abas (layout B · "tela única")
    ------------------------------------------------------------
    Arquivo   : tabs.js
-   Versão    : 3.1.0 (SPRINT 19)
-   Data/Hora : 2026-10-12T19:30:00-03:00
+   Versão    : 3.2.0 (SPRINT 20)
+   Data/Hora : 2026-10-12T17:00:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.2.0  [NOVO] window.TugTabs.abrir(aba) para o Manual de bordo
+                  ("Abrir a aba …") e o tour guiado (manual.js).
    v3.1.0  [NOVO] Barra inferior Rádio | Maré | Manobras | Portos.
            [NOVO] Selo laranja na aba Manobras a cada alerta SAAM
                   recebido enquanto o usuário está em outra aba.
@@ -92,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   }
   window.addEventListener('hashchange', pelaHash);
+  window.TugTabs = { abrir };   // v3.2.0: usado por manual.js
 
   if (!pelaHash()) abrir(store.get() || 'radio', { salvar: false });
 });
