@@ -7,6 +7,7 @@ App mobile da webrádio TugLife FM.
 - Site: https://radiotuglifefm.netlify.app/
 - Stream: BRLogic Icecast
 - Repo: https://github.com/Jbvix/radiotuglifefm
+- **Documentação técnica:** [docs/PROJETO.md](docs/PROJETO.md) — diretórios, módulos, backend, fluxos, deploy e testes
 
 <!-- manual:inicio -->
 ## Manual de bordo (v3.3.0)

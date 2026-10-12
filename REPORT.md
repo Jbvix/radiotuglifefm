@@ -1,3 +1,10 @@
+# Documentação do projeto — docs/PROJETO.md 1.0.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-12T17:45:00-03:00
+
+- Novo `docs/PROJETO.md`: visão geral e princípios, árvore de diretórios com a função de cada arquivo, diagrama de arquitetura, ordem de carregamento dos scripts, tabela de módulos e contratos entre eles, dados no aparelho, backend Supabase (tabelas, funções, coletor SAAM e regras de alerta), fluxos (alerta SAAM, maré com a fórmula harmônica, ouvintes), interface, checklist de versão e deploy, testes, ferramentas, convenções, licenças de terceiros e limitações. Link no `README.md`.
+- Conferido contra o código: conversão do serial do Excel (exemplo 46307,75 → 18:00 de Brasília), amplitude M2 de Suape (0,74 m), chaves de armazenamento, registro do service worker e regra do pico de ouvintes.
+
 # SPRINT 21 — Grade semanal recolhível — v3.3.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-12T17:30:00-03:00
