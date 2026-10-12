@@ -1,15 +1,14 @@
-# SPRINT 17 — Santana calibrado (CIEX-FURG cancelado) — v2.9.2
+# SPRINT 18 — Programação SAAM · Suape com alertas — v3.0.0
 Autor: Jossian Brito  
-Data/hora: 2026-10-12T15:30:00-03:00
+Data/hora: 2026-10-12T16:00:00-03:00
 
 Implementação:
-- Novo `ciex.js`: lê os JSON públicos do Monitoramento Hidrodinâmico CIEX-FURG (estação FURG_CCMAR) — nível medido a cada 30 min, previsão hidrodinâmica horária (~72 h, vento + vazão + maré) e erro médio da previsão corrigida. Acesso pelo proxy `/ciex/*` do novo `netlify.toml` (origem sem CORS). Atualiza a cada 15 min.
-- Card de maré, porto Rio Grande: modo "nível real" em cm na régua CCMar-FURG — agora (medido ou previsto), tendência da última hora, alerta quando o modelo prevê ≥ 80 cm (cota de alerta usada pelo CIEX/Defesa Civil), picos e vales do dia (proeminência ≥ 3 cm), gráfico com medido (linha), previsão (tracejada), faixa ±erro e cota. Dias fora da cobertura, ou sem rede, voltam à maré astronômica calibrada.
-- Amapá (Porto de Santana) calibrado com a Tábua DHN 2026: ±14 min / ±13 cm (validação nov/2026). 13/13 portos calibrados.
+- Coletor `saam-suape-sync` (Supabase Edge Function, a cada 2 min via pg_cron): baixa a planilha de manobras da praticagem pelo link público do SharePoint (seguindo o redirecionamento com cookie FedAuth), lê só as abas visíveis, filtra Suape, casa cada manobra com a leitura anterior por IMO + tipo + horário mais próximo (≤ 48 h) e gera os alertas CONFIRMADA, CANCELADA (situação, troca de empresa ou retirada da planilha em 2 leituras seguidas) e ANTECIPADA (≥ 15 min). Adiamentos não alertam. Primeira leitura = linha de base, sem alertas.
+- Banco: tabelas fechadas à API pública; acesso só por funções com PIN (hash bcrypt) e trava de 20 tentativas erradas em 10 min.
+- App: card "Programação SAAM · Suape" com PIN da tripulação, manobras agrupadas por dia (horário, navio, tipo, situação, berço, calado, rebocadores, observação), alertas recentes, 3 sons sintetizados distintos + vibração + faixa colorida, e inscrição em Web Push (notificação com vibração por tipo e o som padrão do celular quando a tela está apagada).
 
-Verificação: Playwright com dados reais do CIEX de 12/10/2026 (fixture) e relógio fixo: modo online (76 cm medido, alerta, 6 extremos, gráfico), +2 dias, +3 dias (fallback), modo offline (fallback astronômico), sem overflow a 360 px, sem erros; regressões tide-check e crew-check passaram. Proxy Netlify verificado após deploy.
+Verificação: testes unitários do leitor e das regras (planilha sintética, 6 cenários); leitura real da planilha na nuvem (121 manobras em Suape, 74 SAAM, 0,9 s de download, 25 ms de leitura); linha de base gravada pelo cron; teste no navegador com dados reais (PIN errado/certo, renderização, teste de som, alerta novo no ciclo de 60 s, PIN lembrado, 360 px sem overflow); regressões de maré e ouvintes passaram.
 
-Observação: referencial da régua CCMar ≠ Nível de Redução DHN; por isso cm e rótulo próprio, sem misturar com a maré astronômica.
+Bug encontrado e corrigido no teste: sem nenhum alerta no histórico, o primeiro alerta real não tocaria (o código usava "último id > 0" como sinal de carga inicial).
 
-## Atualização v2.9.2 — 2026-10-12T14:35:00-03:00
-Integração CIEX-FURG cancelada por decisão do usuário: o Cloudflare do CIEX desafia (403) os pedidos do proxy Netlify, e o acesso dependeria de liberação pelo CIEX. Removidos `ciex.js`, `netlify.toml`, o modo "nível real" do card e os estilos correspondentes. Rio Grande volta à maré astronômica calibrada com a DHN. O código completo fica preservado no commit 82af613 para reativação futura. Santana permanece calibrado (13/13 portos).
+Limitações: notificação com tela apagada usa o som padrão do celular (web não permite som próprio por tipo); no iPhone só funciona com o app instalado na tela de início.

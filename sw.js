@@ -1,6 +1,6 @@
 // Only the app shell is cached. Never cache the live stream or third-party APIs.
-const CACHE = 'tuglife-shell-v2.9.2';
-const FILES = ['./','./index.html','./refresh.css','./schedule.js','./schedule-ui.js','./experience.js','./equalizer.js','./pwa.js','./listeners.js','./tides.js','./tide-data.js','./vendor/tide-engine.js','./manifest.webmanifest','./assets/icon-192.png','./assets/icon-512.png','./assets/apple-touch-icon.png','./assets/brand.png','./assets/share-qr.png'];
+const CACHE = 'tuglife-shell-v3.0.0';
+const FILES = ['./','./index.html','./refresh.css','./schedule.js','./schedule-ui.js','./experience.js','./equalizer.js','./pwa.js','./listeners.js','./tides.js','./saam.js','./tide-data.js','./vendor/tide-engine.js','./manifest.webmanifest','./assets/icon-192.png','./assets/icon-512.png','./assets/apple-touch-icon.png','./assets/brand.png','./assets/share-qr.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))));
 self.addEventListener('activate', event => event.waitUntil((async () => {
   const keys = await caches.keys();
@@ -20,5 +20,38 @@ self.addEventListener('fetch', event => {
     if (stored) return stored;
     try {return await fetch(event.request);}
     catch {if (event.request.mode === 'navigate') return cache.match('./index.html');throw new Error('Offline');}
+  })());
+});
+
+// SPRINT 18 · v3.0.0 · Jossian Brito — Alertas SAAM (Web Push)
+// Vibração diferente por tipo; o som próprio toca no app aberto (saam.js),
+// avisado por postMessage. Com a tela apagada vale o som padrão do celular.
+const SAAM_VIBRA = {
+  CONFIRMADA: [200, 100, 200],
+  CANCELADA: [600, 200, 600],
+  ANTECIPADA: [150, 80, 150, 80, 150, 300, 150, 80, 150, 80, 150]
+};
+self.addEventListener('push', event => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch { d = { titulo: 'TugLife FM', corpo: event.data && event.data.text() }; }
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    wins.forEach(c => c.postMessage({ type: 'saam-push', ...d }));
+    await self.registration.showNotification(d.titulo || 'Programação SAAM', {
+      body: d.corpo || '', tag: 'saam-' + (d.id || Date.now()), renotify: true,
+      requireInteraction: d.tipo !== 'CONFIRMADA',
+      vibrate: SAAM_VIBRA[d.tipo] || [200],
+      icon: './assets/icon-192.png', badge: './assets/icon-192.png',
+      data: { url: d.url || './#card-saam' }
+    });
+  })());
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = new URL(event.notification.data && event.notification.data.url || './#card-saam', self.registration.scope).href;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of wins) { if ('focus' in c) { await c.focus(); if ('navigate' in c) c.navigate(url); return; } }
+    if (self.clients.openWindow) await self.clients.openWindow(url);
   })());
 });

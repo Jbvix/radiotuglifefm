@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v2.9.2 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.0.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,12 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v2.9.2
-           Data: 2026-10-12T14:35:00-03:00
+           Versão: v3.0.0
+           Data: 2026-10-12T16:00:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.0.0 (SPRINT 18): Programação SAAM · Suape com PIN,
+             3 alertas sonoros e push (saam.js + Supabase).
            - v2.9.2 (SPRINT 17): Santana calibrado com a DHN; integração
              CIEX-FURG removida por ora.
            - v2.8.0 (SPRINT 16): marés calibradas com a Tábua DHN 2026.
@@ -222,6 +224,7 @@
     <script src="vendor/tide-engine.js" defer></script>
     <script src="tide-data.js" defer></script>
     <script src="tides.js" defer></script>
+    <script src="saam.js" defer></script>
 </head>
 <body>
 
@@ -364,6 +367,42 @@
         <p class="tide-disclaimer">Previsão astronômica informativa, calibrada com a Tábua das Marés DHN 2026; alturas sobre o nível de redução. <strong>Não substitui a Tábua de Marés da DHN para navegação.</strong> Base: TICON-4 (CC BY 4.0) via Neaps.</p>
     </section>
 
+    <!-- SPRINT 18 · v3.0.0: Programação SAAM · Suape (saam.js) -->
+    <section class="card" id="card-saam" hidden aria-labelledby="saam-heading">
+        <div class="saam-head">
+            <div>
+                <div class="eyebrow" id="saam-heading">Programação SAAM · Suape</div>
+                <div class="saam-sub">Apoio ao Comandante do rebocador</div>
+            </div>
+        </div>
+        <div id="saam-lock">
+            <p class="saam-sub">Área da tripulação SAAM. Digite o PIN para ver as manobras e receber alertas.</p>
+            <form id="saam-form" class="saam-form" autocomplete="off">
+                <input id="saam-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="PIN" aria-label="PIN da tripulação">
+                <button type="submit">Entrar</button>
+            </form>
+            <p id="saam-msg" class="saam-msg" role="status"></p>
+        </div>
+        <div id="saam-main" hidden>
+            <p id="saam-banner" class="saam-banner" role="alert" hidden></p>
+            <p id="saam-sync" class="saam-sync" role="status"></p>
+            <div class="saam-controls">
+                <button id="saam-alert-btn" type="button">🔕 Ativar alertas</button>
+                <div id="saam-tests" class="saam-tests" role="group" aria-label="Testar sons">
+                    <span>Testar:</span>
+                    <button type="button" data-teste="CONFIRMADA">✅</button>
+                    <button type="button" data-teste="CANCELADA">❌</button>
+                    <button type="button" data-teste="ANTECIPADA">⏩</button>
+                </div>
+            </div>
+            <p id="saam-alert-info" class="saam-sub"></p>
+            <div id="saam-list" class="saam-list"></div>
+            <h3 class="saam-dia">Alertas recentes</h3>
+            <ul id="saam-events" class="saam-events"></ul>
+            <p class="tide-disclaimer">Fonte: planilha de manobras da praticagem, lida a cada 2 min. Apoio informativo — confirme sempre com a central e o prático. <button id="saam-sair" type="button" class="saam-link">Bloquear neste aparelho</button></p>
+        </div>
+    </section>
+
     <!-- Monitoramento AIS -->
     <section class="card" id="card-mapa"><details id="mariner-panel"><summary>Painel do Marujo <span>Portos e clima</span></summary><p class="service-note">Mapas fornecidos por serviços externos. Se estiverem indisponíveis, tente novamente mais tarde.</p>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -388,9 +427,9 @@
     </div>
 
     <footer>
-        <strong>TugLife FM v2.9.2</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.0.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T14:35:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T16:00:00-03:00
     </footer>
 </div>
 <dialog id="share-dialog" aria-labelledby="share-title">
@@ -414,7 +453,7 @@
 <aside class="mini-player" aria-label="Player compacto"><span class="mini-symbol" aria-hidden="true">✦</span><div><small>TUGLIFE FM · AO VIVO</small><strong id="mini-title">O som do mar</strong><span id="mini-status">Pronto para ouvir</span></div><button id="mini-play" aria-label="Ouvir rádio">▶</button></aside>
 <script>
     /**
-     * TugLife FM Engine v2.9.2
+     * TugLife FM Engine v3.0.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

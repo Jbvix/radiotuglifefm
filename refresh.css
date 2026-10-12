@@ -189,3 +189,49 @@ body.light-theme .nautical-cover {--amber:#f1bd70;}
 .tide-note {font-size:.78rem;color:#f59e0b;margin:10px 0 0;}
 .tide-note:empty {display:none;}
 .tide-disclaimer {font-size:.7rem;color:var(--text-muted);line-height:1.5;margin:10px 0 0;}
+
+/* SPRINT 18 · v3.0.0 · Jossian Brito · Programação SAAM · Suape */
+#card-saam {grid-column:1/-1;}
+#card-saam[hidden], #saam-main[hidden], #saam-lock[hidden], .saam-banner[hidden] {display:none;}
+.saam-sub {font-size:.8rem;color:var(--text-muted);margin:6px 0 0;line-height:1.5;}
+.saam-form {display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.saam-form input {flex:1;min-width:120px;min-height:44px;padding:8px 14px;border-radius:12px;border:1px solid var(--accent);background:var(--bg-deep);color:var(--text-main);font:inherit;font-size:1.1rem;letter-spacing:.3em;}
+.saam-form button, .saam-controls button {min-height:44px;padding:8px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#082f49;font:inherit;font-weight:700;cursor:pointer;}
+.saam-msg {font-size:.8rem;color:#f59e0b;min-height:1.2em;}
+.saam-sync {font-size:.8rem;margin:10px 0;}
+.saam-controls {display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+#saam-alert-btn {background:var(--bg-deep);color:var(--text-main);}
+#saam-alert-btn.is-on {background:#16a34a;border-color:#16a34a;color:#fff;}
+.saam-tests {display:flex;gap:6px;align-items:center;font-size:.75rem;color:var(--text-muted);}
+.saam-tests button {min-width:44px;padding:6px 10px;background:var(--bg-deep);color:var(--text-main);border-color:var(--glass-border);}
+.saam-banner {margin:0 0 10px;padding:12px 14px;border-radius:14px;font-weight:700;font-size:.9rem;animation:saam-pulse 1s ease 3;}
+.saam-banner.is-confirmada {background:#14532d;color:#dcfce7;}
+.saam-banner.is-cancelada {background:#7f1d1d;color:#fee2e2;}
+.saam-banner.is-antecipada {background:#78350f;color:#fef3c7;}
+@keyframes saam-pulse {50% {transform:scale(1.02);}}
+@media (prefers-reduced-motion: reduce) {.saam-banner {animation:none;}}
+.saam-list {margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+.saam-dia {font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:12px 0 2px;}
+.saam-item {display:flex;gap:12px;padding:12px;border:1px solid var(--glass-border);border-left:4px solid var(--text-muted);border-radius:14px;}
+.saam-item.sit-confirmada {border-left-color:#22c55e;}
+.saam-item.sit-prevista {border-left-color:var(--accent);}
+.saam-item.sit-em-andamento {border-left-color:#f59e0b;}
+.saam-item.sit-realizada, .saam-item.sit-cancelada {opacity:.55;}
+.saam-item.sit-cancelada {border-left-color:#ef4444;}
+.saam-hora {font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums;min-width:58px;}
+.saam-corpo {min-width:0;flex:1;}
+.saam-navio {font-weight:700;overflow-wrap:anywhere;}
+.saam-linha {display:flex;flex-wrap:wrap;gap:6px 10px;font-size:.75rem;color:var(--text-muted);margin-top:4px;align-items:center;}
+.saam-mnb, .saam-sit {padding:2px 8px;border-radius:999px;border:1px solid var(--glass-border);}
+.saam-mnb.mnb-EA {border-color:#22c55e;color:#22c55e;}
+.saam-mnb.mnb-DS {border-color:#f59e0b;color:#f59e0b;}
+.saam-mnb.mnb-DA {border-color:#a78bfa;color:#a78bfa;}
+.sit-confirmada .saam-sit {border-color:#22c55e;color:#22c55e;}
+.saam-rbq {color:var(--text-main);}
+.saam-obs {font-size:.75rem;color:#f59e0b;margin-top:4px;}
+.saam-events {list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+.saam-ev {display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:10px;border:1px solid var(--glass-border);font-size:.8rem;}
+.saam-ev small {color:var(--text-muted);}
+.saam-ev.is-confirmada {border-color:#22c55e;} .saam-ev.is-cancelada {border-color:#ef4444;} .saam-ev.is-antecipada {border-color:#f59e0b;}
+.saam-vazio {font-size:.8rem;color:var(--text-muted);}
+.saam-link {background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;padding:0;}
