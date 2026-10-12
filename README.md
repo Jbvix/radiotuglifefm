@@ -8,6 +8,19 @@ App mobile da webrádio TugLife FM.
 - Stream: BRLogic Icecast
 - Repo: https://github.com/Jbvix/radiotuglifefm
 
+## Como usar (celular) — v3.1.0
+
+Barra de abas embaixo:
+
+| Aba | O que tem |
+|-----|-----------|
+| **Rádio** | Player, faixa atual, programa no ar e grade semanal |
+| **Maré** | Tábua de maré de 13 portos (calibrada com a DHN 2026) |
+| **Manobras** | Programação SAAM · Suape (PIN da tripulação). Selo laranja = alerta novo |
+| **Portos** | Painel do Marujo: mapa marítimo e clima por porto |
+
+Fora da aba Rádio, a faixa "ao vivo" acima da barra mantém o play à mão. Tocar na notificação de manobra abre direto a aba Manobras. No computador, todos os cards aparecem lado a lado.
+
 ## Local
 
 ```bash

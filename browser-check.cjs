@@ -23,15 +23,18 @@ const assert = require('node:assert/strict');
  await page.locator('#mariner-panel summary').click();
  await page.getByRole('button',{name:'Sábado',exact:true}).click();
  assert.equal(await page.locator('#schedule-list li').count(),13);
- await page.getByRole('button',{name:'Hoje',exact:true}).click();
+ await page.locator('#schedule-today').click(); // v3.1.0: id único (a maré também tem um botão "Hoje")
  assert.ok(await page.locator('.program-duration').textContent());
  await page.setViewportSize({width:390,height:844});
+ // v3.1.0: no celular o mini-player aparece fora da aba Rádio (layout em abas)
+ await page.locator('.tabbar [data-aba="mare"]').click();
  await page.locator('#mini-play').click();
  assert.equal(await page.evaluate(()=>window.playCalls),1);
  assert.equal(await page.locator('#mini-status').textContent(),'Você está ouvindo');
  await page.evaluate(()=>document.getElementById('radio-stream').dispatchEvent(new Event('error')));
  assert.match(await page.locator('#mini-status').textContent(),/Sem conexão/);
  await page.evaluate(()=>document.getElementById('radio-stream').dispatchEvent(new Event('pause')));
+ await page.locator('.tabbar [data-aba="radio"]').click();
  await page.screenshot({path:'../../outputs/tuglife-v2.2-mobile.png',fullPage:true});
  await page.getByRole('button',{name:'Alternar tema claro e escuro'}).click();
  assert.equal(await page.locator('body').evaluate(e=>e.classList.contains('light-theme')),true);

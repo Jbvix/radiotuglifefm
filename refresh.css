@@ -235,3 +235,60 @@ body.light-theme .nautical-cover {--amber:#f1bd70;}
 .saam-ev.is-confirmada {border-color:#22c55e;} .saam-ev.is-cancelada {border-color:#ef4444;} .saam-ev.is-antecipada {border-color:#f59e0b;}
 .saam-vazio {font-size:.8rem;color:var(--text-muted);}
 .saam-link {background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;padding:0;}
+
+/* ============================================================
+   SPRINT 19 · v3.1.0 · 2026-10-12T19:30-03:00 · Jossian Brito
+   Layout B — tela única com abas (só no celular, ≤ 760 px)
+   - A página não rola: quem rola, se precisar, é só o conteúdo
+     da aba (.app-shell vira o "porão" com rolagem própria).
+   - Cabeçalho fixo no topo; barra de abas fixa embaixo;
+     faixa "ao vivo" (mini-player) logo acima da barra em todas
+     as abas menos Rádio (lá o player completo já está na tela).
+   - A aba ativa vem de <body data-aba> (tabs.js); cada bloco
+     declara a sua em data-tab. Computador: grade inalterada.
+   ============================================================ */
+.tabbar {display:none;}
+@media(max-width:760px) {
+ html, body {height:100%;}
+ body {overflow:hidden; min-height:0;}
+ .app-shell {height:100vh; height:100dvh; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; gap:12px!important; padding:0 12px calc(84px + env(safe-area-inset-bottom))!important;}
+ body:not([data-aba="radio"]) .app-shell {padding-bottom:calc(160px + env(safe-area-inset-bottom))!important;}
+
+ /* cabeçalho compacto e fixo (como o passadiço: sempre à vista) */
+ header.app-header {position:sticky; top:0; z-index:20; flex-direction:row; justify-content:flex-start; margin:0 -12px; padding:10px 60px 10px 12px; background:var(--bg-deep); border-bottom:1px solid var(--glass-border);}
+ header.app-header .brand-tagline {display:none;}
+ header.app-header .brand-lockup img {width:34px; height:34px;}
+ header.app-header .brand-title {font-size:1.2rem!important;}
+ .theme-toggle-btn {top:8px; right:12px; width:38px; height:38px;}
+
+ /* só a aba ativa aparece */
+ body[data-aba="radio"]    .app-shell>[data-tab]:not([data-tab="radio"]),
+ body[data-aba="mare"]     .app-shell>[data-tab]:not([data-tab="mare"]),
+ body[data-aba="manobras"] .app-shell>[data-tab]:not([data-tab="manobras"]),
+ body[data-aba="portos"]   .app-shell>[data-tab]:not([data-tab="portos"]) {display:none!important;}
+
+ /* aba Rádio: capa menor para caber player + faixa sem rolar */
+ body[data-aba="radio"] .official-cover {max-width:170px; margin-inline:auto; padding:4px;}
+ body[data-aba="radio"] .spectrum {margin-bottom:12px;}
+ body[data-aba="radio"] .program-feature h1 {margin:6px 0;}
+ body[data-aba="radio"] .play-wrapper {margin-top:10px;}
+ /* Instalar/Compartilhar descem para o fim da aba (antes do rodapé) */
+ body[data-aba="radio"] .app-tools {order:4; padding-top:4px;}
+ body[data-aba="radio"] .app-shell>.player-card {margin-top:4px;}
+
+ /* aba Portos: painel sempre aberto e mapa ocupando a altura útil */
+ body[data-aba="portos"] #mariner-panel>summary {display:none;}
+ body[data-aba="portos"] #card-mapa .map-container {height:calc(100dvh - 440px); min-height:260px;}
+
+ /* faixa ao vivo acima da barra de abas */
+ .mini-player {bottom:calc(76px + env(safe-area-inset-bottom))!important;}
+ body[data-aba="radio"] .mini-player {display:none!important;}
+
+ /* barra de abas */
+ .tabbar {display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); position:fixed; left:0; right:0; bottom:0; z-index:10002; padding:6px 6px max(8px, env(safe-area-inset-bottom)); background:var(--bg-card); border-top:1px solid var(--glass-border);}
+ .tabbar button {position:relative; min-height:56px; border:0; background:transparent; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font:inherit; font-size:.7rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+ .tabbar button.is-active {color:var(--accent);}
+ .tabbar button:focus-visible {outline:2px solid var(--accent); outline-offset:-4px; border-radius:12px;}
+ .tab-badge {position:absolute; top:4px; left:calc(50% + 6px); min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#f59e0b; color:#1c1917; font-size:10px; line-height:16px; text-align:center;}
+ .tab-badge[hidden] {display:none;}
+}

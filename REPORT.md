@@ -1,3 +1,24 @@
+# SPRINT 19 — Layout B: tela única com abas — v3.1.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-12T19:30:00-03:00
+
+Implementação:
+- Celular (até 760 px): o app virou uma tela única com barra de abas inferior **Rádio | Maré | Manobras | Portos** (`tabs.js` + bloco SPRINT 19 do `refresh.css`). Cabeçalho compacto fixo no topo; a página não rola, só o conteúdo da aba quando precisa. Fora da aba Rádio, a faixa "ao vivo" (mini-player) fica logo acima da barra.
+- Cada bloco declara sua aba em `data-tab`; `tabs.js` só grava a aba ativa em `<body data-aba>` e o CSS faz o resto. Nenhum card é recriado — maré, SAAM e ouvintes seguem com os mesmos ids e scripts.
+- Selo laranja na aba **Manobras** a cada alerta SAAM recebido em outra aba (`saam.js` emite o evento `saam:alerta`; testes de som não contam). Abrir a aba zera o selo.
+- Clique na notificação push (`#card-saam`) abre direto a aba Manobras.
+- Aba **Portos** abre o Painel do Marujo e só então carrega o mapa (economia de dados a bordo); mapa ocupa a altura útil.
+- A aba escolhida é lembrada no aparelho.
+- Computador: grade original inalterada, barra de abas oculta.
+- Âncora/hélice flutuante (PixiJS) e o painel "Efeitos visuais" **desabilitados**: o script do PixiJS (CDN) não é mais carregado, o que tira um laço de animação a ~60 quadros/s que rodava mesmo com a rádio parada.
+
+Verificação: Playwright em 390×844 nas 4 abas (página sem rolagem; só a aba ativa visível; mapa carregado só ao abrir Portos; curva da maré redesenhada na largura real do card; selo acende e apaga; `#card-saam` abre Manobras) e em 1280 px (grade com todos os cards, barra oculta); sem erros de JavaScript. Regressões: schedule.test, tide-check, crew-check, saam-check, pwa-check, equalizer-check e browser-check passaram.
+
+Bugs encontrados e corrigidos:
+- `browser-check.cjs` falhava desde a v2.7 (dois botões "Hoje": grade e maré). Agora usa `#schedule-today`; também passou a tocar numa aba antes do mini-player, que no layout novo não aparece na aba Rádio.
+
+Limitações: a aba Rádio ainda rola para mostrar a grade semanal completa abaixo do player (player, faixa atual e botão "Ouça Agora" cabem na primeira tela de 844 px). Em telas muito baixas (< 700 px), Maré pode rolar alguns centímetros.
+
 # SPRINT 18 — Programação SAAM · Suape com alertas — v3.0.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-12T16:00:00-03:00

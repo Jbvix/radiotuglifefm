@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.0.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.1.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -24,15 +24,19 @@
     
     
     <!-- PixiJS Engine v7.2.4 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
+    <!-- v3.1.0: PixiJS removido (âncora/hélice flutuante desabilitada) -->
 
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.0.0
-           Data: 2026-10-12T16:00:00-03:00
+           Versão: v3.1.0
+           Data: 2026-10-12T19:30:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.1.0 (SPRINT 19): layout B "tela única com abas" no
+             celular (Rádio | Maré | Manobras | Portos, tabs.js) com selo
+             de alerta SAAM; âncora/hélice flutuante (PixiJS) e painel
+             "Efeitos visuais" desabilitados.
            - v3.0.0 (SPRINT 18): Programação SAAM · Suape com PIN,
              3 alertas sonoros e push (saam.js + Supabase).
            - v2.9.2 (SPRINT 17): Santana calibrado com a DHN; integração
@@ -88,11 +92,6 @@
 
         .app-shell { width: 100%; max-width: 480px; padding: 20px 16px 60px; position: relative; z-index: 1; }
 
-        #global-anchor-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            pointer-events: none; z-index: 9999;
-        }
-        #global-anchor-overlay canvas { width: 100%; height: 100%; display: block; }
 
         header.app-header { 
             display: flex; flex-direction: column; align-items: center; 
@@ -225,10 +224,10 @@
     <script src="tide-data.js" defer></script>
     <script src="tides.js" defer></script>
     <script src="saam.js" defer></script>
+    <script src="tabs.js" defer></script>
 </head>
 <body>
 
-<div id="global-anchor-overlay"></div>
 
 <div id="goc-modal">
     <div class="modal-box">
@@ -244,12 +243,12 @@
         <div class="brand-tagline">O Som do Mar • 24/7/365</div>
     </header>
 
-    <nav class="app-tools" aria-label="Aplicativo e compartilhamento">
+    <nav class="app-tools" data-tab="radio" aria-label="Aplicativo e compartilhamento">
         <button id="install-app">Instalar app</button><button id="share-radio">Compartilhar rádio · QR Code</button>
     </nav>
-    <p id="network-status" role="status" hidden>Você está offline. A programação está disponível; conecte-se à internet para ouvir a rádio.</p>
+    <p id="network-status" data-tab="radio" role="status" hidden>Você está offline. A programação está disponível; conecte-se à internet para ouvir a rádio.</p>
     <!-- Player Card -->
-    <section class="card player-card">
+    <section class="card player-card" data-tab="radio" id="card-player">
         <div class="live-status">
             <div id="badge-live" class="badge-live">
                 <span class="live-dot"></span>
@@ -286,50 +285,26 @@
             <div class="play-label" id="play-text" style="font-family:'Orbitron'; font-size:0.8rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Ouça Agora</div>
         </div>
 
-        <details class="effects-panel"><summary>Efeitos visuais <span>Personalizar</span></summary><div class="anchor-controls" style="grid-template-columns: 1fr 1fr 1fr;">
-            <div class="ctrl-group">
-                <span class="ctrl-label">Ícone</span>
-                <button id="toggle-shape" class="toggle-btn active">Âncora</button>
-            </div>
-            <div class="ctrl-group">
-                <span class="ctrl-label">Exibir</span>
-                <button id="toggle-anchor" class="toggle-btn active">SIM</button>
-            </div>
-            <div class="ctrl-group">
-                <span class="ctrl-label">Pulso</span>
-                <button id="toggle-sync" class="toggle-btn">NÃO</button>
-            </div>
-            <div class="ctrl-group" style="grid-column: span 2;">
-                <span class="ctrl-label">Velocidade</span>
-                <input type="range" id="anchor-speed" min="0" max="5" step="0.1" value="1">
-            </div>
-            <div class="ctrl-group">
-                <span class="ctrl-label">Cor</span>
-                <input type="color" id="anchor-color" value="#0ea5e9" style="width:100%; height:25px; border:none; background:transparent; cursor:pointer;">
-            </div>
-        </div>
-
-        </details>
         <audio id="radio-stream" preload="none" crossorigin="anonymous">
             <source src="https://servidor27-1.brlogic.com:7098/live" type="audio/mpeg" />
         </audio>
     </section>
 
     <!-- Informações da faixa -->
-    <section class="card" id="card-brlogic-player" style="padding: 12px 10px 8px;">
+    <section class="card" data-tab="radio" id="card-brlogic-player" style="padding: 12px 10px 8px;">
         <div style="font-family:'Orbitron'; font-size:0.7rem; color:var(--accent); margin:0 0 10px 4px; letter-spacing:1px;">
             NESTA FREQUÊNCIA · FAIXA ATUAL
         </div>
         <p id="now-playing-brlogic" style="margin:10px 4px 0; font-size:0.75rem; color:var(--text-muted); min-height:1.2em;" role="status">Consultando a faixa atual…</p>
     </section>
 
-    <section class="card" id="card-charlie" hidden>
+    <section class="card" data-tab="radio" id="card-charlie" hidden>
         <div style="font-family:'Orbitron'; font-size:0.7rem; color:var(--accent); margin:0 0 8px 4px; letter-spacing:1px;">CHARLIE</div>
         <p id="charlie-line" style="margin:0 4px; font-size:0.95rem; line-height:1.45;"></p>
     </section>
 
 <!-- Programação -->
-    <section class="card" id="card-prog">
+    <section class="card" data-tab="radio" id="card-prog">
         <div class="digital-clock-container">
             <span id="digital-date" style="font-family:'Orbitron', sans-serif; font-size:0.75rem; color:var(--text-main); font-weight:600; margin-bottom:6px; letter-spacing:1px; text-shadow: 0 0 8px var(--accent-glow);">Carregando...</span>
             <span style="font-size:0.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Horário de Brasília · America/Sao_Paulo</span>
@@ -341,7 +316,7 @@
     </section>
 
     <!-- SPRINT 15 · v2.7.0: Tábua de Maré (tides.js) -->
-    <section class="card" id="card-mare" hidden aria-labelledby="tide-heading">
+    <section class="card" data-tab="mare" id="card-mare" hidden aria-labelledby="tide-heading">
         <div class="tide-head">
             <div>
                 <div class="eyebrow" id="tide-heading">Tábua de Maré</div>
@@ -368,7 +343,7 @@
     </section>
 
     <!-- SPRINT 18 · v3.0.0: Programação SAAM · Suape (saam.js) -->
-    <section class="card" id="card-saam" hidden aria-labelledby="saam-heading">
+    <section class="card" data-tab="manobras" id="card-saam" hidden aria-labelledby="saam-heading">
         <div class="saam-head">
             <div>
                 <div class="eyebrow" id="saam-heading">Programação SAAM · Suape</div>
@@ -404,7 +379,7 @@
     </section>
 
     <!-- Monitoramento AIS -->
-    <section class="card" id="card-mapa"><details id="mariner-panel"><summary>Painel do Marujo <span>Portos e clima</span></summary><p class="service-note">Mapas fornecidos por serviços externos. Se estiverem indisponíveis, tente novamente mais tarde.</p>
+    <section class="card" data-tab="portos" id="card-mapa"><details id="mariner-panel"><summary>Painel do Marujo <span>Portos e clima</span></summary><p class="service-note">Mapas fornecidos por serviços externos. Se estiverem indisponíveis, tente novamente mais tarde.</p>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--accent);">MONITORAMENTO GOC</div>
             <div style="display:flex; background:rgba(0,0,0,0.1); padding:2px; border-radius:8px;">
@@ -417,7 +392,7 @@
     </section>
 
     <!-- Footer Actions -->
-    <div class="footer-actions">
+    <div class="footer-actions" data-tab="radio">
         <a href="https://www.tuglife.store" target="_blank" rel="noopener noreferrer" class="btn-ext">⚓ TugLife Store</a>
         <a href="https://www.deezer.com/search/tuglife%20fm" target="_blank" rel="noopener noreferrer" class="btn-ext">🎧 Deezer</a>
         <div class="btn-ext alexa">
@@ -426,10 +401,10 @@
         </div>
     </div>
 
-    <footer>
-        <strong>TugLife FM v3.0.0</strong> • Mobile First GOC<br>
+    <footer data-tab="radio">
+        <strong>TugLife FM v3.1.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T16:00:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T19:30:00-03:00
     </footer>
 </div>
 <dialog id="share-dialog" aria-labelledby="share-title">
@@ -451,9 +426,16 @@
     <p id="install-note">A rádio ao vivo precisa de internet. A opção de instalação depende do navegador.</p>
 </dialog>
 <aside class="mini-player" aria-label="Player compacto"><span class="mini-symbol" aria-hidden="true">✦</span><div><small>TUGLIFE FM · AO VIVO</small><strong id="mini-title">O som do mar</strong><span id="mini-status">Pronto para ouvir</span></div><button id="mini-play" aria-label="Ouvir rádio">▶</button></aside>
+<!-- SPRINT 19 · v3.1.0: barra de abas inferior (tabs.js) — só no celular -->
+<nav class="tabbar" id="tabbar" role="tablist" aria-label="Seções do app">
+    <button role="tab" data-aba="radio" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M6.5 6.5a8 8 0 0 0 0 11M17.5 6.5a8 8 0 0 1 0 11"/></svg><span>Rádio</span></button>
+    <button role="tab" data-aba="mare" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12c2.5-3 4.5-3 7 0s4.5 3 7 0 4.5-3 6 0"/><path d="M2 18c2.5-3 4.5-3 7 0s4.5 3 7 0 4.5-3 6 0"/></svg><span>Maré</span></button>
+    <button role="tab" data-aba="manobras" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17h18l-2 4H5z"/><path d="M6 17V9h8l3 4v4"/><path d="M9 9V5h3"/></svg><span>Manobras</span><b class="tab-badge" id="tab-badge" hidden>0</b></button>
+    <button role="tab" data-aba="portos" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span>Portos</span></button>
+</nav>
 <script>
     /**
-     * TugLife FM Engine v3.0.0
+     * TugLife FM Engine v3.1.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
@@ -467,73 +449,15 @@
             document.body.classList.toggle('light-theme');
             const isLight = document.body.classList.contains('light-theme');
             themeBtn.innerText = isLight ? "☀️" : "🌙";
-            // Ajustar cor da âncora/hélice automaticamente se não foi mexida manualmente
-            if(document.getElementById('anchor-color').value === "#0ea5e9") {
-                const autoColor = isLight ? 0x0284c7 : 0x0ea5e9;
-                if(anchor) anchor.tint = autoColor;
-                if(fanMain) { fanMain.tint = autoColor; }
-            }
         });
 
         // Grade semanal independente em schedule.js e schedule-ui.js.
 
-        // --- 3. PixiJS Engine (Âncora/Hélice) ---
-        let aVis = true, aSpeed = 1, aSync = false, isAnchor = true, audioCtx, analyser, dataA, source;
-        let anchor, fanMain, propeller, mainObj;
-        if (window.PIXI) {
-        const app = new PIXI.Application({ width: window.innerWidth, height: window.innerHeight, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1 });
-        document.getElementById('global-anchor-overlay').appendChild(app.view);
-        window.addEventListener('resize', () => app.renderer.resize(window.innerWidth, window.innerHeight));
-
-        mainObj = new PIXI.Container();
-        mainObj.x = window.innerWidth / 2; mainObj.y = window.innerHeight / 2;
-        app.stage.addChild(mainObj);
-
-        anchor = new PIXI.Text('⚓', { fontSize: 80, fill: '#0ea5e9', fontFamily: ['Arial', 'sans-serif'] });
-        anchor.anchor.set(0.5); 
-        mainObj.addChild(anchor);
-
-        const fanSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23FFFFFF" d="M50,35 C75,35 85,10 50,5 C35,5 30,20 50,35 Z M65,50 C65,75 90,85 95,50 C95,35 80,30 65,50 Z M50,65 C25,65 15,90 50,95 C65,95 70,80 50,65 Z M35,50 C35,25 10,15 5,50 C5,65 20,70 35,50 Z"/></svg>`;
-        const propTex = PIXI.Texture.from(fanSvg);
-        
-        fanMain = new PIXI.Sprite(propTex);
-        fanMain.anchor.set(0.5); fanMain.scale.set(0.8); fanMain.tint = 0x0ea5e9;
-
-        propeller = new PIXI.Container();
-        propeller.addChild(fanMain);
-        propeller.visible = false;
-        mainObj.addChild(propeller);
-
-        let dX = (Math.random() - 0.5) * 0.4, dY = (Math.random() - 0.5) * 0.4, el = 0;
-        app.ticker.add((delta) => {
-            if (!aVis) { mainObj.visible = false; return; }
-            mainObj.visible = true; el += 0.05 * delta;
-            
-            if (aSync && analyser) {
-                analyser.getByteFrequencyData(dataA);
-                let p = 0; for(let i=0; i<8; i++) p += dataA[i];
-                let avg = p / 8; let tS = 1.0 + (avg / 220);
-                mainObj.scale.x += (tS - mainObj.scale.x) * 0.3; mainObj.scale.y = mainObj.scale.x;
-                mainObj.alpha = 0.6 + (avg / 255) * 0.4;
-            } else {
-                mainObj.scale.set(1 + Math.sin(el * 0.4) * 0.04); mainObj.alpha = 1;
-            }
-            
-            mainObj.x += dX * aSpeed * delta; mainObj.y += dY * aSpeed * delta;
-            const m = 80; if (mainObj.x < m || mainObj.x > window.innerWidth - m) dX *= -1; if (mainObj.y < m || mainObj.y > window.innerHeight - m) dY *= -1;
-            
-            if (isAnchor) {
-                mainObj.rotation = Math.sin(el * 0.15) * 0.08;
-            } else {
-                mainObj.rotation += (aSpeed * 0.05 + 0.05) * delta;
-            }
-        });
-        } else {
-            document.querySelectorAll('.anchor-controls button, .anchor-controls input').forEach(control => {
-                control.disabled = true;
-                control.title = 'Animação indisponível. A rádio continua disponível.';
-            });
-        }
+        // --- 3. [v3.1.0] Âncora/Hélice flutuante (PixiJS) DESABILITADA ---
+        // A animação ocupava a tela inteira por cima dos cards e custava
+        // CPU/bateria (um ticker de ~60 quadros/s, mesmo com a rádio parada).
+        // Mantidas apenas as variáveis do motor de áudio usadas pelo player.
+        let audioCtx, analyser, dataA;
 // --- 4. Player & Web Audio Logic ---
         const audio = document.getElementById('radio-stream');
         const btnPlay = document.getElementById('btn-play');
@@ -624,22 +548,6 @@
         refreshCharlie();
         setInterval(refreshCharlie, 15000);
 
-        document.getElementById('toggle-shape').onclick = (e) => { 
-            isAnchor = !isAnchor; 
-            anchor.visible = isAnchor;
-            propeller.visible = !isAnchor;
-            mainObj.rotation = 0;
-            e.target.innerText = isAnchor ? "Âncora" : "Hélice"; 
-            e.target.classList.toggle('active', isAnchor);
-        };
-        document.getElementById('toggle-anchor').onclick = (e) => { aVis = !aVis; e.target.classList.toggle('active', aVis); e.target.innerText = aVis ? "SIM" : "NÃO"; };
-        document.getElementById('anchor-speed').oninput = (e) => aSpeed = parseFloat(e.target.value);
-        document.getElementById('anchor-color').oninput = (e) => { 
-            const colorHex = e.target.value.replace('#', '0x');
-            anchor.tint = colorHex; 
-            fanMain.tint = colorHex;
-        };
-        document.getElementById('toggle-sync').onclick = (e) => { if(audio.paused) { showModal("Inicie a rádio primeiro para calibrar os instrumentos!"); return; } initAudioEngine(); aSync = !aSync; e.target.classList.toggle('active', aSync); e.target.innerText = aSync ? "SIM" : "NÃO"; };
 
         // --- 5. O Slider de Portos ---
         const ports = [

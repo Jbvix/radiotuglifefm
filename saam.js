@@ -2,11 +2,15 @@
    TugLife FM — "Programação SAAM · Suape" (apoio ao Comandante)
    ------------------------------------------------------------
    Arquivo   : saam.js
-   Versão    : 3.0.0 (SPRINT 18)
-   Data/Hora : 2026-10-12T16:00:00-03:00
+   Versão    : 3.1.0 (SPRINT 19)
+   Data/Hora : 2026-10-12T19:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.1.0  [NOVO] alertar() emite o evento 'saam:alerta' para o
+           selo laranja da aba "Manobras" (tabs.js). Testes de som
+           não acendem o selo (detail.teste = true).
+           [MOD] Link #card-saam: a abertura da aba fica com tabs.js.
    v3.0.0  [NOVO] Card protegido por PIN da tripulação com as
            manobras SAAM em Suape (lidas da planilha da praticagem
            a cada 2 min pelo coletor saam-suape-sync no Supabase).
@@ -108,6 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.banner.hidden = false;
     clearTimeout(alertar.t);
     alertar.t = setTimeout(() => { ui.banner.hidden = true; }, 20000);
+    // v3.1.0: avisa a barra de abas (selo na aba Manobras)
+    document.dispatchEvent(new CustomEvent('saam:alerta', { detail: { tipo, teste: texto === 'teste de som' } }));
   }
 
   /* ---------- 3. Formatação ---------- */
@@ -302,5 +308,5 @@ document.addEventListener('DOMContentLoaded', () => {
   card.hidden = false;
   if (pin) { mostrar(true); atualizar(true); agendar(); estadoAlertas(); }
   else mostrar(false);
-  if (location.hash === '#card-saam') card.scrollIntoView({ behavior: 'smooth' });
+  // v3.1.0: o link #card-saam (clique na notificação) é tratado por tabs.js
 });
