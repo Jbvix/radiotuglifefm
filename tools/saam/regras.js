@@ -2,7 +2,7 @@
    TugLife FM — Regras dos alertas SAAM (comparador)
    ------------------------------------------------------------
    Arquivo   : regras.js   (módulo puro: roda no Deno e no Node)
-   Versão    : 1.0.0 (SPRINT 18)
+   Versão    : 1.0.1 (SPRINT 18)
    Data/Hora : 2026-10-12T15:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
@@ -20,6 +20,11 @@
    Se confirmou e antecipou na mesma leitura, sai um só alerta
    (ANTECIPADA), com a confirmação no detalhe — o mais urgente.
    Na primeira leitura não há alertas: só se forma a "linha de base".
+
+   v1.0.1 [FIX] Chave única garantida: se a planilha tiver duas linhas
+          iguais (mesmo IMO, tipo e horário), a segunda recebe sufixo
+          "#2" — antes as duas geravam a mesma chave e o upsert falhava
+          ("ON CONFLICT ... cannot affect row a second time").
    ============================================================ */
 
 export const ANTECIPA_MIN = 15;
@@ -43,6 +48,13 @@ export function comparar(old, rows, now, baseline) {
   const t = (d) => new Date(d).getTime();
   const livres = old.map((o) => ({ ...o, _pob: t(o.pob), _usado: false }));
   const upserts = [], eventos = [];
+  const usadas = new Set(old.map((o) => o.chave));
+  const novaChave = (base) => {
+    let k = base, n = 2;
+    while (usadas.has(k)) k = `${base}#${n++}`;
+    usadas.add(k);
+    return k;
+  };
   const ev = (o, tipo, detalhe, pobAntes, pobDepois) => {
     if (!baseline) eventos.push({ chave: o.chave, tipo, navio: o.navio, mnb: o.mnb, pob_antes: pobAntes ?? null, pob_depois: pobDepois ?? null, detalhe });
   };
@@ -61,7 +73,7 @@ export function comparar(old, rows, now, baseline) {
 
     if (!best) {
       if (!ehSaam) continue;                                  // não é nossa e nunca foi
-      const novo = { ...r, chave: `${r.imo}|${r.mnb}|${new Date(rp).toISOString()}`, ausencias: 0 };
+      const novo = { ...r, chave: novaChave(`${r.imo}|${r.mnb}|${new Date(rp).toISOString()}`), ausencias: 0 };
       upserts.push(novo);
       if (r.situacao === 'CONFIRMADA' && rp > t(now) - 0.5 * H) ev(novo, 'CONFIRMADA', 'Nova manobra já confirmada', null, r.pob);
       continue;
@@ -102,7 +114,8 @@ export function comparar(old, rows, now, baseline) {
       upserts.push({ ...strip(o), ausencias: aus });
     }
   }
-  return { upserts, eventos };
+  // Garantia final: uma linha por chave (a última vence)
+  return { upserts: [...new Map(upserts.map((u) => [u.chave, u])).values()], eventos };
 }
 
 function strip(o) {

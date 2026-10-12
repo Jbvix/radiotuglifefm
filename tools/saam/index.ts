@@ -2,10 +2,14 @@
    TugLife FM — Coletor "Programação SAAM · Suape"
    ------------------------------------------------------------
    Arquivo   : index.ts  (Supabase Edge Function: saam-suape-sync)
-   Versão    : 1.0.0 (SPRINT 18)
+   Versão    : 1.0.2 (SPRINT 18)
    Data/Hora : 2026-10-12T15:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
+   v1.0.2 [FIX] Só compara linhas dos últimos 3 dias em diante (mesma
+          janela das manobras carregadas do banco).
+   v1.0.1 [MOD] Download do SharePoint seguindo redirecionamentos
+          manualmente com o cookie FedAuth (sem ele: 403).
    Roda a cada 2 min (pg_cron). Ciclo:
      1. baixa a planilha da praticagem (link público do SharePoint)
      2. lê as manobras de Suape (parser.js)
@@ -147,7 +151,8 @@ Deno.serve(async (req) => {
     if (eOld) throw eOld;
     const { data: st } = await sb.from('saam_sync').select('primeira').eq('id', 1).single();
     const baseline = !!st?.primeira;
-    const { upserts, eventos } = comparar(old || [], rows, new Date(), baseline);
+    const recentes = rows.filter((r) => r.pob.toISOString() >= desde);
+    const { upserts, eventos } = comparar(old || [], recentes, new Date(), baseline);
 
     // 4. gravação
     const agoraIso = new Date().toISOString();

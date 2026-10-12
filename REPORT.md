@@ -9,6 +9,8 @@ Implementação:
 
 Verificação: testes unitários do leitor e das regras (planilha sintética, 6 cenários); leitura real da planilha na nuvem (121 manobras em Suape, 74 SAAM, 0,9 s de download, 25 ms de leitura); linha de base gravada pelo cron; teste no navegador com dados reais (PIN errado/certo, renderização, teste de som, alerta novo no ciclo de 60 s, PIN lembrado, 360 px sem overflow); regressões de maré e ouvintes passaram.
 
-Bug encontrado e corrigido no teste: sem nenhum alerta no histórico, o primeiro alerta real não tocaria (o código usava "último id > 0" como sinal de carga inicial).
+Bugs encontrados e corrigidos:
+- Em produção, da 2ª leitura em diante o upsert falhou ("ON CONFLICT ... cannot affect row a second time"): linhas antigas da planilha (fora da janela de 3 dias carregada do banco) geravam chaves repetidas no mesmo lote. Agora o coletor só compara a janela de 3 dias, as chaves novas são garantidamente únicas e o lote é deduplicado. Teste de regressão incluído.
+- No teste do navegador: sem nenhum alerta no histórico, o primeiro alerta real não tocaria (o código usava "último id > 0" como sinal de carga inicial).
 
 Limitações: notificação com tela apagada usa o som padrão do celular (web não permite som próprio por tipo); no iPhone só funciona com o app instalado na tela de início.

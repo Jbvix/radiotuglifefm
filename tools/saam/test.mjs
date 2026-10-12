@@ -81,3 +81,15 @@ const db4 = Object.values(Object.fromEntries([...db3, ...r4.upserts].map(u=>[u.c
 const r5 = comparar(db4, parseWorkbook(book(ch4), unzipSync).rows, now, false);
 assert.equal(r5.eventos.length, 1); assert.match(r5.eventos[0].detalhe, /confirmada/);
 console.log('regras OK —', r5.eventos[0].tipo, r5.eventos[0].detalhe);
+
+// 7) linhas duplicadas na planilha (mesmo IMO, tipo e horário)
+const dup = [...base, { ...base[1] }];
+const pd = parseWorkbook(book(dup), unzipSync);
+const r6 = comparar([], pd.rows, now, true);
+const chaves = r6.upserts.map(u => u.chave);
+assert.equal(new Set(chaves).size, chaves.length, 'chaves únicas na linha de base');
+const r7 = comparar(r6.upserts, pd.rows, now, false);
+const ch7 = r7.upserts.map(u => u.chave);
+assert.equal(new Set(ch7).size, ch7.length, 'chaves únicas na 2ª leitura');
+assert.equal(r7.eventos.length, 0, 'duplicata não gera alerta');
+console.log('duplicatas OK —', chaves.filter(k => k.includes('#')));
