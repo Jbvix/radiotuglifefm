@@ -1,4 +1,4 @@
-# SPRINT 17 — Rio Grande com nível real CIEX-FURG + Santana calibrado — v2.9.0
+# SPRINT 17 — Santana calibrado (CIEX-FURG cancelado) — v2.9.2
 Autor: Jossian Brito  
 Data/hora: 2026-10-12T15:30:00-03:00
 
@@ -10,3 +10,6 @@ Implementação:
 Verificação: Playwright com dados reais do CIEX de 12/10/2026 (fixture) e relógio fixo: modo online (76 cm medido, alerta, 6 extremos, gráfico), +2 dias, +3 dias (fallback), modo offline (fallback astronômico), sem overflow a 360 px, sem erros; regressões tide-check e crew-check passaram. Proxy Netlify verificado após deploy.
 
 Observação: referencial da régua CCMar ≠ Nível de Redução DHN; por isso cm e rótulo próprio, sem misturar com a maré astronômica.
+
+## Atualização v2.9.2 — 2026-10-12T14:35:00-03:00
+Integração CIEX-FURG cancelada por decisão do usuário: o Cloudflare do CIEX desafia (403) os pedidos do proxy Netlify, e o acesso dependeria de liberação pelo CIEX. Removidos `ciex.js`, `netlify.toml`, o modo "nível real" do card e os estilos correspondentes. Rio Grande volta à maré astronômica calibrada com a DHN. O código completo fica preservado no commit 82af613 para reativação futura. Santana permanece calibrado (13/13 portos).
