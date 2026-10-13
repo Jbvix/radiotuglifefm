@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.netlify.radiotuglifefm.twa",
+      "sha256_cert_fingerprints": ["F3:B1:CB:93:16:26:09:A3:87:53:15:10:B8:A8:6E:EA:89:2A:39:94:CC:8B:47:49:F7:32:89:75:1B:B6:E8:CD"]
+    }
+  }
+]
