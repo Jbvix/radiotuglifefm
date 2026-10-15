@@ -1,3 +1,18 @@
+# SPRINT 29 — Contador de visitas — v3.10.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T18:45:00-03:00
+
+Pedido do Comandante: "Vamos adicionar um contador de visitas ao app?" Proposta aprovada: visitas e aparelhos únicos, anônimo, no Supabase.
+
+Implementação:
+- **Banco (já aplicado no `tuglife-fm`, migração `v3_10_contador_visitas`, cópia em `tools/visitas/`).** Tabelas `visitas_aparelhos` e `visitas_diarias`, RLS ligado e sem política (o público não lê nem grava direto). Função `registrar_visita(p_aparelho uuid)`: conta a visita só se a última daquele aparelho tiver mais de 30 min e devolve `{visitas, aparelhos, hoje}` (dia no fuso de Brasília).
+- **App (`visitas.js`).** Na 1ª abertura sorteia um UUID v4 e guarda em `tuglife_aparelho`; envia só esse código. Mostra "👁️ N visitas · N aparelhos · N hoje" no rodapé (computador) e no painel "Mais da TugLife" (celular, onde o rodapé é oculto). Falha ou offline: a linha não aparece e o app segue igual.
+- Sem IP, nome, conta ou localização. Versão 3.10.0 (VERSION.json, index.html, sw.js com `visitas.js` no cache), manual (item "Contador de visitas" e novidade), README, `docs/PROJETO.md` 1.8.0.
+
+Verificação: a função publicada respondeu pela API pública com a chave do app; a 2ª chamada do mesmo aparelho em menos de 30 min não somou; a leitura direta da tabela foi negada (42501). A visita de teste foi descontada. `visitas-check.cjs` (novo, 7 cenários) passou; regressões update-check, radio-check, manual-check, browser-check, pwa-check, saam-rj-check, schedule.test e README em dia passaram.
+
+Limitações: limpar os dados do navegador ou usar modo anônimo conta o aparelho como novo; um robô que sorteie códigos pode inflar a contagem (mesma confiança do pico de ouvintes). O contador começa do zero nesta versão.
+
 # SPRINT 28 — PIN no Rio e programações recolhíveis — v3.9.1
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T17:30:00-03:00
