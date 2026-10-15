@@ -11,7 +11,7 @@
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
-> - 1.5.0 (2026-10-15) — Aviso de nova versão (SPRINT 26): `SKIP_WAITING` no `sw.js`, faixa no `pwa.js`, §8 com o novo fluxo de atualização, teste `update-check.cjs`.
+> - 1.5.0 (2026-10-15) — Aviso de nova versão (SPRINT 26): `SKIP_WAITING` no `sw.js`, faixa no `pwa.js`, §8 com o novo fluxo de atualização, teste `update-check.cjs`. Faixa "Ao vivo" da Maré recolhida numa linha com ⓘ.
 > - 1.4.0 (2026-10-15) — Aba Rádio compacta (SPRINT 25): faixa atual no player, painel "Mais da TugLife", rodapé só no computador; teste `radio-check.cjs`.
 > - 1.3.0 (2026-10-15) — Nível medido em mais 4 portos (Pecém, Rio de Janeiro, Paranaguá, Salvador), segunda API (IOC/UNESCO), decisão de deixar Itaqui de fora, ferramenta de offset 1.2.0 e cenários 10–11 no teste.
 > - 1.2.0 (2026-10-14) — Nível medido em Suape (média Recife + Tamandaré, correção de horário de porto secundário), §6.4 reescrito, maré meteorológica pela mediana dos resíduos, ferramenta de offset 1.1.0 e 3 cenários novos no teste.
@@ -104,7 +104,7 @@ radiotuglifefm/
 ├── manual-check.cjs        Teste de navegador: manual, tour, #manual, desktop
 ├── radio-check.cjs         Teste de navegador: aba Rádio numa tela (390×844), painel "Mais", desktop
 ├── update-check.cjs        Teste de navegador: aviso de nova versão com deploys simulados (servidor próprio)
-├── tide-live-check.cjs     Teste de navegador: nível medido (APIs simuladas) em 11 cenários
+├── tide-live-check.cjs     Teste de navegador: nível medido (APIs simuladas) em 13 cenários
 ├── schedule.test.cjs       Teste unitário da grade (node:test)
 ├── server.py               Servidor local (porta 8787) para desenvolvimento e testes
 │
@@ -340,6 +340,7 @@ O card de Maré mostra, além da previsão, o nível **real** medido por marégr
 - **Incerteza exibida:** metade da oscilação semanal do offset, no mínimo 3 cm (a ferramenta imprime a sugerida).
 - **Itaqui fica de fora:** o marégrafo mais próximo (Ribamar, id 302) está em outra baía, com amplitude 18% menor; mesmo com correção de amplitude e horário sobram ~21 cm de erro de transferência, que apareceriam como maré meteorológica falsa. Sem fonte para Santos, Itajaí, Vitória, Vila do Conde, Amapá e Sepetiba: estações mudas (Aracruz, Belém, Santana) ou distantes demais (Ilhabela, Imbituba).
 - **Validação:** Pecém, Salvador e Suape: correlação ≥ 0,99, diferença típica ≤ 5 cm (a previsão acerta). Rio de Janeiro: 0,93 e 12 cm. Paranaguá: 0,86 e 28 cm (de −78 a +91 cm: o vento manda, como em Rio Grande). Rio Grande — correlação medido × previsto de só 0,39 (a previsão explica pouco). Suape — correlação 0,996 (Recife) e 0,992 (Tamandaré), amplitude medida/prevista 1,03 e 1,00: a previsão calibrada pela DHN acerta; o medido serve para confirmar e flagrar o fora do normal.
+- **Interface (v3.8.0):** a faixa nasce recolhida numa linha — `● Medido 0,49 m ↓ · −4 cm da previsão ⓘ` (≈ 46 px). A maré meteorológica fica sempre à vista e laranja a partir de ±15 cm; um toque (botão com `aria-expanded`) abre os detalhes, e o estado sobrevive às buscas de 5 min.
 - **Segurança da informação:** dado com mais de 30 min ou falha da API → a caixa avisa e o app volta só à previsão. Crédito obrigatório por porto (`credito` em `ESTACOES`): SiMCosta/FURG; Suape + UFPE e CEPENE; Paranaguá + CEM/UFPR; Salvador "IBGE (RMPG), via IOC/UNESCO".
 
 ---
@@ -406,7 +407,7 @@ python3 server.py          # http://localhost:8787/
 | Navegador · aba Rádio | `node radio-check.cjs` | 390×844 sem rolagem; com ouvintes conectados (390×844 e 412×823) a linha 👥 não encavala o selo e o "Mais" segue à vista; com play, faixa, grade e "Mais" à vista; painel fechado no celular e aberto numa linha no computador; manual → "Instalar na tela inicial"; rodapé só no computador |
 | Navegador · espectro | `node equalizer-check.cjs` | Pausa/retomada, movimento reduzido, falha de CORS mantém o áudio |
 | Navegador · manual | `node manual-check.cjs` | Tour automático, manual por seção, "Abrir a aba", `#manual`, desktop |
-| Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: Rio Grande ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha; Suape com 2 fontes (média e horário corrigido), 1 fonte fora e as 2 fora; Pecém, Rio, Paranaguá e Salvador (IOC com sensor de isca); Itaqui sem busca |
+| Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: Rio Grande ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha; Suape com 2 fontes (média e horário corrigido), 1 fonte fora e as 2 fora; Pecém, Rio, Paranaguá e Salvador (IOC com sensor de isca); Itaqui sem busca; faixa recolhida (uma linha, abre/fecha, segue aberta após nova busca, laranja com +20 cm) |
 | README em dia | `node tools/manual/gerar-readme.mjs --check` | Manual do README igual ao `manual.js` |
 | Coletor SAAM | `cd tools/saam && npm i xlsx fflate && node test.mjs` | Leitor da planilha e regras de alerta (planilha sintética) |
 
