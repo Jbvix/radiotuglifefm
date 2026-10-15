@@ -3,14 +3,15 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.4.0 (SPRINT 22) |
-| **Documento** | 1.1.0 · 2026-10-12T18:30:00-03:00 |
+| **Versão do app** | 3.5.0 (SPRINT 23) |
+| **Documento** | 1.2.0 · 2026-10-14T22:30:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
 | **Repositório** | https://github.com/Jbvix/radiotuglifefm |
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
+> - 1.2.0 (2026-10-14) — Nível medido em Suape (média Recife + Tamandaré, correção de horário de porto secundário), §6.4 reescrito, maré meteorológica pela mediana dos resíduos, ferramenta de offset 1.1.0 e 3 cenários novos no teste.
 > - 1.1.0 (2026-10-12) — Nível medido ao vivo (SiMCosta/FURG): `tide-live.js`, fluxo §6.4, calibração do zero do radar, teste e ferramenta novos.
 > - 1.0.0 (2026-10-12) — Primeira edição: diretórios, módulos, backend, fluxos, deploy, testes e convenções, cobrindo até a v3.3.0.
 
@@ -30,7 +31,7 @@ A TugLife FM é uma webrádio 24/7 (stream BRLOGIC). O app começou como um play
 | **Programação SAAM · Suape** | Manobras SAAM com PIN, 3 alertas sonoros e notificação push | v3.0.0 |
 | **Painel do Marujo** | Mapa AIS (MarineTraffic) e clima (Windy) por porto | v2.x |
 
-E ainda: layout em abas no celular (v3.1.0), Manual de bordo e tour guiado (v3.2.0), grade recolhível (v3.3.0), nível do mar **medido** ao vivo em Rio Grande (v3.4.0).
+E ainda: layout em abas no celular (v3.1.0), Manual de bordo e tour guiado (v3.2.0), grade recolhível (v3.3.0), nível do mar **medido** ao vivo em Rio Grande (v3.4.0) e em Suape (v3.5.0).
 
 ### Princípios de projeto
 
@@ -59,7 +60,7 @@ radiotuglifefm/
 ├── listeners.js            "Tripulação a bordo": ouvintes ao vivo e pico do dia (Supabase)
 ├── tide-data.js            Constantes harmônicas calibradas dos 13 portos
 ├── tides.js                Card "Tábua de Maré": cálculo, curva 24 h, extremos, navegação
-├── tide-live.js            Nível MEDIDO ao vivo (marégrafo SiMCosta/FURG) e maré meteorológica
+├── tide-live.js            Nível MEDIDO ao vivo (marégrafos SiMCosta/FURG; Suape = média de 2) e maré meteorológica
 ├── saam.js                 Card "Programação SAAM · Suape": PIN, lista, alertas, push
 ├── tabs.js                 Navegação por abas no celular + selo de alerta em Manobras
 ├── manual.js               Manual de bordo + tour guiado (fonte única dos textos)
@@ -98,7 +99,7 @@ radiotuglifefm/
 ├── pwa-check.cjs           Teste de navegador: manifesto, QR, instalação, offline
 ├── equalizer-check.cjs     Teste de navegador: espectro, pausa, movimento reduzido, CORS
 ├── manual-check.cjs        Teste de navegador: manual, tour, #manual, desktop
-├── tide-live-check.cjs     Teste de navegador: nível medido (API simulada) em 6 cenários
+├── tide-live-check.cjs     Teste de navegador: nível medido (API simulada) em 9 cenários
 ├── schedule.test.cjs       Teste unitário da grade (node:test)
 ├── server.py               Servidor local (porta 8787) para desenvolvimento e testes
 │
@@ -187,11 +188,11 @@ flowchart LR
 | `listeners.js` | Presença em tempo real ("N a bordo") e pico do dia; só observa os eventos do `<audio>` | `#crew-row`, `#crew-count`, `#crew-peak` | Supabase Realtime + RPC `registrar_pico`, `pico_hoje` | 2.6.0 |
 | `tide-data.js` | Constantes harmônicas por porto, método de calibração e erro típico | — (só dados) | — | 2.9.0 |
 | `tides.js` | Altura agora, tendência, extremos do dia, curva SVG 24 h, navegação por dia, porto lembrado | `#card-mare`, `#tide-port`, `#tide-chart`, `#tide-list` | `NeapsTide`, `TUGLIFE_TIDES` | 3.4.0 |
-| `tide-live.js` | Nível medido agora (mediana 10 min), tendência (reta de 30 min), maré meteorológica, série de 6 h no gráfico, busca incremental a cada 5 min, volta à previsão se o dado tiver > 30 min | `#tide-live`, `.tide-real` | API SiMCosta; `window.TugTides` | 3.4.0 |
+| `tide-live.js` | Nível medido agora (previsão + mediana dos resíduos de 10 min), tendência (reta de 30 min), maré meteorológica, série de 6 h no gráfico, busca incremental a cada 5 min, várias fontes por porto (média, uma pode cair), correção de horário de porto secundário, volta à previsão se o dado tiver > 30 min | `#tide-live`, `.tide-real` | API SiMCosta; `window.TugTides` | 3.5.0 |
 | `saam.js` | PIN, lista por dia, sincronização a cada 60 s, 3 sons sintetizados + vibração, faixa de alerta, push | `#card-saam`, `#saam-pin`, `#saam-list`, `#saam-events`, `#saam-banner` | RPC `saam_programacao`, `saam_push_registrar`; SW | 3.1.0 |
 | `tabs.js` | Barra de abas (≤ 760 px), aba lembrada, selo de alertas, `#card-saam` abre Manobras | `#tabbar`, `#tab-badge`, `body[data-aba]` | evento `saam:alerta` | 3.2.0 |
-| `manual.js` | Botão ?, Manual de bordo (seções, sanfona, "Abrir a aba"), tour de 6 passos, `#manual` | `#help-btn`, `#manual-dialog`, `.tour-camada` | `TugTabs` | 3.4.0 |
-| `sw.js` | Cache versionado só do app (nunca do stream nem de APIs); push SAAM com vibração por tipo; clique abre `#card-saam` | — | Web Push | 3.4.0 |
+| `manual.js` | Botão ?, Manual de bordo (seções, sanfona, "Abrir a aba"), tour de 6 passos, `#manual` | `#help-btn`, `#manual-dialog`, `.tour-camada` | `TugTabs` | 3.5.0 |
+| `sw.js` | Cache versionado só do app (nunca do stream nem de APIs); push SAAM com vibração por tipo; clique abre `#card-saam` | — | Web Push | 3.5.0 |
 
 ### Contratos entre módulos
 
@@ -313,15 +314,22 @@ A calibração (`tools/mare/`) ajusta esses números para casar com a Tábua DHN
 Cada app tocando entra num canal de presença do Supabase e o contador mostra quantos estão ali. Os apps enviam a contagem para `registrar_pico`, e o banco guarda por hora `pico_da_hora = MAX(pico_atual, enviado)` (teto de 1000, contra valores absurdos) — o maior valor da hora nunca diminui, como o ponteiro de arraste de um manômetro. `pico_hoje` devolve o maior pico do dia.
 
 
-### 6.4 Nível medido ao vivo (Rio Grande · SiMCosta/FURG)
+### 6.4 Nível medido ao vivo (SiMCosta/FURG · Rio Grande e Suape)
 
-Em Rio Grande a maré astronômica é pequena e quem manda é o vento e a descarga da Lagoa dos Patos. Por isso o card mostra também o nível **real** do marégrafo radar de São José do Norte (SiMCosta id 332, na entrada do canal).
+O card de Maré mostra, além da previsão, o nível **real** medido por marégrafos radar do SiMCosta. Cada porto tem uma lista de **fontes** em `ESTACOES` (`tide-live.js`), cada uma com o seu offset.
 
-- **Fonte:** API pública e documentada (https://simcosta.furg.br/q/docs/) — `GET /api/intrans_data?boiaID=332&type=json&time1=&time2=&params=avg_water_level_arbitrary_zero`. 1 leitura/min, CORS liberado, sem login. 1ª carga ~50 KB (6 h); depois só o que chegou (~1 KB a cada 5 min).
-- **Do zero do radar ao NR:** `nível_NR ≈ leitura − 12,374 m`. O offset é a média de (leitura − previsão) em 706 horas (12/09 a 12/10/2026); a média semanal oscilou ±7 cm, por isso o valor aparece como "estimado ±7 cm". Recalcular com `node tools/mare/simcosta-offset.mjs` quando a FURG amarrar o radar à rede do IBGE ou o sensor for reinstalado.
-- **Maré meteorológica:** `surge = nível_NR − previsão`. Em 30 dias variou de −34 a +29 cm (típico 12,5 cm), mais que a maré astronômica local. Destaque laranja a partir de ±15 cm.
-- **Validação (7 dias):** correlação medido × previsto de só 0,39 (0,54 no melhor ajuste de fase) — a previsão sozinha explica pouco em Rio Grande.
-- **Segurança da informação:** dado com mais de 30 min ou falha da API → a caixa avisa e o app volta só à previsão. Crédito obrigatório: "Dados cortesia do SiMCosta/FURG".
+| Porto | Fonte(s) | Offset (zero do radar → NR) | Correção de horário | Incerteza | Calibração |
+|---|---|---|---|---|---|
+| Rio Grande | São José do Norte (id 332) | 12,374 m | 0 | ±7 cm | 12/09–12/10/2026 |
+| Suape | Recife (id 330, UFPE) + Tamandaré (id 399, CEPENE/UFPE) | 10,311 m e 10,305 m | +11 min | ±4 cm | 15/09–15/10/2026 |
+
+- **Fonte:** API pública e documentada (https://simcosta.furg.br/q/docs/) — `GET /api/intrans_data?boiaID=<id>&type=json&time1=&time2=&params=avg_water_level_arbitrary_zero`. 1 leitura/min, CORS liberado, sem login. Lista de estações em `GET /q/stations`. 1ª carga ~50 KB por fonte (6 h); depois só o que chegou (~1 KB a cada 5 min). As fontes de um porto são buscadas em paralelo.
+- **Do zero do radar ao NR:** `nível_NR = leitura − OFFSET`. O offset é a média de (leitura − previsão) em ~720 horas; a oscilação semanal vira a incerteza exibida. Recalcular com `node tools/mare/simcosta-offset.mjs <porto> 30` quando os radares forem amarrados à rede do IBGE ou reinstalados.
+- **Várias fontes (Suape):** minuto a minuto, média das fontes no ar: `nível_NR(t) = (1/n) · Σ [leitura_i(t) − OFFSET_i]`. A série vai só até o último minuto que todas as fontes ativas já mandaram (sem degrau no fim). Fonte com dado > 30 min sai da média e a faixa avisa ("Só Tamandaré no ar (Recife sem dado)"). Em 30 dias, Recife e Tamandaré no NR diferiram 0,0 cm em média (RMS 3,2 cm).
+- **Porto secundário (Suape):** em Recife e Tamandaré a maré chega ~11 min antes da previsão de Suape (melhor ajuste em 30 dias, passos de 1 min, igual nas duas). A leitura é transferida para Suape com `t_porto = t_leitura + 11 min`, como nas correções de porto secundário da DHN. Sem isso, perto da meia-maré (~0,5 m/h) surgiria uma maré meteorológica falsa de ~9 cm. A idade do dado continua no relógio real.
+- **Maré meteorológica:** `surge = mediana_10min( nível_NR(tᵢ) − previsão(tᵢ) )` e `nível agora = previsão(último minuto) + surge`. Destaque laranja a partir de ±15 cm. Rio Grande: em 30 dias, de −34 a +108 cm (RMS 13 cm), mais que a maré astronômica local. Suape: de −12 a +10 cm (RMS 4,1 cm).
+- **Validação:** Rio Grande — correlação medido × previsto de só 0,39 (a previsão explica pouco). Suape — correlação 0,996 (Recife) e 0,992 (Tamandaré), amplitude medida/prevista 1,03 e 1,00: a previsão calibrada pela DHN acerta; o medido serve para confirmar e flagrar o fora do normal.
+- **Segurança da informação:** dado com mais de 30 min ou falha da API → a caixa avisa e o app volta só à previsão. Crédito obrigatório: "Dados cortesia do SiMCosta/FURG" (Suape: "SiMCosta/FURG, UFPE e CEPENE").
 
 ---
 
@@ -377,7 +385,7 @@ python3 server.py          # http://localhost:8787/
 | Navegador · PWA | `node pwa-check.cjs` | Manifesto, ícones, QR, copiar link, instalação, offline |
 | Navegador · espectro | `node equalizer-check.cjs` | Pausa/retomada, movimento reduzido, falha de CORS mantém o áudio |
 | Navegador · manual | `node manual-check.cjs` | Tour automático, manual por seção, "Abrir a aba", `#manual`, desktop |
-| Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha |
+| Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: Rio Grande ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha; Suape com 2 fontes (média e horário corrigido), 1 fonte fora e as 2 fora |
 | README em dia | `node tools/manual/gerar-readme.mjs --check` | Manual do README igual ao `manual.js` |
 | Coletor SAAM | `cd tools/saam && npm i xlsx fflate && node test.mjs` | Leitor da planilha e regras de alerta (planilha sintética) |
 
@@ -428,5 +436,6 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 - **SAAM** depende do link público da planilha da praticagem; só Suape por enquanto.
 - **Push com tela apagada** usa o som padrão do celular; no iPhone exige o app instalado.
 - **Maré** é previsão astronômica: não considera vento, pressão ou vazão de rio. Informativa — não substitui a Tábua DHN na navegação.
-- **Nível medido** só em Rio Grande por enquanto; referência ao NR é estimada (±7 cm) até a FURG amarrar o radar à rede do IBGE; depende da estação estar no ar.
+- **Nível medido** só em Rio Grande e Suape por enquanto (próximos candidatos com marégrafo SiMCosta no ar: Pecém, Paranaguá, Niterói/Rio, Salvador e São José do Ribamar/Itaqui); referência ao NR é estimada (Rio Grande ±7 cm, Suape ±4 cm) até a amarração dos radares à rede do IBGE; depende das estações estarem no ar.
+- **Suape** não tem marégrafo próprio no ar (o do porto, SiMCosta 311, está mudo desde 2024): o nível vem de Recife e Tamandaré, ~40 km de cada lado, transferido para Suape. Fenômenos muito locais da baía não aparecem.
 - **Mapas e frase do Charlie** dependem de serviços externos; quando caem, o card mostra aviso e o resto segue.

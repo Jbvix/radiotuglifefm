@@ -1,3 +1,29 @@
+# SPRINT 23 — Suape com nível do mar medido ao vivo (Recife + Tamandaré) — v3.5.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-14T22:30:00-03:00
+
+Validação da fonte (Etapa 1, pesquisa):
+- O marégrafo de **Suape (SiMCosta id 311) está mudo**: nenhuma leitura de mar/2024 até hoje; também "fora do ar" na rede IOC/UNESCO. O radar dele (série 27092984) aparece em Tamandaré desde set/2024 — muito provavelmente foi transferido.
+- Dois marégrafos vivos, um de cada lado do porto: **Recife (id 330, UFPE, desde mai/2026)**, ~40 km ao norte, e **Tamandaré (id 399, CEPENE/UFPE)**, 44 km ao sul. 720/720 h completas em 30 dias, dado com ~20 min, mesma API pública do SiMCosta (CORS `*`, sem login).
+- Medido × previsão do app para Suape em 30 dias (15/09–15/10/2026): correlação 0,996 (Recife) e 0,992 (Tamandaré); amplitude medida/prevista 1,03 e 1,00. A maré chega **11 min antes** nas duas (melhor ajuste, passos de 1 min). Com essa correção, diferença típica de 4,7 cm (Recife), 4,2 cm (Tamandaré) e **4,1 cm na média das duas**; Recife − Tamandaré no NR: 0,0 cm em média (RMS 3,2 cm).
+- Leitura crítica: em Suape a maré astronômica domina e a previsão já acerta; o medido serve para confirmar e para flagrar o fora do normal (ressaca, maré meteorológica). Em Rio Grande é o contrário.
+
+Implementação (Etapa 2, opção A aprovada pelo Comandante):
+- `tide-live.js` 3.5.0: `ESTACOES[porto].fontes` (1 ou mais marégrafos, offset por fonte). Suape = média minuto a minuto de Recife (10,311 m) e Tamandaré (10,305 m), cortada no último minuto que ambos já mandaram. Fonte com dado > 30 min sai da média e a faixa avisa "Só Tamandaré no ar (Recife sem dado)". Fontes buscadas em paralelo.
+- Correção de **porto secundário** (`adiantamentoMin: 11`): `t_porto = t_leitura + 11 min`. Sem ela, perto da meia-maré (~0,5 m/h) surgiria uma maré meteorológica falsa de ~9 cm.
+- Faixa "Ao vivo · nível medido · Recife + Tamandaré", linha "Média de Recife e Tamandaré · horário corrigido para Suape", crédito "SiMCosta/FURG, UFPE e CEPENE", ±4 cm.
+- `tools/mare/simcosta-offset.mjs` 1.1.0: várias fontes, aplica o adiantamento, procura a melhor defasagem (−30 a +30 min) e mede a diferença entre as fontes. Uso: `node tools/mare/simcosta-offset.mjs suape 30`.
+- Manual de bordo: item "Nível medido (Rio Grande e Suape)" e novidade da v3.5.0; README regenerado. `docs/PROJETO.md` 1.2.0 (§6.4 reescrito). Versão 3.5.0 em `VERSION.json`, `index.html`, `sw.js` (cache novo) e `manual.js`.
+
+Verificação: `tide-live-check.cjs` com 9 cenários (3 novos de Suape): média das duas fontes com nível = previsão(t + 11 min) + 12 cm (erro ≤ 1 cm) e "+12 cm acima da previsão"; Recife fora → segue só com Tamandaré e avisa; as duas fora → "indisponível" com a previsão intacta; Rio Grande sem mudança. Passou 2 vezes seguidas. Teste contra a **API real**: Suape "0,74 m · −6 cm abaixo da previsão", Rio Grande "0,16 m · −9 cm", linha verde sobre a curva, sem erros de JavaScript. Ferramenta de offset rodada na API real (recupera 10,311 e 10,305 m). Regressões: schedule.test, browser, pwa, equalizer e manual passaram; README conferido com `--check`.
+
+Bugs encontrados e corrigidos:
+- **Maré meteorológica inventada com a maré correndo:** o nível era a mediana dos últimos 10 min (que representa ~5 min atrás) comparada à previsão do último minuto. Em Suape, vazando a ~0,5 m/h, o teste mostrou +16 cm em vez de +12. Agora a maré meteorológica é a mediana dos resíduos (medido − previsto) minuto a minuto e o nível = previsão + essa mediana. Afetava também Rio Grande, mas lá a maré astronômica quase não se move e o erro passava de 1 cm.
+
+Observação: a ferramenta de offset mostrou em Rio Grande uma maré meteorológica de até **+108 cm** na última semana; o offset de 30 dias (12,381 m) segue a menos de 1 cm do atual (12,374 m), sem necessidade de recalibrar.
+
+Limitações: Suape não tem marégrafo próprio; Recife e Tamandaré ficam ~40 km de cada lado e fenômenos muito locais da baía não aparecem. Nível absoluto estimado (±4 cm) até a amarração oficial dos radares. Próximos portos com marégrafo SiMCosta no ar: Pecém, Paranaguá, Niterói (Rio), Salvador e São José do Ribamar (Itaqui). Os testes `browser`, `pwa` e `equalizer` estão fixos no Edge (`channel: 'msedge'`) e aqui rodaram com o Chromium do servidor de testes por cópia temporária; `tools/saam/test.mjs` não rodou (pacote `xlsx` não instalado neste ambiente; SAAM não foi tocado).
+
 # SPRINT 22 — Rio Grande com nível do mar medido ao vivo — v3.4.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-12T18:30:00-03:00
