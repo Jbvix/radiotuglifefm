@@ -10,7 +10,7 @@ App mobile da webrádio TugLife FM.
 - **Documentação técnica:** [docs/PROJETO.md](docs/PROJETO.md) — diretórios, módulos, backend, fluxos, deploy e testes
 
 <!-- manual:inicio -->
-## Manual de bordo (v3.6.0)
+## Manual de bordo (v3.7.0)
 
 _Gerado de `manual.js` por `tools/manual/gerar-readme.mjs` — edite lá, não aqui._
 
@@ -18,6 +18,7 @@ No app: botão **?** no topo. No celular, a barra de abas embaixo leva a cada se
 
 **Novidades**
 
+- v3.7.0: Aba Rádio numa tela só: faixa atual no player e o resto em "Mais da TugLife".
 - v3.6.0: Nível do mar medido ao vivo também em Pecém, Rio de Janeiro, Paranaguá e Salvador.
 - v3.5.0: Suape com nível do mar medido ao vivo: média dos marégrafos de Recife e Tamandaré.
 - v3.4.0: Rio Grande com nível do mar medido ao vivo (SiMCosta/FURG) e maré meteorológica.
@@ -32,7 +33,7 @@ Ouvir a TugLife FM e acompanhar a programação.
 - **Ouvir ao vivo** — Toque no botão grande da aba Rádio. Nas outras abas, use a faixa ao vivo logo acima da barra de abas.
 - **No ar agora e próximo** — Mostra o programa da grade neste momento, quanto falta para acabar e o que vem em seguida.
 - **Grade semanal** — Toque em "Grade da semana" para abrir. Escolha o dia; "Hoje" volta para o dia atual. Funciona mesmo sem internet.
-- **Faixa atual** — Nome da música que está tocando, atualizado sozinho.
+- **Faixa atual** — Nome da música que está tocando (♪), logo abaixo do programa no ar. Atualiza sozinho.
 - **Tripulação a bordo** — Quantos ouvintes estão conectados agora e o pico do dia.
 
 ### Maré
@@ -67,8 +68,8 @@ Painel do Marujo: tráfego e clima por porto.
 
 Instalação, compartilhamento e ajustes.
 
-- **Instalar na tela inicial** — Abre como aplicativo, em tela cheia, e recebe as notificações de manobra.
-- **Compartilhar e QR Code** — Envie o link da rádio ou mostre o QR Code para outro tripulante.
+- **Instalar na tela inicial** — Na aba Rádio, abra "Mais da TugLife" e toque em Instalar app. Abre como aplicativo, em tela cheia, e recebe as notificações de manobra.
+- **Compartilhar e QR Code** — Em "Mais da TugLife" (aba Rádio): envie o link da rádio ou mostre o QR Code para outro tripulante. Lá também ficam a TugLife Store, o Deezer e a Alexa.
 - **Tema claro e escuro** — Botão da lua no topo. O claro ajuda sob sol forte no convés.
 - **Como atualizar** — Feche e reabra o app duas vezes. Não precisa desinstalar.
 - **Sem internet** — Grade, maré e este manual continuam disponíveis; a rádio precisa de conexão.

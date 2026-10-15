@@ -1,3 +1,25 @@
+# SPRINT 25 — Aba Rádio numa tela só (P2-A) — v3.7.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T01:30:00-03:00
+
+Antes: em 390×844 a aba Rádio media 1.394 px para 844 px de tela (~550 px de rolagem); abaixo da dobra ficavam relógio, grade, faixa atual, Instalar/Compartilhar, Store/Deezer/Alexa e o rodapé (com a data de atualização parada em 12/10).
+
+Implementação (proposta P2-A aprovada pelo Comandante):
+- **Faixa atual (♪) dentro do player**, logo abaixo do programa no ar; o card "Nesta frequência · faixa atual" deixou de existir. Mensagem de falha encurtada para "Faixa indisponível no momento." (cabe numa linha).
+- **Painel recolhível "Mais da TugLife"** (`#more-panel`) com Instalar app, Compartilhar · QR Code, TugLife Store, Deezer e Alexa. Fechado no celular; ao abrir, a aba rola sozinha até os botões (parando acima da barra de abas). No computador abre sozinho, numa linha, logo abaixo do cabeçalho (onde ficava a barra Instalar/Compartilhar).
+- **Celular:** logo de 100 px, legenda do espectro oculta (o selo Standby/Ao vivo já informa), relógio numa linha (data à esquerda, hora à direita, sem a linha do fuso), espaçamentos menores; rodapé só no computador.
+- O botão "Instalar na tela inicial" do Manual de bordo agora abre a aba Rádio e o painel antes de instalar.
+- Rodapé com a data de atualização correta. Manual de bordo (itens Faixa atual, Instalar, Compartilhar e novidade da v3.7.0), README regenerado, `docs/PROJETO.md` 1.4.0, versão 3.7.0.
+
+Verificação: `radio-check.cjs` (novo) — 390×844 com **0 px de rolagem** e play, faixa, grade e "Mais" acima da barra de abas; faixa dentro do player; painel fechado e rodapé oculto no celular; abrir o painel rola até os botões; manual → App → "Instalar na tela inicial" volta à aba Rádio, abre o painel e o diálogo; 1280×900 com painel aberto numa linha entre o cabeçalho e o player, rodapé visível, sem rolagem lateral; sem erros de JavaScript. Medido também em 360×740: rolagem de ~130 px, com o play e a faixa à vista. Regressões: schedule.test, browser, pwa, equalizer, manual e tide-live passaram.
+
+Bugs encontrados e corrigidos durante a sprint:
+- Sem a barra Instalar/Compartilhar, a linha 2 da grade do computador ficou vazia e o card de Maré (largura total) subiu para lá, empurrando o player para baixo. O painel "Mais" passou a ocupar essa linha.
+- A regra geral `.footer-actions {width:100%}` impedia os botões de ficarem numa linha no painel do computador.
+- Um comentário `//` posto na mesma linha do `catch` engoliu a chave de fechamento e quebrou o script da faixa atual; o teste acusou o erro de JavaScript e o comentário foi para a linha de cima.
+
+Limitações: em celulares baixos (≤ 740 px de altura) a aba ainda rola um pouco. A versão e o autor, antes no rodapé, só aparecem no computador e no Manual de bordo.
+
 # SPRINT 24 — Nível medido em Pecém, Rio de Janeiro, Paranaguá e Salvador — v3.6.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T00:30:00-03:00

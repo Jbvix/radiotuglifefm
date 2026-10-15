@@ -1,5 +1,17 @@
 // SPRINTS 09–10 · Jossian Brito · Release date in VERSION.json.
+// v3.7.0 (SPRINT 25) · 2026-10-15T01:30:00-03:00 · Jossian Brito
+//   [MOD] Instalar/Compartilhar agora moram no painel recolhível
+//         "Mais da TugLife" (#more-panel): fechado no celular para a
+//         aba Rádio caber numa tela; aberto no computador. No celular,
+//         ao abrir, a aba rola sozinha até os botões.
 document.addEventListener('DOMContentLoaded', () => {
+  const mais = document.getElementById('more-panel');
+  const celular = window.matchMedia('(max-width: 760px)');
+  if (mais && !celular.matches) mais.open = true;
+  // no celular, ao abrir, rola até o fim do painel (os botões nascem abaixo da dobra)
+  if (mais) mais.addEventListener('toggle', () => {
+    if (mais.open && celular.matches) requestAnimationFrame(() => mais.scrollIntoView({ block: 'end', behavior: 'smooth' }));
+  });
   const publicUrl = 'https://radiotuglifefm.netlify.app/';
   const dialog = document.getElementById('share-dialog');
   const installDialog = document.getElementById('install-dialog');

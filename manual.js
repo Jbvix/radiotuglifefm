@@ -2,11 +2,14 @@
    TugLife FM — Manual de bordo (botão ?) e Tour guiado
    ------------------------------------------------------------
    Arquivo   : manual.js
-   Versão    : 3.6.0 (SPRINT 24)
-   Data/Hora : 2026-10-15T00:30:00-03:00
+   Versão    : 3.7.0 (SPRINT 25)
+   Data/Hora : 2026-10-15T01:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.7.0  [MOD] Itens "Faixa atual", "Instalar" e "Compartilhar" dizem onde estão
+                 agora (player e painel "Mais da TugLife"); novidade da v3.7.0.
+           [MOD] "Instalar na tela inicial" do manual abre a aba Rádio e o painel.
    v3.6.0  [MOD] Item "Nível medido (6 portos)" e novidade da v3.6.0.
    v3.5.0  [MOD] Item "Nível medido (Rio Grande e Suape)" e novidade da v3.5.0.
    v3.4.0  [NOVO] Item "Nível medido (Rio Grande)" e novidade da v3.4.0.
@@ -41,9 +44,10 @@
 
 (function () {
   const MANUAL = {
-    versao: '3.6.0',
+    versao: '3.7.0',
     tourVersao: '3.2.0',   // mude só quando o tour precisar ser revisto pela tripulação
     novidades: [
+      { versao: '3.7.0', texto: 'Aba Rádio numa tela só: faixa atual no player e o resto em "Mais da TugLife".' },
       { versao: '3.6.0', texto: 'Nível do mar medido ao vivo também em Pecém, Rio de Janeiro, Paranaguá e Salvador.' },
       { versao: '3.5.0', texto: 'Suape com nível do mar medido ao vivo: média dos marégrafos de Recife e Tamandaré.' },
       { versao: '3.4.0', texto: 'Rio Grande com nível do mar medido ao vivo (SiMCosta/FURG) e maré meteorológica.' },
@@ -56,7 +60,7 @@
         ['Ouvir ao vivo', 'Toque no botão grande da aba Rádio. Nas outras abas, use a faixa ao vivo logo acima da barra de abas.'],
         ['No ar agora e próximo', 'Mostra o programa da grade neste momento, quanto falta para acabar e o que vem em seguida.'],
         ['Grade semanal', 'Toque em "Grade da semana" para abrir. Escolha o dia; "Hoje" volta para o dia atual. Funciona mesmo sem internet.'],
-        ['Faixa atual', 'Nome da música que está tocando, atualizado sozinho.'],
+        ['Faixa atual', 'Nome da música que está tocando (♪), logo abaixo do programa no ar. Atualiza sozinho.'],
         ['Tripulação a bordo', 'Quantos ouvintes estão conectados agora e o pico do dia.']
       ]},
       { id: 'mare', label: 'Maré', aba: 'mare', resumo: 'Previsão de maré de 13 portos, calibrada com a DHN 2026.', itens: [
@@ -79,8 +83,8 @@
         ['Trocar de porto', 'Deslize a fileira de portos e toque no desejado.']
       ]},
       { id: 'app', label: 'App', aba: null, resumo: 'Instalação, compartilhamento e ajustes.', itens: [
-        ['Instalar na tela inicial', 'Abre como aplicativo, em tela cheia, e recebe as notificações de manobra.'],
-        ['Compartilhar e QR Code', 'Envie o link da rádio ou mostre o QR Code para outro tripulante.'],
+        ['Instalar na tela inicial', 'Na aba Rádio, abra "Mais da TugLife" e toque em Instalar app. Abre como aplicativo, em tela cheia, e recebe as notificações de manobra.'],
+        ['Compartilhar e QR Code', 'Em "Mais da TugLife" (aba Rádio): envie o link da rádio ou mostre o QR Code para outro tripulante. Lá também ficam a TugLife Store, o Deezer e a Alexa.'],
         ['Tema claro e escuro', 'Botão da lua no topo. O claro ajuda sob sol forte no convés.'],
         ['Como atualizar', 'Feche e reabra o app duas vezes. Não precisa desinstalar.'],
         ['Sem internet', 'Grade, maré e este manual continuam disponíveis; a rádio precisa de conexão.']
@@ -161,7 +165,12 @@
       const s = MANUAL.secoes.find((x) => x.id === secao);
       dlg.close();
       if (s && s.aba) { if (window.TugTabs) window.TugTabs.abrir(s.aba); }
-      else { const inst = document.getElementById('install-app'); if (inst) inst.click(); }
+      else {
+        // v3.7.0: o botão mora no painel "Mais da TugLife"; abre a aba Rádio e o painel antes
+        if (window.TugTabs) window.TugTabs.abrir('radio');
+        const mais = document.getElementById('more-panel'); if (mais) mais.open = true;
+        const inst = document.getElementById('install-app'); if (inst) inst.click();
+      }
     });
     ui.tour.addEventListener('click', () => { dlg.close(); iniciarTour(); });
     if (location.hash === '#manual') abrirManual();

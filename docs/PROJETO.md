@@ -3,14 +3,15 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.6.0 (SPRINT 24) |
-| **Documento** | 1.3.0 · 2026-10-15T00:30:00-03:00 |
+| **Versão do app** | 3.7.0 (SPRINT 25) |
+| **Documento** | 1.4.0 · 2026-10-15T01:30:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
 | **Repositório** | https://github.com/Jbvix/radiotuglifefm |
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
+> - 1.4.0 (2026-10-15) — Aba Rádio compacta (SPRINT 25): faixa atual no player, painel "Mais da TugLife", rodapé só no computador; teste `radio-check.cjs`.
 > - 1.3.0 (2026-10-15) — Nível medido em mais 4 portos (Pecém, Rio de Janeiro, Paranaguá, Salvador), segunda API (IOC/UNESCO), decisão de deixar Itaqui de fora, ferramenta de offset 1.2.0 e cenários 10–11 no teste.
 > - 1.2.0 (2026-10-14) — Nível medido em Suape (média Recife + Tamandaré, correção de horário de porto secundário), §6.4 reescrito, maré meteorológica pela mediana dos resíduos, ferramenta de offset 1.1.0 e 3 cenários novos no teste.
 > - 1.1.0 (2026-10-12) — Nível medido ao vivo (SiMCosta/FURG): `tide-live.js`, fluxo §6.4, calibração do zero do radar, teste e ferramenta novos.
@@ -57,7 +58,7 @@ radiotuglifefm/
 ├── schedule-ui.js          Interface da grade: dias, "Hoje", lista, relógio, painel recolhível
 ├── experience.js           Mini-player, duração e barra de progresso do programa
 ├── equalizer.js            Motor Web Audio (analisador) + espectro circular de barras
-├── pwa.js                  Instalar app, compartilhar, QR Code, aviso de offline
+├── pwa.js                  Instalar app, compartilhar, QR Code, aviso de offline, painel "Mais da TugLife"
 ├── listeners.js            "Tripulação a bordo": ouvintes ao vivo e pico do dia (Supabase)
 ├── tide-data.js            Constantes harmônicas calibradas dos 13 portos
 ├── tides.js                Card "Tábua de Maré": cálculo, curva 24 h, extremos, navegação
@@ -100,6 +101,7 @@ radiotuglifefm/
 ├── pwa-check.cjs           Teste de navegador: manifesto, QR, instalação, offline
 ├── equalizer-check.cjs     Teste de navegador: espectro, pausa, movimento reduzido, CORS
 ├── manual-check.cjs        Teste de navegador: manual, tour, #manual, desktop
+├── radio-check.cjs         Teste de navegador: aba Rádio numa tela (390×844), painel "Mais", desktop
 ├── tide-live-check.cjs     Teste de navegador: nível medido (APIs simuladas) em 11 cenários
 ├── schedule.test.cjs       Teste unitário da grade (node:test)
 ├── server.py               Servidor local (porta 8787) para desenvolvimento e testes
@@ -185,7 +187,7 @@ flowchart LR
 | `schedule-ui.js` | Botões dos dias, "Hoje", lista com "No ar agora", relógio digital; painel recolhível | `#schedule-panel`, `#schedule-days`, `#schedule-list`, `#digital-clock` | `RadioSchedule` | 3.3.0 |
 | `experience.js` | Mini-player (faixa ao vivo) e duração/progresso do programa | `#mini-play`, `#mini-status`, `.program-duration` | `RadioSchedule` | 2.2.0 |
 | `equalizer.js` | Prepara o Web Audio (confere CORS antes); espectro circular; respeita "movimento reduzido" | `#spectrum-bars`, `#spectrum-status` | stream BRLOGIC | SPRINT 08 |
-| `pwa.js` | Instalar app, diálogo de compartilhamento/QR, copiar link, aviso offline, registro do SW | `#install-app`, `#share-radio`, `#share-dialog`, `#network-status` | — | SPRINTS 09–10 |
+| `pwa.js` | Instalar app, diálogo de compartilhamento/QR, copiar link, aviso offline, registro do SW; abre o painel "Mais da TugLife" no computador e rola até ele no celular | `#install-app`, `#share-radio`, `#share-dialog`, `#network-status`, `#more-panel` | — | 3.7.0 |
 | `listeners.js` | Presença em tempo real ("N a bordo") e pico do dia; só observa os eventos do `<audio>` | `#crew-row`, `#crew-count`, `#crew-peak` | Supabase Realtime + RPC `registrar_pico`, `pico_hoje` | 2.6.0 |
 | `tide-data.js` | Constantes harmônicas por porto, método de calibração e erro típico | — (só dados) | — | 2.9.0 |
 | `tides.js` | Altura agora, tendência, extremos do dia, curva SVG 24 h, navegação por dia, porto lembrado | `#card-mare`, `#tide-port`, `#tide-chart`, `#tide-list` | `NeapsTide`, `TUGLIFE_TIDES` | 3.4.0 |
@@ -342,8 +344,8 @@ O card de Maré mostra, além da previsão, o nível **real** medido por marégr
 
 ## 7. Interface
 
-- **Celular (≤ 760 px):** tela única com cabeçalho fixo e barra de abas **Rádio | Maré | Manobras | Portos**. Cada bloco declara sua aba em `data-tab` e o CSS mostra só a aba ativa (`body[data-aba]`). Fora da aba Rádio, a faixa ao vivo fica acima da barra. Grade semanal recolhida.
-- **Computador:** grade de duas colunas com todos os cards visíveis; barra de abas oculta; grade semanal aberta.
+- **Celular (≤ 760 px):** tela única com cabeçalho fixo e barra de abas **Rádio | Maré | Manobras | Portos**. Cada bloco declara sua aba em `data-tab` e o CSS mostra só a aba ativa (`body[data-aba]`). Fora da aba Rádio, a faixa ao vivo fica acima da barra. Aba Rádio numa tela só (v3.7.0): player com a faixa atual (♪), relógio numa linha, grade semanal e "Mais da TugLife" recolhidos; rodapé oculto.
+- **Computador:** grade de duas colunas com todos os cards visíveis; barra de abas oculta; grade semanal aberta; "Mais da TugLife" aberto numa linha logo abaixo do cabeçalho.
 - **Tema:** escuro por padrão, claro pelo botão da lua.
 - **Acessibilidade:** botões reais, `aria-label` em ícones, alvos ≥ 44 px, respeito a "movimento reduzido", contraste do tema claro reforçado.
 
@@ -390,6 +392,7 @@ python3 server.py          # http://localhost:8787/
 | Grade (unitário) | `node schedule.test.cjs` | Programa atual/próximo, virada de dia |
 | Navegador · geral | `node browser-check.cjs` | 4 larguras sem estouro, grade, tema, mapa sob demanda, mini-player, erro de conexão |
 | Navegador · PWA | `node pwa-check.cjs` | Manifesto, ícones, QR, copiar link, instalação, offline |
+| Navegador · aba Rádio | `node radio-check.cjs` | 390×844 sem rolagem com play, faixa, grade e "Mais" à vista; painel fechado no celular e aberto numa linha no computador; manual → "Instalar na tela inicial"; rodapé só no computador |
 | Navegador · espectro | `node equalizer-check.cjs` | Pausa/retomada, movimento reduzido, falha de CORS mantém o áudio |
 | Navegador · manual | `node manual-check.cjs` | Tour automático, manual por seção, "Abrir a aba", `#manual`, desktop |
 | Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: Rio Grande ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha; Suape com 2 fontes (média e horário corrigido), 1 fonte fora e as 2 fora; Pecém, Rio, Paranaguá e Salvador (IOC com sensor de isca); Itaqui sem busca |
@@ -439,7 +442,7 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 
 ## 13. Limitações conhecidas
 
-- **Aba Rádio** ainda rola cerca de 570 px no celular para mostrar relógio, faixa atual, links, Instalar/Compartilhar e rodapé (proposta de enxugar aguardando decisão).
+- **Aba Rádio** cabe numa tela em 390×844; em celulares baixos (360×740) ainda rola ~130 px, mas o play e a faixa atual ficam à vista.
 - **SAAM** depende do link público da planilha da praticagem; só Suape por enquanto.
 - **Push com tela apagada** usa o som padrão do celular; no iPhone exige o app instalado.
 - **Maré** é previsão astronômica: não considera vento, pressão ou vazão de rio. Informativa — não substitui a Tábua DHN na navegação.
