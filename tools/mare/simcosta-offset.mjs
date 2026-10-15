@@ -2,8 +2,8 @@
    TugLife FM — Calibração do zero do marégrafo SiMCosta → NR (DHN)
    ------------------------------------------------------------
    Arquivo   : tools/mare/simcosta-offset.mjs
-   Versão    : 1.1.0 (SPRINT 23 · app v3.5.0)
-   Data/Hora : 2026-10-14T22:30:00-03:00
+   Versão    : 1.2.0 (SPRINT 24 · app v3.6.0)
+   Data/Hora : 2026-10-15T00:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
@@ -15,6 +15,10 @@
            [NOVO] Usa adiantamentoMin do porto (previsão em t + atraso)
            e procura a melhor defasagem de −30 a +30 min (passo 1 min)
            para conferir se o valor em tide-live.js continua bom.
+   v1.2.0  [MOD] Busca pelos mesmos adaptadores de tide-live.js
+           (SiMCosta e IOC/UNESCO) e respeita fonte.faixa.
+           [NOVO] Imprime a oscilação semanal e a incerteza sugerida
+           (metade dela, no mínimo 3 cm).
    ------------------------------------------------------------
    FÓRMULA
        OFFSET = média_horas( leitura_radar(t) − previsão_NR(t + adiantamento) )
@@ -50,20 +54,20 @@ const est = window.TugTideLive._estacoes[portoId];
 const porto = window.TUGLIFE_TIDES.find((p) => p.id === portoId);
 if (!est || !porto) { console.error('Porto sem estação SiMCosta em tide-live.js:', portoId); process.exit(2); }
 const pred = NeapsTide.createTidePredictor(porto.hc.map(([name, amplitude, phase]) => ({ name, amplitude, phase })), { offset: porto.z0 });
-const param = est.param.replace(/^avg_/, '');   // leitura instantânea; a média horária já suaviza
+const ADAPT = window.TugTideLive._adaptadores;
 const media = (a) => a.reduce((s, x) => s + x, 0) / a.length;
 // previsão no meio da hora h, adiantada de "min" minutos (porto secundário)
 const prev = (h, min) => pred.getWaterLevelAtTime({ time: new Date(h * 3600000 + 1800000 + min * 60000) }).level;
 
-async function horarias(id) {
-  const agora = Math.floor(Date.now() / 1000), horas = new Map();
-  for (let fim = agora; fim > agora - dias * 86400; fim -= 6 * 86400) {
-    const ini = Math.max(fim - 6 * 86400, agora - dias * 86400);
-    const url = `https://simcosta.furg.br/api/intrans_data?boiaID=${id}&type=json&time1=${ini}&time2=${fim}&params=${param}`;
-    const r = await fetch(url); const txt = await r.text();
-    for (const d of (txt ? JSON.parse(txt) : [])) {
-      const t = Date.parse(d.timestamp), v = Number(d[param]);
-      if (!Number.isFinite(t) || !(v > 5 && v < 20)) continue;
+// médias horárias de uma fonte, em blocos de 6 dias (a IOC limita o tamanho da resposta)
+async function horarias(f) {
+  const ad = ADAPT[f.api || 'simcosta'], [lo, hi] = f.faixa || [5, 20];
+  const agora = Date.now(), horas = new Map();
+  for (let fim = agora; fim > agora - dias * 864e5; fim -= 6 * 864e5) {
+    const ini = Math.max(fim - 6 * 864e5, agora - dias * 864e5);
+    const r = await fetch(ad.url(f, ini, fim)); const txt = await r.text();
+    for (const { t, v } of ad.ler(f, txt ? JSON.parse(txt) : [])) {
+      if (!Number.isFinite(t) || !(v > lo && v < hi)) continue;
       const h = Math.floor(t / 3600000), a = horas.get(h) || [0, 0];
       a[0] += v; a[1] += 1; horas.set(h, a);
     }
@@ -75,7 +79,7 @@ async function horarias(id) {
 
 const adiant = est.adiantamentoMin || 0, series = {};
 for (const f of est.fontes) {
-  const s = await horarias(f.id), hs = [...s.keys()];
+  const s = await horarias(f), hs = [...s.keys()];
   if (!hs.length) { console.log(`\n${f.nome} (id ${f.id}): sem dados.`); continue; }
   series[f.id] = s;
   const resumo = (min) => {
@@ -91,11 +95,18 @@ for (const f of est.fontes) {
   console.log(`OFFSET = ${r.off.toFixed(3)} m   (atual em tide-live.js: ${f.offset}) · adiantamento ${adiant} min`);
   console.log(`Maré meteorológica: RMS ${(r.rms * 100).toFixed(1)} cm · mín ${(r.res[0] * 100).toFixed(0)} · máx ${(r.res.at(-1) * 100).toFixed(0)} cm`);
   console.log(`Melhor adiantamento: ${melhor.min} min (RMS ${(melhor.rms * 100).toFixed(1)} cm)`);
+  const semanas = [];
   for (let w = 0; ; w++) {
     const a = hs[0] + w * 168; if (a > hs.at(-1)) break;
     const sem = hs.filter((h) => h >= a && h < a + 168);
-    if (sem.length) console.log(`  semana ${w + 1}: ${media(sem.map((h) => s.get(h) - prev(h, adiant))).toFixed(3)} m (${sem.length} h)`);
+    if (!sem.length) continue;
+    const m = media(sem.map((h) => s.get(h) - prev(h, adiant)));
+    if (sem.length >= 24) semanas.push(m);
+    console.log(`  semana ${w + 1}: ${m.toFixed(3)} m (${sem.length} h)`);
   }
+  // incerteza exibida no app = metade da oscilação semanal, no mínimo 3 cm
+  const osc = (Math.max(...semanas) - Math.min(...semanas)) * 100;
+  console.log(`Oscilação semanal ${osc.toFixed(1)} cm → incerteza sugerida ±${Math.max(3, Math.round(osc / 2))} cm (atual ±${est.incerteza})`);
   f.novo = r.off;
 }
 // v1.1.0: com 2+ fontes, quanto elas discordam depois de irem ao NR

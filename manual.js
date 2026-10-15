@@ -2,11 +2,12 @@
    TugLife FM — Manual de bordo (botão ?) e Tour guiado
    ------------------------------------------------------------
    Arquivo   : manual.js
-   Versão    : 3.5.0 (SPRINT 23)
-   Data/Hora : 2026-10-14T22:30:00-03:00
+   Versão    : 3.6.0 (SPRINT 24)
+   Data/Hora : 2026-10-15T00:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.6.0  [MOD] Item "Nível medido (6 portos)" e novidade da v3.6.0.
    v3.5.0  [MOD] Item "Nível medido (Rio Grande e Suape)" e novidade da v3.5.0.
    v3.4.0  [NOVO] Item "Nível medido (Rio Grande)" e novidade da v3.4.0.
    v3.3.0  [MOD] Item "Grade semanal" descreve o painel recolhível.
@@ -40,9 +41,10 @@
 
 (function () {
   const MANUAL = {
-    versao: '3.5.0',
+    versao: '3.6.0',
     tourVersao: '3.2.0',   // mude só quando o tour precisar ser revisto pela tripulação
     novidades: [
+      { versao: '3.6.0', texto: 'Nível do mar medido ao vivo também em Pecém, Rio de Janeiro, Paranaguá e Salvador.' },
       { versao: '3.5.0', texto: 'Suape com nível do mar medido ao vivo: média dos marégrafos de Recife e Tamandaré.' },
       { versao: '3.4.0', texto: 'Rio Grande com nível do mar medido ao vivo (SiMCosta/FURG) e maré meteorológica.' },
       { versao: '3.3.0', texto: 'Grade da semana recolhida na aba Rádio: o essencial cabe numa tela só.' },
@@ -61,7 +63,7 @@
         ['Porto e dia', 'Escolha um dos 13 portos. As setas mudam o dia; "Hoje" volta para a data atual.'],
         ['Agora e tendência', 'Altura estimada neste instante e se a maré está enchendo ou vazando.'],
         ['Curva de 24 horas', 'A linha laranja marca o agora; os pontos marcam preamares e baixa-mares.'],
-        ['Nível medido (Rio Grande e Suape)', 'Faixa verde "Ao vivo": nível real do mar, atualizado a cada 5 min, e a maré meteorológica — quanto o vento põe a água acima ou abaixo da previsão. Rio Grande: marégrafo de São José do Norte. Suape: média de Recife e Tamandaré, com horário corrigido para Suape; se um sair do ar, segue com o outro. Linha verde no gráfico = medido.'],
+        ['Nível medido (6 portos)', 'Faixa verde "Ao vivo": nível real do mar, atualizado a cada 5 min, e a maré meteorológica — quanto o vento põe a água acima ou abaixo da previsão (laranja a partir de 15 cm). Em Rio Grande, Suape, Pecém, Rio de Janeiro, Paranaguá e Salvador. Suape usa a média de Recife e Tamandaré, com horário corrigido; se um sair do ar, segue com o outro. Linha verde no gráfico = medido.'],
         ['Selo de calibração', 'Mostra o erro típico contra a Tábua DHN 2026. Informativo: não substitui a DHN na navegação.']
       ]},
       { id: 'manobras', label: 'Manobras', aba: 'manobras', resumo: 'Programação SAAM em Suape, exclusiva da tripulação.', itens: [

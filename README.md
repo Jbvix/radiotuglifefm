@@ -10,7 +10,7 @@ App mobile da webrádio TugLife FM.
 - **Documentação técnica:** [docs/PROJETO.md](docs/PROJETO.md) — diretórios, módulos, backend, fluxos, deploy e testes
 
 <!-- manual:inicio -->
-## Manual de bordo (v3.5.0)
+## Manual de bordo (v3.6.0)
 
 _Gerado de `manual.js` por `tools/manual/gerar-readme.mjs` — edite lá, não aqui._
 
@@ -18,6 +18,7 @@ No app: botão **?** no topo. No celular, a barra de abas embaixo leva a cada se
 
 **Novidades**
 
+- v3.6.0: Nível do mar medido ao vivo também em Pecém, Rio de Janeiro, Paranaguá e Salvador.
 - v3.5.0: Suape com nível do mar medido ao vivo: média dos marégrafos de Recife e Tamandaré.
 - v3.4.0: Rio Grande com nível do mar medido ao vivo (SiMCosta/FURG) e maré meteorológica.
 - v3.3.0: Grade da semana recolhida na aba Rádio: o essencial cabe numa tela só.
@@ -41,7 +42,7 @@ Previsão de maré de 13 portos, calibrada com a DHN 2026.
 - **Porto e dia** — Escolha um dos 13 portos. As setas mudam o dia; "Hoje" volta para a data atual.
 - **Agora e tendência** — Altura estimada neste instante e se a maré está enchendo ou vazando.
 - **Curva de 24 horas** — A linha laranja marca o agora; os pontos marcam preamares e baixa-mares.
-- **Nível medido (Rio Grande e Suape)** — Faixa verde "Ao vivo": nível real do mar, atualizado a cada 5 min, e a maré meteorológica — quanto o vento põe a água acima ou abaixo da previsão. Rio Grande: marégrafo de São José do Norte. Suape: média de Recife e Tamandaré, com horário corrigido para Suape; se um sair do ar, segue com o outro. Linha verde no gráfico = medido.
+- **Nível medido (6 portos)** — Faixa verde "Ao vivo": nível real do mar, atualizado a cada 5 min, e a maré meteorológica — quanto o vento põe a água acima ou abaixo da previsão (laranja a partir de 15 cm). Em Rio Grande, Suape, Pecém, Rio de Janeiro, Paranaguá e Salvador. Suape usa a média de Recife e Tamandaré, com horário corrigido; se um sair do ar, segue com o outro. Linha verde no gráfico = medido.
 - **Selo de calibração** — Mostra o erro típico contra a Tábua DHN 2026. Informativo: não substitui a DHN na navegação.
 
 ### Manobras

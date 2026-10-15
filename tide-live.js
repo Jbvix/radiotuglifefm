@@ -2,8 +2,8 @@
    TugLife FM — Nível do mar MEDIDO (marégrafos SiMCosta/FURG)
    ------------------------------------------------------------
    Arquivo   : tide-live.js
-   Versão    : 3.5.0 (SPRINT 23)
-   Data/Hora : 2026-10-14T22:30:00-03:00
+   Versão    : 3.6.0 (SPRINT 24)
+   Data/Hora : 2026-10-15T00:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
@@ -24,11 +24,28 @@
            [FIX] Maré meteorológica pela mediana dos resíduos: a
            mediana do nível atrasava ~5 min e, com a maré correndo,
            inventava até ~4 cm (achado no teste de Suape).
+   v3.6.0  [NOVO] Nível medido em mais 4 portos: Pecém (SiMCosta 307),
+           Rio de Janeiro (SiMCosta 304, Niterói/DHN), Paranaguá
+           (SiMCosta 300, CEM/UFPR) e Salvador (marégrafo do IBGE/RMPG
+           via IOC/UNESCO, código "salv").
+           [NOVO] Segunda API: IOC Sea Level Monitoring (fonte.api =
+           'ioc'); cada fonte diz de qual API vem e a faixa de leituras
+           válidas (fonte.faixa), porque cada radar tem o seu zero.
+           [DECISÃO] Itaqui fica de fora: o marégrafo mais próximo
+           (Ribamar, id 302) está noutra baía, com amplitude 18% menor;
+           mesmo corrigida, sobram ~21 cm de erro de transferência que
+           virariam maré meteorológica falsa.
    ------------------------------------------------------------
    DE ONDE VEM O DADO
-   API pública e documentada do SiMCosta (https://simcosta.furg.br/q/docs/):
+   1) API pública e documentada do SiMCosta (https://simcosta.furg.br/q/docs/):
      GET /api/intrans_data?boiaID=332&type=json&time1=<s>&time2=<s>&params=<p>
-   - 1 leitura por minuto; CORS liberado; sem login.
+   2) v3.6.0: IOC Sea Level Monitoring (UNESCO), que redistribui
+      marégrafos do mundo todo — aqui o do IBGE em Salvador:
+     GET https://www.ioc-sealevelmonitoring.org/service.php?query=data
+         &code=salv&timestart=<ISO UTC>&timestop=<ISO UTC>&format=json
+      Resposta: [{slevel, stime "AAAA-MM-DD hh:mm:ss" (UTC), sensor}];
+      vários sensores misturados → filtramos fonte.sensor ('rad').
+   - 1 leitura por minuto; CORS liberado; sem login nas duas.
    - 1ª carga: últimas 6 h (~50 KB). Depois só o que chegou desde a
      última leitura (busca incremental, poucos KB a cada 5 min).
 
@@ -95,10 +112,13 @@
 
   const API = 'https://simcosta.furg.br/api/intrans_data';
   // v3.5.0: cada porto lista 1 ou mais marégrafos (fontes); offset por fonte
+  // v3.6.0: fonte.api = 'simcosta' (padrão) ou 'ioc'; fonte.faixa = leituras
+  // aceitas em metros (descarta zeros e picos absurdos de cada radar).
+  // Offsets e adiantamentos: tools/mare/simcosta-offset.mjs <porto> 30.
+  // incerteza (cm) = metade da oscilação semanal do offset, no mínimo 3.
   const ESTACOES = {
     'rio-grande': {
       nome: 'São José do Norte',
-      param: 'avg_water_level_arbitrary_zero',
       fontes: [
         { id: 332, nome: 'São José do Norte', offset: 12.374 }   // m — zero do radar → NR
       ],
@@ -109,7 +129,6 @@
     },
     suape: {
       nome: 'Recife + Tamandaré',
-      param: 'avg_water_level_arbitrary_zero',
       fontes: [
         { id: 330, nome: 'Recife', offset: 10.311 },      // ~40 km ao norte
         { id: 399, nome: 'Tamandaré', offset: 10.305 }    // ~44 km ao sul
@@ -118,8 +137,36 @@
       incerteza: 4,         // cm — oscilação semanal do offset
       calibracao: '30 dias (15/09 a 15/10/2026)',
       credito: 'SiMCosta/FURG, UFPE e CEPENE'
+    },
+    // v3.6.0 — calibrados em 30 dias (15/09 a 15/10/2026)
+    pecem: {
+      nome: 'Pecém',
+      fontes: [{ id: 307, nome: 'Pecém', offset: 9.293 }],   // no porto · RMS 3,7 cm
+      adiantamentoMin: 0, incerteza: 3,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'SiMCosta/FURG'
+    },
+    'rio-de-janeiro': {
+      nome: 'Niterói (DHN)',
+      fontes: [{ id: 304, nome: 'Niterói (DHN)', offset: 11.528 }],   // ~2 km da Ilha Fiscal · RMS 12 cm
+      adiantamentoMin: 0, incerteza: 7,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'SiMCosta/FURG'
+    },
+    paranagua: {
+      nome: 'Paranaguá',
+      fontes: [{ id: 300, nome: 'Paranaguá', offset: 11.295 }],   // no porto · RMS 28 cm (vento!)
+      adiantamentoMin: 0, incerteza: 9,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'SiMCosta/FURG e CEM/UFPR'
+    },
+    salvador: {
+      nome: 'Salvador (IBGE)',
+      fontes: [{ api: 'ioc', id: 'salv', sensor: 'rad', nome: 'Salvador (IBGE)', offset: 4.195, faixa: [0, 10] }],   // RMS 4,4 cm
+      adiantamentoMin: 0, incerteza: 3,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'IBGE (RMPG), via IOC/UNESCO'
     }
   };
+  const PARAM = 'avg_water_level_arbitrary_zero';   // SiMCosta: média de 1 min
+  const IOC = 'https://www.ioc-sealevelmonitoring.org/service.php';
+  const chave = (f) => (f.api || 'simcosta') + ':' + f.id;   // cache por fonte
   const JANELA_H = 6;            // horas de série guardadas e desenhadas
   const VELHO_MIN = 30;          // dado mais velho que isso = indisponível
   const ATUALIZA_MS = 5 * 60000; // nova busca a cada 5 min
@@ -131,22 +178,36 @@
   let portoAtual = null, preditor = null, hoje = true;
 
   /* ---------- 1. Busca (todas as fontes do porto em paralelo) ---------- */
-  async function buscarFonte(est, f) {
-    const c = cache[f.id] || (cache[f.id] = { pontos: [], erro: null });
+  // URL e leitura de cada API → lista [{t (ms UTC), v (m, zero do radar)}]
+  const ADAPTADORES = {
+    simcosta: {
+      url: (f, t1, t2) => `${API}?boiaID=${f.id}&type=json&time1=${Math.floor(t1 / 1000)}&time2=${Math.floor(t2 / 1000)}&params=${PARAM}`,
+      ler: (f, lista) => lista.map((d) => ({ t: Date.parse(d.timestamp), v: Number(d[PARAM]) }))
+    },
+    ioc: {
+      // datas ISO sem milissegundos, em UTC
+      url: (f, t1, t2) => { const iso = (t) => new Date(t).toISOString().slice(0, 19); return `${IOC}?query=data&code=${f.id}&timestart=${iso(t1)}&timestop=${iso(t2)}&format=json`; },
+      ler: (f, lista) => lista.filter((d) => d.sensor === f.sensor)
+        .map((d) => ({ t: Date.parse(String(d.stime).replace(' ', 'T') + 'Z'), v: Number(d.slevel) }))
+    }
+  };
+
+  async function buscarFonte(f) {
+    const k = chave(f), ad = ADAPTADORES[f.api || 'simcosta'];
+    const [lo, hi] = f.faixa || [5, 20];
+    const c = cache[k] || (cache[k] = { pontos: [], erro: null });
     try {
       const agora = Date.now();
       const ultimo = c.pontos.length ? c.pontos[c.pontos.length - 1].t : 0;
       // incremental: só o que veio depois da última leitura (com 1 s de folga)
-      const t1 = Math.floor((ultimo ? ultimo + 1000 : agora - JANELA_H * H) / 1000);
-      const t2 = Math.floor(agora / 1000);
-      const url = `${API}?boiaID=${f.id}&type=json&time1=${t1}&time2=${t2}&params=${est.param}`;
-      const r = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined });
+      const t1 = ultimo ? ultimo + 1000 : agora - JANELA_H * H;
+      const r = await fetch(ad.url(f, t1, agora), { cache: 'no-store', signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const txt = await r.text();
       const lista = txt ? JSON.parse(txt) : [];
-      const novos = (Array.isArray(lista) ? lista : [])
-        .map((d) => ({ t: Date.parse(d.timestamp), v: Number(d[est.param]) }))
-        .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v) && p.v > 5 && p.v < 20 && p.t > ultimo);
+      const novos = ad.ler(f, Array.isArray(lista) ? lista : [])
+        .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v) && p.v > lo && p.v < hi && p.t > ultimo)
+        .sort((a, b) => a.t - b.t);
       c.pontos = c.pontos.concat(novos).filter((p) => p.t >= agora - JANELA_H * H);
       c.erro = null;
     } catch (e) {
@@ -160,7 +221,7 @@
     ocupado[portId] = true;
     ultimaBusca[portId] = Date.now();
     try {
-      await Promise.all(est.fontes.map((f) => buscarFonte(est, f)));
+      await Promise.all(est.fontes.map(buscarFonte));
     } finally {
       ocupado[portId] = false;
     }
@@ -175,15 +236,15 @@
     const est = ESTACOES[portId];
     if (!est) return null;
     const agora = Date.now();
-    const comDado = est.fontes.filter((f) => cache[f.id] && cache[f.id].pontos.length);
+    const comDado = est.fontes.filter((f) => cache[chave(f)] && cache[chave(f)].pontos.length);
     if (!comDado.length) return null;
-    const ultimoDe = (f) => cache[f.id].pontos[cache[f.id].pontos.length - 1].t;
+    const ultimoDe = (f) => cache[chave(f)].pontos[cache[chave(f)].pontos.length - 1].t;
     let usadas = comDado.filter((f) => (agora - ultimoDe(f)) / MIN <= VELHO_MIN);
     if (!usadas.length) usadas = comDado;
     // corte no último minuto que todas as usadas já têm (média sem "degrau" no fim)
     const corte = Math.min(...usadas.map(ultimoDe));
     const soma = new Map();   // minuto → [Σ nr, n, t]
-    usadas.forEach((f) => cache[f.id].pontos.forEach((p) => {
+    usadas.forEach((f) => cache[chave(f)].pontos.forEach((p) => {
       if (p.t > corte) return;
       const k = Math.round(p.t / MIN), a = soma.get(k) || [0, 0, p.t];
       a[0] += p.v - f.offset; a[1] += 1; soma.set(k, a);
@@ -235,11 +296,12 @@
   }
 
   /* ---------- 4. Interface ---------- */
-  const fmtM = (m) => (Math.round(m * 100) / 100).toFixed(2).replace('.', ',') + ' m';
+  // v3.6.0: sinal de menos tipográfico (−), igual ao da maré meteorológica
+  const fmtM = (m) => (Math.round(m * 100) / 100).toFixed(2).replace('.', ',').replace('-', '−') + ' m';
   const fmtCm = (m) => { const cm = Math.round(m * 100); return (cm > 0 ? '+' : cm < 0 ? '−' : '±') + Math.abs(cm) + ' cm'; };
   const nomes = (lista) => lista.map((f) => f.nome).join(' e ');
 
-  function algumErro(est) { return est.fontes.some((f) => cache[f.id] && cache[f.id].erro); }
+  function algumErro(est) { return est.fontes.some((f) => cache[chave(f)] && cache[chave(f)].erro); }
 
   function desenharCaixa() {
     const box = document.getElementById('tide-live');
@@ -324,7 +386,8 @@
       desenharCaixa();
       if (ESTACOES[porto.id] && ehHoje && Date.now() - (ultimaBusca[porto.id] || 0) > ATUALIZA_MS) buscar(porto.id);
     },
-    _estacoes: ESTACOES   // para testes e documentação
+    _estacoes: ESTACOES,   // para testes e documentação
+    _adaptadores: ADAPTADORES, _chave: chave   // v3.6.0: usados por tools/mare/simcosta-offset.mjs
   };
 
   if (typeof document === 'undefined') return;   // carregado em Node (tools/mare/simcosta-offset.mjs)

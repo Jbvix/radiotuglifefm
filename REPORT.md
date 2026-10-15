@@ -1,3 +1,30 @@
+# SPRINT 24 — Nível medido em Pecém, Rio de Janeiro, Paranaguá e Salvador — v3.6.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T00:30:00-03:00
+
+Validação das fontes (30 dias, 15/09–15/10/2026, contra a previsão calibrada DHN de cada porto):
+
+| Porto | Fonte | Correlação | Diferença típica | Zero do radar → NR | Oscilação semanal | Decisão |
+|---|---|---|---|---|---|---|
+| Pecém | SiMCosta 307 (no porto) | 1,00 | 3,5 cm | 9,293 m | 3,3 cm | ✅ ±3 cm |
+| Salvador | IBGE/RMPG via IOC (`salv`) | 1,00 | 4,3 cm | 4,195 m | 1,1 cm | ✅ ±3 cm |
+| Rio de Janeiro | SiMCosta 304 (Niterói/DHN) | 0,93 | 11,9 cm | 11,528 m | 13,9 cm | ✅ ±7 cm |
+| Paranaguá | SiMCosta 300 (CEM/UFPR) | 0,86 | 28,4 cm (−78 a +91) | 11,295 m | 18,1 cm | ✅ ±9 cm |
+| Itaqui | SiMCosta 302 (Ribamar) | 0,98 | 37 cm; 21 cm mesmo com amplitude ×0,82 e +11 min | — | — | ❌ |
+
+- Itaqui fica de fora: Ribamar está em outra baía, com amplitude 18% menor; o erro de transferência apareceria como maré meteorológica falsa num porto de 6 m de maré.
+- Sem fonte: Vitória (Aracruz mudo), Vila do Conde (Belém mudo), Amapá (Santana mudo no SiMCosta e intermitente na IOC), Santos (Ilhabela a ~100 km, correlação 0,83) e Itajaí (Imbituba a 147 km, 0,77).
+- Salvador vem do IBGE pela IOC/UNESCO: dado com ~5 min (o SiMCosta chega com ~15–20 min), CORS `*`.
+
+Implementação:
+- `tide-live.js` 3.6.0: 4 portos novos em `ESTACOES`; segunda API (IOC) por adaptadores (`url` + `ler`), escolhida em `fonte.api`; `fonte.faixa` com as leituras válidas de cada radar; `fonte.sensor` filtra o sensor certo na resposta da IOC. Sinal de menos tipográfico no nível (−0,09 m).
+- `tools/mare/simcosta-offset.mjs` 1.2.0: usa os adaptadores do app (SiMCosta e IOC) e sugere a incerteza (metade da oscilação semanal, mínimo 3 cm). Rodada nos 6 portos: todos os offsets conferem.
+- Manual de bordo: item "Nível medido (6 portos)" e novidade da v3.6.0; README regenerado. `docs/PROJETO.md` 1.3.0 (§6.4 com tabela dos 6 portos e a decisão de Itaqui). Versão 3.6.0 em `VERSION.json`, `index.html`, `sw.js` e `manual.js`.
+
+Verificação: `tide-live-check.cjs` com 11 cenários: os 4 portos novos com "+12 cm acima da previsão" na fonte certa e 1ª busca de 6 h; Salvador com a IOC simulada e um sensor de isca (`prs` = 9,999 m) que precisa ser ignorado; Itaqui sem nenhuma chamada de API; cenários anteriores intactos. Contra as APIs reais (00:2x de 15/10): Suape −5 cm, Rio Grande −9, Pecém −6, Rio +1, Paranaguá **−25 cm** (previsão "0,2 m enchendo", medido "−0,09 m vazando") e Salvador −3; sem erros de JavaScript. Regressões: schedule.test, browser, pwa, equalizer e manual passaram; README conferido com `--check`.
+
+Limitações: 6 dos 13 portos com medição. Nível absoluto estimado (±3 a ±9 cm) até a amarração dos radares ao IBGE. Salvador depende da IOC continuar redistribuindo o marégrafo do IBGE.
+
 # SPRINT 23 — Suape com nível do mar medido ao vivo (Recife + Tamandaré) — v3.5.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-14T22:30:00-03:00
