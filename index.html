@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.9.1 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.10.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.9.1
-           Data: 2026-10-15T17:30:00-03:00
+           Versão: v3.10.0
+           Data: 2026-10-15T18:45:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.10.0 (SPRINT 29): contador de visitas anônimo
+             ("👁️ N visitas · N aparelhos · N hoje") no rodapé e no
+             painel "Mais da TugLife" (visitas.js + função
+             registrar_visita no Supabase). Sem IP nem dado pessoal.
            - v3.9.1 (SPRINT 28): PIN da tripulação também no card do Rio
              (o mesmo de Suape, conferido no servidor pela função saam-rj)
              e os dois cards de programação recolhíveis.
@@ -249,6 +253,7 @@
     <script src="pwa.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="listeners.js" defer></script>
+    <script src="visitas.js" defer></script>
     <script src="vendor/tide-engine.js" defer></script>
     <script src="tide-data.js" defer></script>
     <script src="tides.js" defer></script>
@@ -365,6 +370,8 @@
                 <span>"Alexa, abrir RÁDIO MARUJO"</span>
             </div>
         </div>
+        <!-- SPRINT 29 · v3.10.0: contador de visitas (visitas.js preenche; oculto até ter número) -->
+        <p class="visitas-linha visitas-mais" data-visitas hidden>👁️ <span data-visitas-texto></span></p>
         </div>
     </details>
 
@@ -480,9 +487,10 @@
     </section>
 
     <footer data-tab="radio">
-        <strong>TugLife FM v3.9.1</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.10.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T17:30:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T18:45:00-03:00
+        <span class="visitas-linha visitas-rodape" data-visitas hidden><br>👁️ <span data-visitas-texto></span></span>
     </footer>
 </div>
 <!-- SPRINT 20 · v3.2.0: Manual de bordo (manual.js preenche) -->
@@ -528,7 +536,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.9.1
+     * TugLife FM Engine v3.10.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

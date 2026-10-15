@@ -530,3 +530,17 @@ body.light-theme .tide-live-meteo[data-forte="sim"] {color:#b45309;}
 .saam-resumo {margin-left:auto;flex:none;font-size:.75rem;font-weight:700;color:var(--text-muted);padding:2px 10px;border:1px solid var(--glass-border);border-radius:999px;white-space:nowrap;}
 .saam-panel>summary:focus-visible {outline:2px solid var(--accent);outline-offset:2px;border-radius:8px;}
 #saamrj-main[hidden], #saamrj-lock[hidden] {display:none;}
+
+/* ============================================================
+   SPRINT 29 · v3.10.0 · 2026-10-15T18:45:00-03:00 · Jossian Brito
+   Contador de visitas (visitas.js). Duas linhas com o mesmo texto:
+   • .visitas-rodape → no rodapé, visível no computador;
+   • .visitas-mais   → no painel "Mais da TugLife", para o celular,
+     onde o rodapé fica oculto (≤ 760 px). No computador ela some
+     para não repetir a informação.
+   Ficam ocultas ([hidden]) até a função devolver os números.
+   ============================================================ */
+.visitas-linha {font-size:.75rem;color:var(--text-muted);}
+.visitas-linha[hidden] {display:none!important;}
+.visitas-mais {margin:10px 0 0;}
+@media (min-width:761px) { .visitas-mais {display:none!important;} }

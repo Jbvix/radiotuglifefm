@@ -2,11 +2,13 @@
    TugLife FM — Manual de bordo (botão ?) e Tour guiado
    ------------------------------------------------------------
    Arquivo   : manual.js
-   Versão    : 3.9.1 (SPRINT 28)
-   Data/Hora : 2026-10-15T17:30:00-03:00
+   Versão    : 3.10.0 (SPRINT 29)
+   Data/Hora : 2026-10-15T18:45:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.10.0 [MOD] Seção Rádio ganha o item "Contador de visitas";
+                 novidade da v3.10.0.
    v3.9.1  [MOD] Manobras: o card do Rio também pede o PIN (o mesmo de
                  Suape) e os dois cards se recolhem; novidade da v3.9.1.
    v3.9.0  [MOD] Seção Manobras ganha os itens do card "SAAM · Rio de
@@ -52,10 +54,11 @@
 
 (function () {
   const MANUAL = {
-    versao: '3.9.1',
+    versao: '3.10.0',
     tourVersao: '3.2.0',   // mude só quando o tour precisar ser revisto pela tripulação
     novidades: [
-      { versao: '3.9.1', texto: 'Programação do Rio agora com o PIN da tripulação (o mesmo de Suape). Toque no título de cada programação para recolher ou abrir.' },
+      { versao: '3.10.0', texto: 'Contador de visitas: quantas vezes o app foi aberto, por quantos aparelhos e quantas hoje. Anônimo, sem nenhum dado pessoal.' },
+      { versao: '3.10.0', texto: 'Programação do Rio agora com o PIN da tripulação (o mesmo de Suape). Toque no título de cada programação para recolher ou abrir.' },
       { versao: '3.9.0', texto: 'Programação SAAM no Rio de Janeiro: manobras da Praticagem RJ com rebocadores SAAM, por área (Guanabara, Sepetiba, Forno, Açu), sem PIN.' },
       { versao: '3.8.0', texto: 'Aviso de nova versão: toque em Atualizar e pronto, sem fechar o app. Nível medido da Maré numa linha só; toque no ⓘ para os detalhes.' },
       { versao: '3.7.0', texto: 'Aba Rádio numa tela só: faixa atual no player e o resto em "Mais da TugLife".' },
@@ -72,7 +75,8 @@
         ['No ar agora e próximo', 'Mostra o programa da grade neste momento, quanto falta para acabar e o que vem em seguida.'],
         ['Grade semanal', 'Toque em "Grade da semana" para abrir. Escolha o dia; "Hoje" volta para o dia atual. Funciona mesmo sem internet.'],
         ['Faixa atual', 'Nome da música que está tocando (♪), logo abaixo do programa no ar. Atualiza sozinho.'],
-        ['Tripulação a bordo', 'Quantos ouvintes estão conectados agora e o pico do dia.']
+        ['Tripulação a bordo', 'Quantos ouvintes estão conectados agora e o pico do dia.'],
+        ['Contador de visitas', 'Linha 👁️ com o total de visitas, de aparelhos diferentes e as visitas de hoje. No celular fica em "Mais da TugLife"; no computador, no rodapé. Conta no máximo uma visita a cada 30 min por aparelho e é anônimo: o aparelho guarda só um código sorteado, sem nome, IP ou localização.']
       ]},
       { id: 'mare', label: 'Maré', aba: 'mare', resumo: 'Previsão de maré de 13 portos, calibrada com a DHN 2026.', itens: [
         ['Porto e dia', 'Escolha um dos 13 portos. As setas mudam o dia; "Hoje" volta para a data atual.'],

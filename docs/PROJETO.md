@@ -3,14 +3,15 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.9.1 (SPRINT 28) |
-| **Documento** | 1.7.0 · 2026-10-15T17:30:00-03:00 |
+| **Versão do app** | 3.10.0 (SPRINT 29) |
+| **Documento** | 1.8.0 · 2026-10-15T18:45:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
 | **Repositório** | https://github.com/Jbvix/radiotuglifefm |
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
+> - 1.8.0 (2026-10-15) — SPRINT 29: contador de visitas anônimo (`visitas.js`, tabelas `visitas_aparelhos`/`visitas_diarias`, função `registrar_visita`, chave `tuglife_aparelho`, §6.6, teste `visitas-check.cjs`, `tools/visitas/`).
 > - 1.7.0 (2026-10-15) — SPRINT 28: PIN da tripulação também no Rio (conferido no servidor pela `saam-rj` via `saam_programacao`), PIN único para os dois cards (eventos `saam:pin`/`saam:bloqueio`), programações recolhíveis (`tuglife_paineis`).
 > - 1.6.0 (2026-10-15) — Programação SAAM · Rio de Janeiro (SPRINT 27): `saam-rj.js`, Edge Function `saam-rj` (ponte CORS com cache de 60 s para a página da Praticagem RJ), §5 e §6.5 novos, teste `saam-rj-check.cjs` e `tools/saam-rj/`.
 > - 1.5.0 (2026-10-15) — Aviso de nova versão (SPRINT 26): `SKIP_WAITING` no `sw.js`, faixa no `pwa.js`, §8 com o novo fluxo de atualização, teste `update-check.cjs`. Faixa "Ao vivo" da Maré recolhida numa linha com ⓘ.
@@ -63,6 +64,7 @@ radiotuglifefm/
 ├── equalizer.js            Motor Web Audio (analisador) + espectro circular de barras
 ├── pwa.js                  Instalar app, compartilhar, QR Code, aviso de offline, painel "Mais da TugLife", aviso de nova versão
 ├── listeners.js            "Tripulação a bordo": ouvintes ao vivo e pico do dia (Supabase)
+├── visitas.js              Contador de visitas anônimo (Supabase, RPC registrar_visita)
 ├── tide-data.js            Constantes harmônicas calibradas dos 13 portos
 ├── tides.js                Card "Tábua de Maré": cálculo, curva 24 h, extremos, navegação
 ├── tide-live.js            Nível MEDIDO ao vivo em 6 portos (SiMCosta e IOC/UNESCO; Suape = média de 2) e maré meteorológica
@@ -114,6 +116,7 @@ radiotuglifefm/
 ├── update-check.cjs        Teste de navegador: aviso de nova versão com deploys simulados (servidor próprio)
 ├── tide-live-check.cjs     Teste de navegador: nível medido (APIs simuladas) em 13 cenários
 ├── saam-rj-check.cjs       Teste de navegador: card SAAM · Rio (função simulada, servidor próprio)
+├── visitas-check.cjs       Teste de navegador: contador de visitas (função simulada, servidor próprio)
 ├── schedule.test.cjs       Teste unitário da grade (node:test)
 ├── server.py               Servidor local (porta 8787) para desenvolvimento e testes
 │
@@ -184,6 +187,7 @@ flowchart LR
 | 5 | `pwa.js` | Instalar/compartilhar e registro do service worker |
 | 6 | `supabase-js@2` (CDN) | Cliente Realtime para o módulo de ouvintes |
 | 7 | `listeners.js` | Ouvintes (precisa de 6) |
+| 7a | `visitas.js` | Contador de visitas; independente (fetch direto, não precisa de 6) |
 | 8–11 | `vendor/tide-engine.js` → `tide-data.js` → `tides.js` → `tide-live.js` | Motor → constantes → card → nível medido (usa `window.TugTides`) |
 | 12 | `saam.js` | Card SAAM; emite o evento `saam:alerta` |
 | 12a | `saam-rj.js` | Card SAAM · Rio; independente (só lê `body[data-aba]` indiretamente: busca quando o card fica visível) |
@@ -204,6 +208,7 @@ flowchart LR
 | `equalizer.js` | Prepara o Web Audio (confere CORS antes); espectro circular; respeita "movimento reduzido" | `#spectrum-bars`, `#spectrum-status` | stream BRLOGIC | SPRINT 08 |
 | `pwa.js` | Instalar app, diálogo de compartilhamento/QR, copiar link, aviso offline, registro do SW; abre o painel "Mais da TugLife" no computador e rola até ele no celular | `#install-app`, `#share-radio`, `#share-dialog`, `#network-status`, `#more-panel` | — | 3.7.0 |
 | `listeners.js` | Presença em tempo real ("N a bordo") e pico do dia; só observa os eventos do `<audio>` | `#crew-row`, `#crew-count`, `#crew-peak` | Supabase Realtime + RPC `registrar_pico`, `pico_hoje` | 2.6.0 |
+| `visitas.js` | Registra a abertura do app e mostra "👁️ N visitas · N aparelhos · N hoje" (rodapé no computador, "Mais da TugLife" no celular); oculto se falhar | `[data-visitas]`, `[data-visitas-texto]`, `.visitas-rodape`, `.visitas-mais` | RPC `registrar_visita` | 3.10.0 |
 | `tide-data.js` | Constantes harmônicas por porto, método de calibração e erro típico | — (só dados) | — | 2.9.0 |
 | `tides.js` | Altura agora, tendência, extremos do dia, curva SVG 24 h, navegação por dia, porto lembrado | `#card-mare`, `#tide-port`, `#tide-chart`, `#tide-list` | `NeapsTide`, `TUGLIFE_TIDES` | 3.4.0 |
 | `tide-live.js` | Nível medido agora (previsão + mediana dos resíduos de 10 min), tendência (reta de 30 min), maré meteorológica, série de 6 h no gráfico, busca incremental a cada 5 min, várias fontes por porto (média, uma pode cair), correção de horário de porto secundário, duas APIs (SiMCosta e IOC), volta à previsão se o dado tiver > 30 min | `#tide-live`, `.tide-real` | APIs SiMCosta e IOC; `window.TugTides` | 3.6.0 |
@@ -240,6 +245,7 @@ flowchart LR
 | `tuglife_tide_port` | Último porto escolhido na maré |
 | `tuglife_saamrj_area` | Área escolhida no card SAAM · Rio (`TODAS` ou o nome da área) |
 | `tuglife_paineis` | Painéis recolhíveis abertos/fechados pelo tripulante, ex.: `{"saam-panel":false,"saamrj-panel":true}`. Sem escolha: fechado no celular, aberto no computador |
+| `tuglife_aparelho` | Código aleatório (UUID v4) do aparelho para o contador de visitas. Não identifica ninguém; apagar só faz o aparelho contar como novo |
 | `tuglife_client_id` (sessionStorage) | Identificador anônimo da sessão para a contagem de ouvintes |
 
 Todo acesso é protegido por `try/catch`: em modo anônimo o app funciona, só não lembra.
@@ -259,12 +265,15 @@ Todo acesso é protegido por `try/catch`: em modo anônimo o app funciona, só n
 | `saam_config` | `pin_hash` (bcrypt), chaves VAPID, link da planilha, token do cron | Nenhum |
 | `saam_sync` | Situação da última leitura (para o "lida há N min") | Nenhum |
 | `saam_pin_falhas` | Tentativas de PIN errado (trava > 20 em 10 min) | Nenhum |
+| `visitas_aparelhos` | Código aleatório por aparelho, primeiro/último dia, última visita, total | Nenhum (só via RPC) |
+| `visitas_diarias` | Visitas e aparelhos distintos por dia (fuso de Brasília) | Nenhum (só via RPC) |
 
 ### Funções chamadas pelo app (`/rest/v1/rpc/<função>`)
 
 | Função | Faz |
 |---|---|
 | `registrar_pico(...)` / `pico_hoje()` | Grava e lê o pico de ouvintes |
+| `registrar_visita(p_aparelho)` | Conta a visita (no máximo 1 a cada 30 min por aparelho) e devolve `{visitas, aparelhos, hoje}` |
 | `saam_programacao(p_pin)` | Valida o PIN e devolve manobras SAAM (exceto removidas), eventos, situação da leitura e a chave VAPID pública. PIN errado → `{erro}` (sem exceção, para a tentativa ficar registrada) |
 | `saam_push_registrar(...)` / `saam_push_desligar(endpoint)` | Liga/desliga a notificação no aparelho |
 
@@ -352,7 +361,6 @@ A calibração (`tools/mare/`) ajusta esses números para casar com a Tábua DHN
 
 Cada app tocando entra num canal de presença do Supabase e o contador mostra quantos estão ali. Os apps enviam a contagem para `registrar_pico`, e o banco guarda por hora `pico_da_hora = MAX(pico_atual, enviado)` (teto de 1000, contra valores absurdos) — o maior valor da hora nunca diminui, como o ponteiro de arraste de um manômetro. `pico_hoje` devolve o maior pico do dia.
 
-
 ### 6.4 Nível medido ao vivo (SiMCosta/FURG e IOC/UNESCO · 6 portos)
 
 O card de Maré mostra, além da previsão, o nível **real** medido por marégrafos radar do SiMCosta. Cada porto tem uma lista de **fontes** em `ESTACOES` (`tide-live.js`), cada uma com o seu offset.
@@ -397,6 +405,10 @@ sequenceDiagram
 ```
 
 Sem alertas por enquanto (a fonte não informa situação "confirmada"; ver `REPORT.md`, SPRINT 27).
+
+### 6.6 Contador de visitas
+
+Na 1ª abertura o `visitas.js` sorteia um UUID v4 e guarda em `tuglife_aparelho` — o número de casco do bote, nunca o nome do tripulante. A cada abertura ele chama `registrar_visita(código)`; o servidor só soma se `agora − ultima_visita > 30 min` (ex.: 08:00 conta, 08:10 não, 08:45 conta), então recargas não inflam o número. Na mesma resposta vêm os totais: visitas = Σ de todos os dias, aparelhos = códigos distintos, hoje = visitas do dia em Brasília. Nada de IP, nome ou localização é gravado. Limitação: quem limpar os dados do navegador ou usar modo anônimo volta como aparelho novo, e um robô que sorteie códigos pode inflar a contagem (mesma confiança do pico de ouvintes).
 
 ---
 
@@ -466,9 +478,10 @@ python3 server.py          # http://localhost:8787/
 | README em dia | `node tools/manual/gerar-readme.mjs --check` | Manual do README igual ao `manual.js` |
 | Coletor SAAM | `cd tools/saam && npm i xlsx fflate && node test.mjs` | Leitor da planilha e regras de alerta (planilha sintética) |
 | Leitor Praticagem RJ | `node tools/saam-rj/test.mjs [pagina.html]` | Colunas pelo cabeçalho, `BD` repetido, fichas aninhadas, rebocadores e avisos, linhas repetidas, ano do POB (virada), filtro `SAA` × `SAAB`; opcional: página real salva |
+| Navegador · visitas | `node visitas-check.cjs` | Servidor próprio (porta 8797), função simulada: código UUID v4 guardado e enviado sozinho, mesmo código ao recarregar, linha em "Mais da TugLife" no celular (sem rolagem) e no rodapé no computador, número brasileiro e singular, falha ou offline deixam a linha oculta |
 | Navegador · SAAM Rio | `node saam-rj-check.cjs` | Servidor próprio (porta 8798), função simulada (PIN 1234): sem busca fora da aba nem recolhido, cards recolhidos no celular, PIN errado/certo, ordem por horário, dias, rebocadores/⚠️/CTB, filtro por área, PIN e painel lembrados, falha mantém a lista, PIN único com Suape e bloqueio dos dois, PIN trocado (401), 360 px e computador |
 
-Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'`). `manual-check.cjs`, `update-check.cjs`, `tide-live-check.cjs` e `saam-rj-check.cjs` aceitam outro Chromium via `PW_CHROME=/caminho/chrome`. Com o servidor local rodando em outro terminal.
+Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'`). `manual-check.cjs`, `update-check.cjs`, `tide-live-check.cjs`, `saam-rj-check.cjs` e `visitas-check.cjs` aceitam outro Chromium via `PW_CHROME=/caminho/chrome`. Com o servidor local rodando em outro terminal.
 
 ---
 
@@ -479,6 +492,7 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 | `tools/manual/` | Sempre que mudar `manual.js` — regenera o README |
 | `tools/mare/` | Uma vez por ano, com a nova Tábua DHN (os PDFs da DHN não ficam no repositório); `simcosta-offset.mjs` quando o marégrafo SiMCosta mudar de referência |
 | `tools/saam/` | Ao alterar o coletor; o código publicado fica na Edge Function do Supabase |
+| `tools/visitas/` | Cópia da migração do contador de visitas (já aplicada) e consulta por dia |
 | `tools/saam-rj/` | Ao alterar a ponte da Praticagem RJ (ou se a página mudar de formato); publicar de novo a função `saam-rj` |
 
 ---

@@ -10,7 +10,7 @@ App mobile da webrádio TugLife FM.
 - **Documentação técnica:** [docs/PROJETO.md](docs/PROJETO.md) — diretórios, módulos, backend, fluxos, deploy e testes
 
 <!-- manual:inicio -->
-## Manual de bordo (v3.9.1)
+## Manual de bordo (v3.10.0)
 
 _Gerado de `manual.js` por `tools/manual/gerar-readme.mjs` — edite lá, não aqui._
 
@@ -18,7 +18,8 @@ No app: botão **?** no topo. No celular, a barra de abas embaixo leva a cada se
 
 **Novidades**
 
-- v3.9.1: Programação do Rio agora com o PIN da tripulação (o mesmo de Suape). Toque no título de cada programação para recolher ou abrir.
+- v3.10.0: Contador de visitas: quantas vezes o app foi aberto, por quantos aparelhos e quantas hoje. Anônimo, sem nenhum dado pessoal.
+- v3.10.0: Programação do Rio agora com o PIN da tripulação (o mesmo de Suape). Toque no título de cada programação para recolher ou abrir.
 - v3.9.0: Programação SAAM no Rio de Janeiro: manobras da Praticagem RJ com rebocadores SAAM, por área (Guanabara, Sepetiba, Forno, Açu), sem PIN.
 - v3.8.0: Aviso de nova versão: toque em Atualizar e pronto, sem fechar o app. Nível medido da Maré numa linha só; toque no ⓘ para os detalhes.
 - v3.7.0: Aba Rádio numa tela só: faixa atual no player e o resto em "Mais da TugLife".
@@ -38,6 +39,7 @@ Ouvir a TugLife FM e acompanhar a programação.
 - **Grade semanal** — Toque em "Grade da semana" para abrir. Escolha o dia; "Hoje" volta para o dia atual. Funciona mesmo sem internet.
 - **Faixa atual** — Nome da música que está tocando (♪), logo abaixo do programa no ar. Atualiza sozinho.
 - **Tripulação a bordo** — Quantos ouvintes estão conectados agora e o pico do dia.
+- **Contador de visitas** — Linha 👁️ com o total de visitas, de aparelhos diferentes e as visitas de hoje. No celular fica em "Mais da TugLife"; no computador, no rodapé. Conta no máximo uma visita a cada 30 min por aparelho e é anônimo: o aparelho guarda só um código sorteado, sem nome, IP ou localização.
 
 ### Maré
 
