@@ -2,8 +2,8 @@
    TugLife FM — Nível do mar MEDIDO (marégrafos SiMCosta/FURG)
    ------------------------------------------------------------
    Arquivo   : tide-live.js
-   Versão    : 3.6.0 (SPRINT 24)
-   Data/Hora : 2026-10-15T00:30:00-03:00
+   Versão    : 3.8.0 (SPRINT 26)
+   Data/Hora : 2026-10-15T00:45:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
@@ -35,6 +35,12 @@
            (Ribamar, id 302) está noutra baía, com amplitude 18% menor;
            mesmo corrigida, sobram ~21 cm de erro de transferência que
            virariam maré meteorológica falsa.
+   v3.8.0  [MOD] Faixa "Ao vivo" recolhida (pedido do Comandante: o card
+           ocupava meia tela). Fechada = uma linha: nível medido,
+           tendência, maré meteorológica (laranja a partir de ±15 cm,
+           sempre à vista por ser a informação de segurança) e ⓘ.
+           Um toque abre os detalhes (estações, idade, crédito); o
+           estado aberto/fechado sobrevive às atualizações de 5 min.
    ------------------------------------------------------------
    DE ONDE VEM O DADO
    1) API pública e documentada do SiMCosta (https://simcosta.furg.br/q/docs/):
@@ -176,6 +182,7 @@
   const ultimaBusca = {};        // portId → instante da última busca
   const ocupado = {};            // portId → busca em andamento
   let portoAtual = null, preditor = null, hoje = true;
+  let aberto = false;            // v3.8.0: detalhes da faixa "Ao vivo" (fechados por padrão)
 
   /* ---------- 1. Busca (todas as fontes do porto em paralelo) ---------- */
   // URL e leitura de cada API → lista [{t (ms UTC), v (m, zero do radar)}]
@@ -303,9 +310,33 @@
 
   function algumErro(est) { return est.fontes.some((f) => cache[chave(f)] && cache[chave(f)].erro); }
 
+  // v3.8.0: linha-resumo (botão) + detalhes recolhíveis
+  function resumo(partes) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tide-live-resumo';
+    b.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+    b.setAttribute('aria-controls', 'tide-live-detalhes');
+    b.append(...partes);
+    const i = document.createElement('span'); i.className = 'tide-live-info'; i.setAttribute('aria-hidden', 'true'); i.textContent = aberto ? '×' : 'i';
+    const sr = document.createElement('span'); sr.className = 'sr-only'; sr.textContent = aberto ? ' (fechar detalhes)' : ' (ver detalhes)';
+    b.append(i, sr);
+    return b;
+  }
+  function detalhes(filhos) {
+    const d = document.createElement('div');
+    d.className = 'tide-live-detalhes'; d.id = 'tide-live-detalhes'; d.hidden = !aberto;
+    d.append(...filhos);
+    return d;
+  }
+  function span(cls, txt) { const e = document.createElement('span'); e.className = cls; e.textContent = txt; return e; }
+
   function desenharCaixa() {
     const box = document.getElementById('tide-live');
     if (!box) return;
+    if (!box.dataset.ligado) {   // um só ouvinte, mesmo com a caixa redesenhada a cada busca
+      box.dataset.ligado = '1';
+      box.addEventListener('click', (e) => { if (e.target.closest('.tide-live-resumo')) { aberto = !aberto; desenharCaixa(); box.querySelector('.tide-live-resumo').focus(); } });
+    }
     const id = portoAtual && portoAtual.id;
     const s = id && hoje ? situacao(id) : null;
     const est = id && ESTACOES[id];
@@ -320,21 +351,32 @@
     }
     const velho = s.idadeMin > VELHO_MIN;
     box.hidden = false;
-    box.className = 'tide-live' + (velho ? ' is-off' : '');
+    box.className = 'tide-live' + (velho ? ' is-off' : '') + (aberto ? ' is-aberto' : '');
     const idade = s.idadeMin < 1.5 ? 'agora há pouco' : `há ${Math.round(s.idadeMin)} min`;
     if (velho) {
+      const hora = s.quando.toLocaleTimeString('pt-BR', { timeZone: portoAtual.tz, hour: '2-digit', minute: '2-digit' });
       box.replaceChildren(
-        linha('tide-live-head', `Nível medido · ${est.nome}`),
-        linha('tide-live-sub', `Sem dado novo desde ${s.quando.toLocaleTimeString('pt-BR', { timeZone: portoAtual.tz, hour: '2-digit', minute: '2-digit' })} — mostrando só a previsão.`),
-        credito());
+        resumo([span('tide-live-rotulo', `Nível medido · sem dado novo desde ${hora}`)]),
+        detalhes([linha('tide-live-sub', `${est.nome}: sem dado novo desde ${hora} — mostrando só a previsão.`), credito()]));
       return;
     }
     // v3.5.0: com uma fonte fora, o título mostra só a que está no ar
     const titulo = s.fora.length ? nomes(s.usadas) : est.nome;
-    const tendTxt = Math.abs(s.tend) < 0.02 ? '⇆ estável' : s.tend > 0 ? '↑ enchendo' : '↓ vazando';
-    const head = linha('tide-live-head', '');
+    const seta = Math.abs(s.tend) < 0.02 ? '⇆' : s.tend > 0 ? '↑' : '↓';
+    const tendTxt = seta + (Math.abs(s.tend) < 0.02 ? ' estável' : s.tend > 0 ? ' enchendo' : ' vazando');
+    const forte = s.surge != null && Math.abs(s.surge) >= 0.15;
+
+    // linha-resumo: ● Medido 0,49 m ↓ · −4 cm da previsão  ⓘ
     const dot = document.createElement('span'); dot.className = 'tide-live-dot'; dot.setAttribute('aria-hidden', 'true');
-    head.append(dot, document.createTextNode(` Ao vivo · nível medido · ${titulo}`));
+    const partes = [dot, span('tide-live-rotulo', 'Medido'), span('tide-live-num', fmtM(s.nivel)), span('tide-live-seta', seta)];
+    if (s.surge != null) {
+      const sg = span('tide-live-meteo', `${fmtCm(s.surge)} da previsão`);
+      sg.dataset.forte = forte ? 'sim' : 'nao';
+      sg.title = 'Maré meteorológica: medido − previsto';
+      partes.push(sg);
+    }
+
+    const head = linha('tide-live-head', `Ao vivo · nível medido · ${titulo}`);
     const valor = document.createElement('div'); valor.className = 'tide-live-valor';
     const strong = document.createElement('strong'); strong.textContent = fmtM(s.nivel);
     const sup = document.createElement('sup'); sup.textContent = '*';
@@ -343,7 +385,6 @@
     const filhos = [head, valor];
     if (s.surge != null) {
       const sg = linha('tide-live-surge', '');
-      const forte = Math.abs(s.surge) >= 0.15;
       sg.dataset.forte = forte ? 'sim' : 'nao';
       sg.textContent = `Maré meteorológica: ${fmtCm(s.surge)} ${s.surge >= 0 ? 'acima' : 'abaixo'} da previsão`;
       filhos.push(sg);
@@ -355,7 +396,7 @@
         : `Média de ${nomes(s.usadas)} · horário corrigido para ${portoAtual.name}`));
     }
     filhos.push(credito());
-    box.replaceChildren(...filhos);
+    box.replaceChildren(resumo(partes), detalhes(filhos));
   }
 
   function linha(cls, txt) { const p = document.createElement('p'); p.className = cls; p.textContent = txt; return p; }

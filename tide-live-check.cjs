@@ -1,15 +1,25 @@
 /* TugLife FM — teste do nível medido (tide-live.js)
-   Versão 3.6.0 (SPRINT 24) · 2026-10-15T00:30:00-03:00 · Jossian Brito
+   Versão 3.8.0 (SPRINT 26) · 2026-10-15T00:45:00-03:00 · Jossian Brito
    Simula a API SiMCosta: leitura(t) = previsão(t + adiantamento) + 12 cm (maré meteorológica) + zero do radar.
    Uso: python3 server.py (outro terminal) → node tide-live-check.cjs [pasta-das-capturas]
    Cenários: ao vivo, busca incremental, dado velho, falha da API, outro porto, outro dia.
    v3.5.0  [NOVO] Suape com 2 marégrafos (Recife 330 + Tamandaré 399, adiantamento 11 min):
            média ao vivo, uma fonte fora (segue com a outra) e as duas fora.
    v3.6.0  [NOVO] Pecém, Rio de Janeiro, Paranaguá (SiMCosta) e Salvador (IOC/UNESCO
-           simulada, com um sensor "prs" de isca que precisa ser ignorado). */
+           simulada, com um sensor "prs" de isca que precisa ser ignorado).
+   v3.8.0  [MOD] A faixa "Ao vivo" nasce recolhida: lerCaixa() abre os detalhes antes de ler.
+           [NOVO] Cenário 12: fechada = uma linha (≤ 52 px) com nível e maré meteorológica;
+           abre e fecha pelo botão (aria-expanded) e continua aberta depois de nova busca;
+           maré meteorológica forte (+20 cm) fica laranja já na linha fechada. */
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
-const SURGE = 0.12;
+let SURGE = 0.12;
+// v3.8.0: abre os detalhes da faixa (se ainda fechada) e devolve o texto inteiro
+async function lerCaixa(pg) {
+  const bt = pg.locator('#tide-live .tide-live-resumo');
+  if (await bt.count() && (await bt.getAttribute('aria-expanded')) === 'false') await bt.click();
+  return pg.locator('#tide-live').innerText();
+}
 // boia → zero do radar e quanto a maré chega antes da previsão do porto (min)
 const BOIAS = { 332: { off: 12.374, adiant: 0 }, 330: { off: 10.311, adiant: 11 }, 399: { off: 10.305, adiant: 11 },
   307: { off: 9.293, adiant: 0 }, 304: { off: 11.528, adiant: 0 }, 300: { off: 11.295, adiant: 0 }, salv: { off: 4.195, adiant: 0 } };
@@ -59,8 +69,8 @@ const BOIAS = { 332: { off: 12.374, adiant: 0 }, 330: { off: 10.311, adiant: 11 
   // 1. Ao vivo
   {
     const { pg, chamadas } = await abrir();
-    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-valor', { timeout: 6000 });
-    const txt = await pg.locator('#tide-live').innerText();
+    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-num', { timeout: 6000 });
+    const txt = await lerCaixa(pg);
     console.log('caixa:', txt.replace(/\n/g, ' | '));
     assert.match(txt, /Maré meteorológica: \+12 cm acima da previsão/);
     assert.match(txt, /SiMCosta\/FURG/);
@@ -95,9 +105,9 @@ const BOIAS = { 332: { off: 12.374, adiant: 0 }, 330: { off: 10.311, adiant: 11 
   {
     const { pg } = await abrir({ atrasoMin: 45 });
     await pg.waitForSelector('#tide-live.is-off:not([hidden])', { timeout: 6000 });
-    const txt = await pg.locator('#tide-live').innerText();
+    const txt = await lerCaixa(pg);
     console.log('velho:', txt.replace(/\n/g, ' | '));
-    assert.match(txt, /Sem dado novo/);
+    assert.match(txt, /sem dado novo/i);
     assert.equal(await pg.locator('.tide-now-box span').textContent(), 'Agora');
     await pg.close();
   }
@@ -112,8 +122,8 @@ const BOIAS = { 332: { off: 12.374, adiant: 0 }, 330: { off: 10.311, adiant: 11 
   // 7. Suape: média de Recife + Tamandaré, horário corrigido (11 min)
   {
     const { pg, chamadas } = await abrir({ porto: 'suape' });
-    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-valor', { timeout: 6000 });
-    const txt = await pg.locator('#tide-live').innerText();
+    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-num', { timeout: 6000 });
+    const txt = await lerCaixa(pg);
     console.log('suape:', txt.replace(/\n/g, ' | '));
     assert.deepEqual([...new Set(chamadas.map((c) => c.boia))].sort(), ['330', '399'], 'busca nas duas boias');
     assert.match(txt, /Recife \+ Tamandaré/i);
@@ -133,8 +143,8 @@ const BOIAS = { 332: { off: 12.374, adiant: 0 }, 330: { off: 10.311, adiant: 11 
   // 8. Suape com Recife fora: segue só com Tamandaré
   {
     const { pg } = await abrir({ porto: 'suape', mudas: [330] });
-    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-valor', { timeout: 6000 });
-    const txt = await pg.locator('#tide-live').innerText();
+    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-num', { timeout: 6000 });
+    const txt = await lerCaixa(pg);
     console.log('suape 1 fonte:', txt.replace(/\n/g, ' | '));
     assert.match(txt, /nível medido · Tamandaré\s*\n/i);
     assert.match(txt, /Só Tamandaré no ar \(Recife sem dado\)/);
@@ -153,8 +163,8 @@ const BOIAS = { 332: { off: 12.374, adiant: 0 }, 330: { off: 10.311, adiant: 11 
   // 10. Portos novos da v3.6.0: caixa ao vivo com +12 cm em cada um, na fonte certa
   for (const [porto, boia, nome] of [['pecem', '307', 'Pecém'], ['rio-de-janeiro', '304', 'Niterói'], ['paranagua', '300', 'Paranaguá'], ['salvador', 'salv', 'Salvador']]) {
     const { pg, chamadas } = await abrir({ porto });
-    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-valor', { timeout: 6000 });
-    const txt = await pg.locator('#tide-live').innerText();
+    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-num', { timeout: 6000 });
+    const txt = await lerCaixa(pg);
     console.log(porto + ':', txt.replace(/\n+/g, ' | '));
     assert.equal(chamadas[0].boia, boia, `${porto}: fonte ${boia}`);
     assert.ok(chamadas[0].t2 - chamadas[0].t1 >= 6 * 3600 - 5, `${porto}: 1ª busca = 6 h`);
@@ -171,6 +181,40 @@ const BOIAS = { 332: { off: 12.374, adiant: 0 }, 330: { off: 10.311, adiant: 11 
     assert.equal(chamadas.length, 0, 'Itaqui sem busca');
     assert.equal(await pg.locator('#tide-live').isHidden(), true);
     await pg.close();
+  }
+  // 12. v3.8.0: faixa recolhida
+  {
+    const { pg } = await abrir({ porto: 'suape' });
+    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-resumo', { timeout: 6000 });
+    const bt = pg.locator('#tide-live .tide-live-resumo');
+    assert.equal(await bt.getAttribute('aria-expanded'), 'false', 'nasce fechada');
+    assert.equal(await pg.locator('#tide-live-detalhes').isVisible(), false);
+    const alt = (await pg.locator('#tide-live').boundingBox()).height;
+    const linha = await bt.innerText();
+    console.log('fechada:', linha.replace(/\n/g, ' '), '·', Math.round(alt), 'px');
+    assert.ok(alt <= 52, 'fechada ocupa uma linha');
+    assert.match(linha, /Medido/i); assert.match(linha, /\d,\d\d m/); assert.match(linha, /\+12 cm da previsão/);
+    await bt.click();
+    assert.equal(await bt.getAttribute('aria-expanded'), 'true');
+    assert.equal(await pg.locator('#tide-live-detalhes').isVisible(), true, 'abre os detalhes');
+    // nova busca (relógio + 6 min) redesenha a caixa: continua aberta
+    await pg.evaluate(() => { const r = Date.now; Date.now = () => r() + 6 * 60000; window.TugTides.render(); });
+    await pg.waitForTimeout(800);
+    assert.equal(await pg.locator('#tide-live .tide-live-resumo').getAttribute('aria-expanded'), 'true', 'continua aberta após atualizar');
+    await pg.locator('#tide-live .tide-live-resumo').click();
+    assert.equal(await pg.locator('#tide-live-detalhes').isVisible(), false, 'fecha de novo');
+    await pg.screenshot({ path: `${out}/live-recolhida.png` });
+    await pg.close();
+  }
+  // 13. maré meteorológica forte: laranja já na linha fechada
+  {
+    SURGE = 0.20;
+    const { pg } = await abrir({ porto: 'pecem' });
+    await pg.waitForSelector('#tide-live:not([hidden]) .tide-live-meteo', { timeout: 6000 });
+    assert.equal(await pg.locator('#tide-live .tide-live-meteo').getAttribute('data-forte'), 'sim', '+20 cm em destaque');
+    assert.match(await pg.locator('#tide-live .tide-live-meteo').innerText(), /\+20 cm da previsão/);
+    await pg.close();
+    SURGE = 0.12;
   }
   assert.deepEqual(errs, []);
   console.log('OK nível medido');
