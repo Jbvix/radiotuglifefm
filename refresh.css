@@ -385,6 +385,9 @@ body.light-theme .tide-live-surge[data-forte="sim"] {color:#b45309;}
 /* ============================================================
    SPRINT 25 · v3.7.0 · 2026-10-15T01:30-03:00 · Jossian Brito
    Aba Rádio compacta (proposta P2-A aprovada pelo Comandante)
+   v3.7.1 · 2026-10-15T03:00-03:00 · [FIX] linha de ouvintes sobre o
+   selo STANDBY e painel "Mais" escondido com ouvintes conectados
+   (achado pelo Comandante no Moto G Power, 412×823).
    Meta: no celular (390×844) a aba Rádio cabe numa tela só.
    - Faixa atual (♪) dentro do player, logo abaixo do programa.
    - Instalar, QR, Store, Deezer e Alexa no painel recolhível
@@ -409,15 +412,22 @@ body.light-theme .tide-live-surge[data-forte="sim"] {color:#b45309;}
 }
 @media(max-width:760px) {
  body[data-aba="radio"] .player-card {padding:14px 16px;}
- body[data-aba="radio"] .live-status {margin-bottom:4px;}
- body[data-aba="radio"] .official-cover {max-width:100px; padding:2px;}
+ body[data-aba="radio"] .live-status {margin-bottom:6px;}
+ /* v3.7.1 [FIX] a linha de ouvintes tinha margin-top:-12px, feita para os 20 px
+    de folga do selo; com 6 px ela subia sobre o STANDBY. Sem margem negativa
+    e com selos mais finos (mais baixos) ela cabe sem encavalar. */
+ body[data-aba="radio"] .crew-row {margin:0 0 4px; gap:6px;}
+ body[data-aba="radio"] .crew-badge, body[data-aba="radio"] .crew-peak {padding:2px 10px; font-size:.75rem;}
+ body[data-aba="radio"] .official-cover {max-width:84px; padding:2px;}
  body[data-aba="radio"] .spectrum {margin-bottom:4px;}
  /* legenda do espectro some: o selo Standby/Ao vivo no topo já diz o estado */
  body[data-aba="radio"] .spectrum-caption {display:none;}
  body[data-aba="radio"] .program-feature {padding:4px 0 10px;}
  body[data-aba="radio"] .program-feature h1 {font-size:1.6rem;}
  body[data-aba="radio"] .now-track {margin-bottom:8px;}
- body[data-aba="radio"] .next-program {padding:8px 12px;}
+ /* v3.7.1: "Próximo programa" numa linha só (rótulo à esquerda, valor à direita) */
+ body[data-aba="radio"] .next-program {padding:6px 12px; display:flex; align-items:baseline; gap:10px;}
+ body[data-aba="radio"] .next-program span {display:inline; margin:0; white-space:nowrap;}
  body[data-aba="radio"] .play-wrapper {margin-top:4px;}
  /* relógio numa linha: data à esquerda, hora à direita; sem a linha do fuso */
  body[data-aba="radio"] #card-prog {padding:10px 16px 4px;}
@@ -426,7 +436,8 @@ body.light-theme .tide-live-surge[data-forte="sim"] {color:#b45309;}
  body[data-aba="radio"] #digital-date {margin:0!important; font-size:.7rem!important;}
  body[data-aba="radio"] #digital-clock {font-size:1.1rem;}
  body[data-aba="radio"] .schedule-panel {margin-top:4px; padding-top:2px;}
- body[data-aba="radio"] .more-panel {padding:4px 16px;}
+ /* v3.7.1 [FIX] <details> não pegava o width:100% das <section>: fechado, ficava estreito */
+ body[data-aba="radio"] .more-panel {padding:4px 16px; width:100%; box-sizing:border-box;}
  /* ao rolar até o painel, para acima da barra de abas fixa */
  body[data-aba="radio"] .more-panel {scroll-margin-bottom:calc(84px + env(safe-area-inset-bottom));}
  .app-shell>footer {display:none;}

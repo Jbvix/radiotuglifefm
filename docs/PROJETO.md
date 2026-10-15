@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.7.0 (SPRINT 25) |
+| **Versão do app** | 3.7.1 (SPRINT 25) |
 | **Documento** | 1.4.0 · 2026-10-15T01:30:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
@@ -392,7 +392,7 @@ python3 server.py          # http://localhost:8787/
 | Grade (unitário) | `node schedule.test.cjs` | Programa atual/próximo, virada de dia |
 | Navegador · geral | `node browser-check.cjs` | 4 larguras sem estouro, grade, tema, mapa sob demanda, mini-player, erro de conexão |
 | Navegador · PWA | `node pwa-check.cjs` | Manifesto, ícones, QR, copiar link, instalação, offline |
-| Navegador · aba Rádio | `node radio-check.cjs` | 390×844 sem rolagem com play, faixa, grade e "Mais" à vista; painel fechado no celular e aberto numa linha no computador; manual → "Instalar na tela inicial"; rodapé só no computador |
+| Navegador · aba Rádio | `node radio-check.cjs` | 390×844 sem rolagem; com ouvintes conectados (390×844 e 412×823) a linha 👥 não encavala o selo e o "Mais" segue à vista; com play, faixa, grade e "Mais" à vista; painel fechado no celular e aberto numa linha no computador; manual → "Instalar na tela inicial"; rodapé só no computador |
 | Navegador · espectro | `node equalizer-check.cjs` | Pausa/retomada, movimento reduzido, falha de CORS mantém o áudio |
 | Navegador · manual | `node manual-check.cjs` | Tour automático, manual por seção, "Abrir a aba", `#manual`, desktop |
 | Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: Rio Grande ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha; Suape com 2 fontes (média e horário corrigido), 1 fonte fora e as 2 fora; Pecém, Rio, Paranaguá e Salvador (IOC com sensor de isca); Itaqui sem busca |

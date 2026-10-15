@@ -1,3 +1,17 @@
+# v3.7.1 — Correção da aba Rádio com ouvintes conectados
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T03:00:00-03:00
+
+Achado pelo Comandante no preview (Moto G Power, 412×823): com ouvintes conectados, a linha "👥 a bordo · Pico hoje" encavalava o selo STANDBY e o "Mais da TugLife" ficava atrás da barra de abas. Os testes da v3.7.0 bloqueavam o Supabase, então a linha de ouvintes nunca aparecia neles.
+
+Causa e correção:
+- A linha de ouvintes tem `margin-top:-12px`, pensada para os 20 px de folga abaixo do selo; a v3.7.0 reduziu essa folga para 4 px no celular e a linha subiu 8 px sobre o selo. Agora, na aba Rádio do celular, ela fica sem margem negativa e com selos mais finos.
+- Para caber de novo numa tela: logo de 84 px e "Próximo programa" numa linha só (rótulo e valor lado a lado).
+- O painel `<details>` não pegava o `width:100%` das `<section>` e, fechado, ficava estreito; agora ocupa a largura toda.
+- Versão 3.7.1 (cache novo no `sw.js`, para os celulares receberem o CSS).
+
+Verificação: novo cenário 5 no `radio-check.cjs` (ouvintes conectados em 390×844 e 412×823): **falha com o CSS da v3.7.0** ("linha de ouvintes não encavala o STANDBY") e passa com a correção. Medido: 390×844 com 0 px de rolagem, 412×823 com 2 px, "Mais" à vista nas duas. Regressões: radio, manual, tide-live, schedule.test, browser, pwa e equalizer passaram.
+
 # SPRINT 25 — Aba Rádio numa tela só (P2-A) — v3.7.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T01:30:00-03:00

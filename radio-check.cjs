@@ -1,5 +1,9 @@
 /* TugLife FM — teste da aba Rádio compacta (SPRINT 25 · P2-A)
-   Versão 3.7.0 (SPRINT 25) · 2026-10-15T01:30:00-03:00 · Jossian Brito
+   Versão 3.7.1 (SPRINT 25) · 2026-10-15T03:00:00-03:00 · Jossian Brito
+   v3.7.1  [NOVO] Cenário 5: ouvintes conectados (linha "👥 a bordo · Pico hoje"),
+           em 390×844 e 412×823 (Moto G Power do Comandante): a linha não pode
+           encavalar o selo STANDBY e o "Mais da TugLife" tem de ficar à vista,
+           na largura toda do card.
    Uso: python3 server.py (outro terminal) → node radio-check.cjs [pasta-das-capturas]
    Navegador: Edge por padrão; PW_CHROME=<caminho do Chromium> usa outro.
    Confere:
@@ -75,6 +79,23 @@ const assert = require('node:assert/strict');
     assert.equal(await pg.locator('.app-shell>footer').isVisible(), true, 'rodapé visível no computador');
     assert.equal(await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'sem rolagem lateral');
     await pg.screenshot({ path: `${out}/radio-1280.png` });
+    await pg.close();
+  }
+  // 5. v3.7.1: com ouvintes conectados (a linha de ouvintes só aparece com o Supabase no ar)
+  for (const [w, h] of [[390, 844], [412, 823]]) {
+    const pg = await abrir(w, h);
+    await pg.evaluate(() => {
+      document.getElementById('crew-row').hidden = false;
+      document.getElementById('crew-peak').hidden = false;
+      document.getElementById('now-playing-brlogic').textContent = '♪ Agora: Love night - Parte 05';
+    });
+    const selo = await caixa(pg, '#badge-live'), crew = await caixa(pg, '#crew-row'), barra = await caixa(pg, '.tabbar');
+    assert.ok(crew.top >= selo.bottom - 0.5, `${w}×${h}: linha de ouvintes não encavala o STANDBY`);
+    const mais = await caixa(pg, '#more-panel>summary');
+    assert.ok(mais.bottom <= barra.top + 1, `${w}×${h}: "Mais da TugLife" acima da barra de abas`);
+    const larguras = await pg.evaluate(() => [document.getElementById('more-panel').offsetWidth, document.getElementById('card-prog').offsetWidth]);
+    assert.equal(larguras[0], larguras[1], `${w}×${h}: painel "Mais" na largura toda`);
+    await pg.screenshot({ path: `${out}/radio-crew-${w}.png` });
     await pg.close();
   }
   assert.deepEqual(errs, []);
