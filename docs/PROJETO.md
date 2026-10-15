@@ -3,14 +3,15 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.7.1 (SPRINT 25) |
-| **Documento** | 1.4.0 · 2026-10-15T01:30:00-03:00 |
+| **Versão do app** | 3.8.0 (SPRINT 26) |
+| **Documento** | 1.5.0 · 2026-10-15T00:30:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
 | **Repositório** | https://github.com/Jbvix/radiotuglifefm |
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
+> - 1.5.0 (2026-10-15) — Aviso de nova versão (SPRINT 26): `SKIP_WAITING` no `sw.js`, faixa no `pwa.js`, §8 com o novo fluxo de atualização, teste `update-check.cjs`.
 > - 1.4.0 (2026-10-15) — Aba Rádio compacta (SPRINT 25): faixa atual no player, painel "Mais da TugLife", rodapé só no computador; teste `radio-check.cjs`.
 > - 1.3.0 (2026-10-15) — Nível medido em mais 4 portos (Pecém, Rio de Janeiro, Paranaguá, Salvador), segunda API (IOC/UNESCO), decisão de deixar Itaqui de fora, ferramenta de offset 1.2.0 e cenários 10–11 no teste.
 > - 1.2.0 (2026-10-14) — Nível medido em Suape (média Recife + Tamandaré, correção de horário de porto secundário), §6.4 reescrito, maré meteorológica pela mediana dos resíduos, ferramenta de offset 1.1.0 e 3 cenários novos no teste.
@@ -52,13 +53,13 @@ radiotuglifefm/
 ├── index.html              Página única do app: estrutura, estilos-base e o "motor" do player
 ├── refresh.css             Camada visual atual (grade/desktop, celular, abas, maré, SAAM, manual)
 ├── manifest.webmanifest    Identidade do PWA (nome, ícones, cores, modo standalone)
-├── sw.js                   Service worker: cache do app (offline) + recepção de push SAAM
+├── sw.js                   Service worker: cache do app (offline), push SAAM e troca de versão sob comando (SKIP_WAITING)
 │
 ├── schedule.js             Grade semanal (dados) e cálculo "no ar agora / próximo"
 ├── schedule-ui.js          Interface da grade: dias, "Hoje", lista, relógio, painel recolhível
 ├── experience.js           Mini-player, duração e barra de progresso do programa
 ├── equalizer.js            Motor Web Audio (analisador) + espectro circular de barras
-├── pwa.js                  Instalar app, compartilhar, QR Code, aviso de offline, painel "Mais da TugLife"
+├── pwa.js                  Instalar app, compartilhar, QR Code, aviso de offline, painel "Mais da TugLife", aviso de nova versão
 ├── listeners.js            "Tripulação a bordo": ouvintes ao vivo e pico do dia (Supabase)
 ├── tide-data.js            Constantes harmônicas calibradas dos 13 portos
 ├── tides.js                Card "Tábua de Maré": cálculo, curva 24 h, extremos, navegação
@@ -102,6 +103,7 @@ radiotuglifefm/
 ├── equalizer-check.cjs     Teste de navegador: espectro, pausa, movimento reduzido, CORS
 ├── manual-check.cjs        Teste de navegador: manual, tour, #manual, desktop
 ├── radio-check.cjs         Teste de navegador: aba Rádio numa tela (390×844), painel "Mais", desktop
+├── update-check.cjs        Teste de navegador: aviso de nova versão com deploys simulados (servidor próprio)
 ├── tide-live-check.cjs     Teste de navegador: nível medido (APIs simuladas) em 11 cenários
 ├── schedule.test.cjs       Teste unitário da grade (node:test)
 ├── server.py               Servidor local (porta 8787) para desenvolvimento e testes
@@ -195,7 +197,7 @@ flowchart LR
 | `saam.js` | PIN, lista por dia, sincronização a cada 60 s, 3 sons sintetizados + vibração, faixa de alerta, push | `#card-saam`, `#saam-pin`, `#saam-list`, `#saam-events`, `#saam-banner` | RPC `saam_programacao`, `saam_push_registrar`; SW | 3.1.0 |
 | `tabs.js` | Barra de abas (≤ 760 px), aba lembrada, selo de alertas, `#card-saam` abre Manobras | `#tabbar`, `#tab-badge`, `body[data-aba]` | evento `saam:alerta` | 3.2.0 |
 | `manual.js` | Botão ?, Manual de bordo (seções, sanfona, "Abrir a aba"), tour de 6 passos, `#manual` | `#help-btn`, `#manual-dialog`, `.tour-camada` | `TugTabs` | 3.6.0 |
-| `sw.js` | Cache versionado só do app (nunca do stream nem de APIs); push SAAM com vibração por tipo; clique abre `#card-saam` | — | Web Push | 3.6.0 |
+| `sw.js` | Cache versionado só do app (nunca do stream nem de APIs); push SAAM com vibração por tipo; clique abre `#card-saam`; versão nova fica em espera até a mensagem `SKIP_WAITING` | — | Web Push | 3.8.0 |
 
 ### Contratos entre módulos
 
@@ -373,7 +375,15 @@ O card de Maré mostra, além da previsão, o nível **real** medido por marégr
 
 ### Atualização no celular
 
-O service worker guarda a versão anterior inteira (HTML, scripts e imagens da mesma versão juntos). Trocar o nome do cache força a renovação: o tripulante **fecha e reabre o app duas vezes** (a 1ª baixa, a 2ª ativa). Não precisa desinstalar.
+O service worker guarda a versão anterior inteira (HTML, scripts e imagens da mesma versão juntos). Trocar o nome do cache força a renovação.
+
+**Desde a v3.8.0 (aviso de nova versão):**
+1. O navegador acha o `sw.js` novo, ao abrir o app ou ao voltar para ele (`pwa.js` chama `registration.update()` no máximo a cada 30 min), e instala a versão nova, que **fica em espera**. Ela nunca troca sozinha.
+2. O `pwa.js` mostra a faixa **"Nova versão X.Y.Z disponível · Atualizar"**, com o número lido do `VERSION.json`. Com a rádio tocando, a faixa avisa que o áudio para por alguns segundos.
+3. O toque envia `SKIP_WAITING` ao SW em espera; ele assume (`controllerchange`) e a página recarrega já na versão nova. Outras abas recarregam sozinhas, a menos que estejam tocando; nesse caso só avisam.
+4. "×" dispensa a faixa até a próxima abertura. Na 1ª visita não há aviso nem recarga.
+
+Quem estava numa versão anterior à 3.8.0 precisa ainda **fechar e reabrir o app duas vezes** uma última vez para chegar nela; dali em diante, basta o toque.
 
 ---
 
@@ -392,6 +402,7 @@ python3 server.py          # http://localhost:8787/
 | Grade (unitário) | `node schedule.test.cjs` | Programa atual/próximo, virada de dia |
 | Navegador · geral | `node browser-check.cjs` | 4 larguras sem estouro, grade, tema, mapa sob demanda, mini-player, erro de conexão |
 | Navegador · PWA | `node pwa-check.cjs` | Manifesto, ícones, QR, copiar link, instalação, offline |
+| Navegador · nova versão | `node update-check.cjs` | Servidor próprio (porta 8799) simula deploys: 1ª visita sem aviso nem recarga, faixa "Nova versão 9.9.2 disponível", "×" dispensa, rádio tocando não troca sozinha e avisa, "Atualizar" recarrega na versão nova |
 | Navegador · aba Rádio | `node radio-check.cjs` | 390×844 sem rolagem; com ouvintes conectados (390×844 e 412×823) a linha 👥 não encavala o selo e o "Mais" segue à vista; com play, faixa, grade e "Mais" à vista; painel fechado no celular e aberto numa linha no computador; manual → "Instalar na tela inicial"; rodapé só no computador |
 | Navegador · espectro | `node equalizer-check.cjs` | Pausa/retomada, movimento reduzido, falha de CORS mantém o áudio |
 | Navegador · manual | `node manual-check.cjs` | Tour automático, manual por seção, "Abrir a aba", `#manual`, desktop |

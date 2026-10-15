@@ -1,3 +1,22 @@
+# SPRINT 26 — Aviso de nova versão — v3.8.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T00:30:00-03:00
+
+Motivação: no teste da v3.7.1 o Comandante viu a versão velha por causa do cache do service worker. A regra "feche e reabra o app duas vezes" atrasava correções para a tripulação. Proposta aprovada pelo Comandante após o merge do PR #1.
+
+Implementação:
+- `sw.js`: mensagem `SKIP_WAITING`. A versão nova instala e fica em espera; só assume quando o app manda.
+- `pwa.js`: faixa fixa logo abaixo do cabeçalho, em qualquer aba — **"Nova versão X.Y.Z disponível · Atualizar · ×"** (número lido do `VERSION.json`; sem rede, sem número). O toque envia `SKIP_WAITING` e a página recarrega já na versão nova.
+  - Procura versão nova ao abrir e ao voltar para o app (`registration.update()`, no máximo a cada 30 min): app aberto por horas a bordo também recebe.
+  - Rádio tocando: nada troca sozinho; a faixa avisa "a rádio para por alguns segundos". Troca pedida em outra aba: abas paradas recarregam, a que está tocando só avisa.
+  - 1ª visita: o `clients.claim()` dispara `controllerchange`, mas não é atualização; o app ignora (sem recarga, sem aviso).
+  - "×" dispensa até a próxima abertura.
+- Manual de bordo: "Como atualizar" reescrito e novidade da v3.8.0; README regenerado; `docs/PROJETO.md` 1.5.0 (§8 com o fluxo novo). Versão 3.8.0.
+
+Verificação: `update-check.cjs` (novo) sobe um servidor próprio que acrescenta o "deploy" atual ao `sw.js` e ao `VERSION.json`, simulando deploys reais: 1ª visita sem aviso e sem recarga; deploy 2 → "Nova versão 9.9.2 disponível", faixa abaixo do cabeçalho e acima da barra de abas; "×" dispensa; recarregar mantém a versão em espera e a faixa volta; deploy 3 com a rádio tocando → "9.9.3 disponível · a rádio para por alguns segundos" e nada troca sozinho; "Atualizar" → página recarrega, sem versão em espera, com o `sw.js` do deploy 3 ativo; sem erros de JavaScript. Contraprova: sem o `SKIP_WAITING` no `sw.js` o teste falha (a página nunca recarrega). Passou 3 vezes. Regressões: radio, manual, tide-live, schedule.test, browser, pwa e equalizer passaram.
+
+Limitações: quem está na 3.7.1 ou antes ainda precisa fechar e reabrir o app uma última vez para chegar na 3.8.0 (o aviso mora no código novo). Ao atualizar com a rádio tocando o áudio para e é preciso tocar no play de novo (o navegador não deixa a rádio voltar sozinha sem um toque).
+
 # v3.7.1 — Correção da aba Rádio com ouvintes conectados
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T03:00:00-03:00
