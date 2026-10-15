@@ -4,7 +4,9 @@
    Cobre: tour automático na 1ª abertura (6 passos, caixa sempre dentro da tela),
    tour só uma vez por versão do manual, manual abre na seção da aba atual,
    chips e sanfona, "Abrir a aba …", "Rever o tour", link #manual, tema claro,
-   computador sem tour automático. */
+   computador sem tour automático.
+   v3.9.0 (SPRINT 27) · 2026-10-15T16:40:00-03:00 · Jossian Brito
+          [MOD] Seção Manobras tem 8 itens (5 de Suape + 3 do card do Rio). */
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 (async () => {
@@ -39,7 +41,7 @@ const assert = require('node:assert/strict');
   assert.equal(await pg.locator('#manual-dialog').evaluate(d => d.open), true);
   assert.equal(await pg.locator('.manual-chip[aria-pressed="true"]').textContent(), 'Maré');
   await pg.click('.manual-chip[data-secao="manobras"]');
-  assert.equal(await pg.locator('.manual-item').count(), 5);
+  assert.equal(await pg.locator('.manual-item').count(), 8);   // v3.9.0: +3 itens do Rio
   await pg.locator('.manual-item summary').nth(2).click();
   assert.equal(await pg.locator('.manual-item').nth(2).evaluate(d => d.open), true);
   const box = await pg.locator('#manual-dialog').boundingBox();

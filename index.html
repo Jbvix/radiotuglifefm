@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.8.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.9.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.8.0
-           Data: 2026-10-15T00:30:00-03:00
+           Versão: v3.9.0
+           Data: 2026-10-15T16:40:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.9.0 (SPRINT 27): card "Programação SAAM · Rio de Janeiro"
+             na aba Manobras, público (sem PIN), lido da página da
+             Praticagem RJ (EMP.RB = SAA) pela Edge Function saam-rj
+             (saam-rj.js); filtro por área e rebocadores escalados.
            - v3.8.0 (SPRINT 26): faixa "Nova versão disponível · Atualizar"
              (pwa.js + sw.js) — fim do "feche e reabra duas vezes".
            - v3.7.1: [FIX] linha de ouvintes encavalava o selo STANDBY e o
@@ -247,6 +251,7 @@
     <script src="tides.js" defer></script>
     <script src="tide-live.js" defer></script>
     <script src="saam.js" defer></script>
+    <script src="saam-rj.js" defer></script>
     <script src="tabs.js" defer></script>
     <script src="manual.js" defer></script>
 </head>
@@ -425,6 +430,21 @@
         </div>
     </section>
 
+    <!-- SPRINT 27 · v3.9.0: Programação SAAM · Rio de Janeiro (saam-rj.js · Praticagem RJ) -->
+    <section class="card" data-tab="manobras" id="card-saam-rj" hidden aria-labelledby="saamrj-heading">
+        <div class="saam-head">
+            <div>
+                <div class="eyebrow" id="saamrj-heading">Programação SAAM · Rio de Janeiro</div>
+                <div class="saam-sub">Manobras com rebocadores SAAM na programação da Praticagem RJ</div>
+            </div>
+        </div>
+        <p id="saamrj-sync" class="saam-sync" role="status"></p>
+        <div id="saamrj-areas" class="saamrj-areas" role="group" aria-label="Filtrar por área"></div>
+        <p id="saamrj-barra" class="saamrj-barra" hidden></p>
+        <div id="saamrj-list" class="saam-list"></div>
+        <p class="tide-disclaimer">Fonte: <a href="https://www.praticagem-rj.com.br/" target="_blank" rel="noopener">praticagem-rj.com.br</a>, coluna EMP.RB = SAA, lida a cada 2 min com o card à vista. Horários de Brasília. Apoio informativo — confirme sempre com a central e o prático.</p>
+    </section>
+
     <!-- Monitoramento AIS -->
     <section class="card" data-tab="portos" id="card-mapa"><details id="mariner-panel"><summary>Painel do Marujo <span>Portos e clima</span></summary><p class="service-note">Mapas fornecidos por serviços externos. Se estiverem indisponíveis, tente novamente mais tarde.</p>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -439,7 +459,7 @@
     </section>
 
     <footer data-tab="radio">
-        <strong>TugLife FM v3.8.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.9.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
         © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T00:30:00-03:00
     </footer>
@@ -487,7 +507,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.8.0
+     * TugLife FM Engine v3.9.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
