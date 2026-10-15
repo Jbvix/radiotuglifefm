@@ -2,11 +2,13 @@
    TugLife FM — Manual de bordo (botão ?) e Tour guiado
    ------------------------------------------------------------
    Arquivo   : manual.js
-   Versão    : 3.10.0 (SPRINT 29)
-   Data/Hora : 2026-10-15T18:45:00-03:00
+   Versão    : 3.11.0 (SPRINT 30)
+   Data/Hora : 2026-10-15T20:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.11.0 [MOD] Seção Rádio ganha o item "Disco e equalizador";
+                 novidade da v3.11.0.
    v3.10.0 [MOD] Seção Rádio ganha o item "Contador de visitas";
                  novidade da v3.10.0.
    v3.9.1  [MOD] Manobras: o card do Rio também pede o PIN (o mesmo de
@@ -54,9 +56,10 @@
 
 (function () {
   const MANUAL = {
-    versao: '3.10.0',
+    versao: '3.11.0',
     tourVersao: '3.2.0',   // mude só quando o tour precisar ser revisto pela tripulação
     novidades: [
+      { versao: '3.11.0', texto: 'Player de cara nova: o logo maior gira como um disco enquanto a rádio toca e, ao lado, o equalizador mostra graves e agudos ao vivo.' },
       { versao: '3.10.0', texto: 'Contador de visitas: quantas vezes o app foi aberto, por quantos aparelhos e quantas hoje. Anônimo, sem nenhum dado pessoal.' },
       { versao: '3.10.0', texto: 'Programação do Rio agora com o PIN da tripulação (o mesmo de Suape). Toque no título de cada programação para recolher ou abrir.' },
       { versao: '3.9.0', texto: 'Programação SAAM no Rio de Janeiro: manobras da Praticagem RJ com rebocadores SAAM, por área (Guanabara, Sepetiba, Forno, Açu), sem PIN.' },
@@ -74,6 +77,7 @@
         ['Ouvir ao vivo', 'Toque no botão grande da aba Rádio. Nas outras abas, use a faixa ao vivo logo acima da barra de abas.'],
         ['No ar agora e próximo', 'Mostra o programa da grade neste momento, quanto falta para acabar e o que vem em seguida.'],
         ['Grade semanal', 'Toque em "Grade da semana" para abrir. Escolha o dia; "Hoje" volta para o dia atual. Funciona mesmo sem internet.'],
+        ['Disco e equalizador', 'O logo da rádio gira como um disco (sentido horário) enquanto a rádio toca e para no standby. Ao lado, as barras do equalizador sobem com o som: à esquerda os graves, à direita os agudos. Com "movimento reduzido" ligado no aparelho, o disco e as barras ficam parados.'],
         ['Faixa atual', 'Nome da música que está tocando (♪), logo abaixo do programa no ar. Atualiza sozinho.'],
         ['Tripulação a bordo', 'Quantos ouvintes estão conectados agora e o pico do dia.'],
         ['Contador de visitas', 'Linha 👁️ com o total de visitas, de aparelhos diferentes e as visitas de hoje. No celular fica em "Mais da TugLife"; no computador, no rodapé. Conta no máximo uma visita a cada 30 min por aparelho e é anônimo: o aparelho guarda só um código sorteado, sem nome, IP ou localização.']

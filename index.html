@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.10.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.11.0 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,14 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.10.0
-           Data: 2026-10-15T18:45:00-03:00
+           Versão: v3.11.0
+           Data: 2026-10-15T20:30:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.11.0 (SPRINT 30): logo da rádio maior, à esquerda, girando
+             como um disco (sentido horário) só enquanto a rádio toca; à
+             direita, equalizador de barras (graves → agudos). Tudo lado a
+             lado e centralizado no player (equalizer.js + refresh.css).
            - v3.10.0 (SPRINT 29): contador de visitas anônimo
              ("👁️ N visitas · N aparelhos · N hoje") no rodapé e no
              painel "Mais da TugLife" (visitas.js + função
@@ -305,12 +309,17 @@
             <span class="crew-peak" id="crew-peak" hidden>📈 Pico hoje: <strong id="crew-peak-count">0</strong></span>
         </div>
 
-        <section class="spectrum" aria-label="Espectro circular do áudio da rádio">
-            <div class="official-cover"><div class="spectrum-orbit">
-                <img src="assets/brand.png" width="640" height="640" alt="TugLife FM — O Som do Mar">
+        <!-- SPRINT 30 · v3.11.0: logo girando como disco (à esquerda) + equalizador de
+             barras (à direita), lado a lado e centralizados. Antes: espectro circular
+             em volta de um logo de 84 px. O disco só gira com a rádio tocando. -->
+        <section class="spectrum" aria-label="Logo da rádio e equalizador do áudio">
+            <div class="spectrum-deck">
+                <div class="official-cover radio-disc" id="radio-disc">
+                    <img src="assets/brand.png" width="640" height="640" alt="TugLife FM — O Som do Mar">
+                </div>
                 <div id="spectrum-bars" aria-hidden="true"></div>
-            </div></div>
-            <div class="spectrum-caption"><span>ESPECTRO AO VIVO</span><span id="spectrum-status" role="status">Aguardando reprodução</span></div>
+            </div>
+            <div class="spectrum-caption"><span>EQUALIZADOR AO VIVO</span><span id="spectrum-status" role="status">Aguardando reprodução</span></div>
         </section>
         <div class="program-feature" aria-live="polite">
             <span class="eyebrow">No ar agora · conforme a grade</span>
@@ -487,9 +496,9 @@
     </section>
 
     <footer data-tab="radio">
-        <strong>TugLife FM v3.10.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.11.0</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T18:45:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T20:30:00-03:00
         <span class="visitas-linha visitas-rodape" data-visitas hidden><br>👁️ <span data-visitas-texto></span></span>
     </footer>
 </div>
@@ -536,7 +545,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.10.0
+     * TugLife FM Engine v3.11.0
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

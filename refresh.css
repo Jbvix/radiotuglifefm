@@ -50,17 +50,47 @@ dialog label {display:block;font-size:.75rem;color:var(--text-muted);margin-bott
 .dialog-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
 [hidden] {display:none!important;}
 @media(max-width:420px) {.brand-lockup {gap:8px;}.brand-lockup img {width:36px;height:36px;}.brand-title {font-size:1.35rem!important;} .app-tools button {font-size:.73rem;padding:10px 12px;}}
-/* SPRINT 13: radial spectrum, amplitude remains driven by Web Audio. */
+/* ============================================================
+   SPRINT 30 · v3.11.0 · 2026-10-15T20:30:00-03:00 · Jossian Brito
+   Toca-discos do player: logo girando à esquerda + equalizador à direita
+   (substitui o espectro circular do SPRINT 13 em volta de um logo de 84 px).
+
+   MEDIDA ÚNICA: --disc (diâmetro do disco). Tudo deriva dela, como o
+   diâmetro do hélice dita o resto do Kort nozzle:
+     - disco   = --disc × --disc  (redondo, border-radius 50%)
+     - barras  = altura de 72% do disco → equalizador "abraçado" ao disco,
+                 centrado na mesma linha d'água (align-items:center).
+   --disc = clamp(120px, 34vw, 210px): 34% da largura da tela, nunca menos
+   de 120 px nem mais de 210 px (computador). Na aba Rádio do celular, que
+   tem de caber numa tela só, a regra da aba fixa 112 px.
+
+   GIRO (sentido horário): rotate(0 → 360deg) em CSS é horário. Uma volta
+   a cada 6 s = 10 rpm. Um LP gira a 33⅓ rpm (1,8 s/volta) — rápido demais
+   para ler o logo; 10 rpm é o "giro de cortesia" de um disco na vitrine.
+   A animação existe sempre, mas fica PAUSADA (animation-play-state) e só
+   anda com .is-spinning, que o equalizer.js liga no evento "playing" e
+   desliga em pause/ended/waiting/error. Pausar (e não remover) a animação
+   faz o disco parar onde está, como um prato que perde a tração, em vez
+   de pular de volta para 0°.
+   Movimento reduzido: regra explícita abaixo (o disco fica parado).
+   ============================================================ */
 .spectrum {margin:0 0 26px;}
-.official-cover {display:flex;justify-content:center;padding:8px;background:radial-gradient(circle,#14374966,transparent 70%);border-radius:16px;}
-.spectrum-orbit {position:relative;width:min(100%,360px);aspect-ratio:1;isolation:isolate;overflow:hidden;}
-.spectrum-orbit img {position:absolute;width:72%;height:72%;left:14%;top:14%;object-fit:contain;}
-#spectrum-bars {position:absolute;inset:0;pointer-events:none;}
-.spectrum-spoke {position:absolute;inset:0;transform:rotate(var(--angle));}
-#spectrum-bars span {position:absolute;left:calc(50% - 2.5px);top:2%;width:5px;height:11%;background:linear-gradient(to top,var(--accent) 25%,var(--amber));border-radius:5px;transform:scaleY(.035);transform-origin:center bottom;}
+.spectrum-deck {--disc:clamp(120px,34vw,210px); display:flex; align-items:center; justify-content:center; gap:clamp(16px,5vw,32px);}
+/* o disco: sulcos de vinil (gradiente radial repetido a cada 3 px) e o logo como selo central */
+.official-cover.radio-disc {flex:0 0 var(--disc); width:var(--disc); height:var(--disc); padding:0; border-radius:50%; display:grid; place-items:center;
+  background:repeating-radial-gradient(circle,#0b141b 0 1.5px,#17262f 1.5px 3px);
+  box-shadow:0 0 0 2px #ffffff12, 0 10px 28px #0007, inset 0 0 0 3px #0009;
+  animation:disc-spin 6s linear infinite; animation-play-state:paused;}
+.radio-disc img {width:80%; height:80%; border-radius:50%; object-fit:contain;}
+.radio-disc.is-spinning {animation-play-state:running;}
+@keyframes disc-spin {to {transform:rotate(360deg);}}
+@media(prefers-reduced-motion:reduce) {.radio-disc {animation:none;}}
+/* o equalizador: barras da mesma largura, crescendo de baixo para cima.
+   Cada barra = height 100% × scaleY(nível), nível 0,035…1 vindo do analisador. */
+#spectrum-bars {flex:0 1 240px; min-width:0; height:calc(var(--disc) * .72); display:flex; align-items:flex-end; justify-content:space-between; gap:3px; pointer-events:none;}
+#spectrum-bars span {flex:1 1 0; max-width:8px; height:100%; background:linear-gradient(to top,var(--accent) 25%,var(--amber)); border-radius:3px; transform:scaleY(.035); transform-origin:center bottom;}
 .spectrum-caption {display:flex;justify-content:center;align-items:center;gap:6px 14px;flex-wrap:wrap;margin-top:12px;font-size:.6rem;letter-spacing:.08em;color:var(--accent);}
 #spectrum-status {color:var(--text-muted);letter-spacing:0;}
-@media(max-width:420px) {#spectrum-bars span {width:4px;left:calc(50% - 2px);}}
 :root {--bg-deep:#07131d;--bg-card:#101f2b;--accent:#69d5e7;--accent-glow:rgba(55,170,191,.16);--text-main:#ecf4f5;--text-muted:#a3b6c3;--amber:#f1bd70;}
 body {font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif; background-image:radial-gradient(ellipse at 15% 0%,#14303d,transparent 55%);}
 button,input {font:inherit;}
@@ -265,7 +295,6 @@ body.light-theme .nautical-cover {--amber:#f1bd70;}
  body[data-aba="portos"]   .app-shell>[data-tab]:not([data-tab="portos"]) {display:none!important;}
 
  /* aba Rádio: capa menor para caber player + faixa sem rolar */
- body[data-aba="radio"] .official-cover {max-width:170px; margin-inline:auto; padding:4px;}
  body[data-aba="radio"] .spectrum {margin-bottom:12px;}
  body[data-aba="radio"] .program-feature h1 {margin:6px 0;}
  body[data-aba="radio"] .play-wrapper {margin-top:10px;}
@@ -418,17 +447,21 @@ body.light-theme .tide-live-surge[data-forte="sim"] {color:#b45309;}
     e com selos mais finos (mais baixos) ela cabe sem encavalar. */
  body[data-aba="radio"] .crew-row {margin:0 0 4px; gap:6px;}
  body[data-aba="radio"] .crew-badge, body[data-aba="radio"] .crew-peak {padding:2px 10px; font-size:.75rem;}
- body[data-aba="radio"] .official-cover {max-width:84px; padding:2px;}
+ /* v3.11.0: disco de 112 px (era um logo de 84 px) e equalizador ao lado;
+    a folga vem do botão Ouvir, que perdeu o respiro de 24 px embaixo. */
+ body[data-aba="radio"] .spectrum-deck {--disc:112px;}
  body[data-aba="radio"] .spectrum {margin-bottom:4px;}
  /* legenda do espectro some: o selo Standby/Ao vivo no topo já diz o estado */
  body[data-aba="radio"] .spectrum-caption {display:none;}
- body[data-aba="radio"] .program-feature {padding:4px 0 10px;}
+ body[data-aba="radio"] .program-feature {padding:2px 0 6px;}   /* v3.11.0: era 4px 0 10px */
  body[data-aba="radio"] .program-feature h1 {font-size:1.6rem;}
  body[data-aba="radio"] .now-track {margin-bottom:8px;}
+ /* v3.11.0: barra de progresso com 10 px de respiro (era 24) — paga o disco maior */
+ body[data-aba="radio"] .program-feature progress {margin-bottom:10px;}
  /* v3.7.1: "Próximo programa" numa linha só (rótulo à esquerda, valor à direita) */
  body[data-aba="radio"] .next-program {padding:6px 12px; display:flex; align-items:baseline; gap:10px;}
  body[data-aba="radio"] .next-program span {display:inline; margin:0; white-space:nowrap;}
- body[data-aba="radio"] .play-wrapper {margin-top:4px;}
+ body[data-aba="radio"] .play-wrapper {margin-top:4px; padding:0 0 6px;}   /* v3.11.0: era 6px 0 24px */
  /* relógio numa linha: data à esquerda, hora à direita; sem a linha do fuso */
  body[data-aba="radio"] #card-prog {padding:10px 16px 4px;}
  body[data-aba="radio"] #card-prog .digital-clock-container {margin:0; padding:2px 0 6px; flex-wrap:nowrap; align-items:center; border-bottom:0;}
