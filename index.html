@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.4.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.7.1 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,22 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.4.0
-           Data: 2026-10-12T18:30:00-03:00
+           Versão: v3.7.1
+           Data: 2026-10-15T03:00:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.7.1: [FIX] linha de ouvintes encavalava o selo STANDBY e o
+             "Mais da TugLife" sumia com ouvintes conectados (Moto G Power).
+           - v3.7.0 (SPRINT 25): aba Rádio compacta — faixa atual dentro do
+             player; Instalar, QR, Store, Deezer e Alexa no painel recolhível
+             "Mais da TugLife"; relógio numa linha; rodapé só no computador.
+             Em 390×844 a aba cabe numa tela (antes rolava ~550 px).
+           - v3.6.0 (SPRINT 24): nível MEDIDO ao vivo também em Pecém,
+             Rio de Janeiro, Paranaguá (SiMCosta) e Salvador (IBGE via
+             IOC/UNESCO); Itaqui fica de fora (sem marégrafo representativo).
+           - v3.5.0 (SPRINT 23): Suape com nível MEDIDO ao vivo pela
+             média dos marégrafos de Recife e Tamandaré (SiMCosta/FURG,
+             UFPE, CEPENE), com horário corrigido para Suape.
            - v3.4.0 (SPRINT 22): Rio Grande com nível MEDIDO ao vivo
              (marégrafo SiMCosta/FURG de São José do Norte) e maré
              meteorológica (tide-live.js).
@@ -254,9 +266,6 @@
         <div class="brand-tagline">O Som do Mar • 24/7/365</div>
     </header>
 
-    <nav class="app-tools" data-tab="radio" aria-label="Aplicativo e compartilhamento">
-        <button id="install-app">Instalar app</button><button id="share-radio">Compartilhar rádio · QR Code</button>
-    </nav>
     <p id="network-status" data-tab="radio" role="status" hidden>Você está offline. A programação está disponível; conecte-se à internet para ouvir a rádio.</p>
     <!-- Player Card -->
     <section class="card player-card" data-tab="radio" id="card-player">
@@ -285,6 +294,8 @@
         <div class="program-feature" aria-live="polite">
             <span class="eyebrow">No ar agora · conforme a grade</span>
             <h1 id="program-current">TugLife FM</h1>
+            <!-- SPRINT 25 · v3.7.0: faixa atual dentro do player (era um card à parte) -->
+            <p class="now-track" id="now-playing-brlogic" role="status">Consultando a faixa atual…</p>
             <div class="next-program"><span>PRÓXIMO PROGRAMA</span><strong id="program-next">Carregando programação…</strong></div>
         </div>
         <div class="play-wrapper">
@@ -299,14 +310,6 @@
         <audio id="radio-stream" preload="none" crossorigin="anonymous">
             <source src="https://servidor27-1.brlogic.com:7098/live" type="audio/mpeg" />
         </audio>
-    </section>
-
-    <!-- Informações da faixa -->
-    <section class="card" data-tab="radio" id="card-brlogic-player" style="padding: 12px 10px 8px;">
-        <div style="font-family:'Orbitron'; font-size:0.7rem; color:var(--accent); margin:0 0 10px 4px; letter-spacing:1px;">
-            NESTA FREQUÊNCIA · FAIXA ATUAL
-        </div>
-        <p id="now-playing-brlogic" style="margin:10px 4px 0; font-size:0.75rem; color:var(--text-muted); min-height:1.2em;" role="status">Consultando a faixa atual…</p>
     </section>
 
     <section class="card" data-tab="radio" id="card-charlie" hidden>
@@ -329,6 +332,25 @@
         <ul class="schedule-list" id="schedule-list" aria-labelledby="schedule-heading"></ul>
         </details>
     </section>
+
+    <!-- SPRINT 25 · v3.7.0: "Mais da TugLife" — instalar, QR, loja, Deezer e Alexa
+         num painel recolhível (fechado no celular, aberto no computador) -->
+    <details class="card more-panel" data-tab="radio" id="more-panel">
+        <summary>Mais da TugLife <span>Instalar · QR · Store</span></summary>
+        <div class="more-corpo">
+        <nav class="app-tools" aria-label="Aplicativo e compartilhamento">
+            <button id="install-app">Instalar app</button><button id="share-radio">Compartilhar rádio · QR Code</button>
+        </nav>
+        <div class="footer-actions">
+            <a href="https://www.tuglife.store" target="_blank" rel="noopener noreferrer" class="btn-ext">⚓ TugLife Store</a>
+            <a href="https://www.deezer.com/search/tuglife%20fm" target="_blank" rel="noopener noreferrer" class="btn-ext">🎧 Deezer</a>
+            <div class="btn-ext alexa">
+                <span aria-hidden="true">◉</span>
+                <span>"Alexa, abrir RÁDIO MARUJO"</span>
+            </div>
+        </div>
+        </div>
+    </details>
 
     <!-- SPRINT 15 · v2.7.0: Tábua de Maré (tides.js) -->
     <section class="card" data-tab="mare" id="card-mare" hidden aria-labelledby="tide-heading">
@@ -408,20 +430,10 @@
         <div class="map-container" id="map-view"></div></details>
     </section>
 
-    <!-- Footer Actions -->
-    <div class="footer-actions" data-tab="radio">
-        <a href="https://www.tuglife.store" target="_blank" rel="noopener noreferrer" class="btn-ext">⚓ TugLife Store</a>
-        <a href="https://www.deezer.com/search/tuglife%20fm" target="_blank" rel="noopener noreferrer" class="btn-ext">🎧 Deezer</a>
-        <div class="btn-ext alexa">
-            <span aria-hidden="true">◉</span>
-            <span>"Alexa, abrir RÁDIO MARUJO"</span>
-        </div>
-    </div>
-
     <footer data-tab="radio">
-        <strong>TugLife FM v3.4.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.7.1</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-12T18:30:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T03:00:00-03:00
     </footer>
 </div>
 <!-- SPRINT 20 · v3.2.0: Manual de bordo (manual.js preenche) -->
@@ -467,7 +479,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.4.0
+     * TugLife FM Engine v3.7.1
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };
@@ -554,7 +566,8 @@
                 if (audio && !audio.paused && statusText) {
                     statusText.innerText = 'Agora: ' + track;
                 }
-            } catch (e) { if (npLabel) npLabel.textContent = 'Faixa indisponível no momento. Você pode continuar ouvindo a rádio.'; }
+            // v3.7.0: texto curto — cabe numa linha dentro do player
+            } catch (e) { if (npLabel) npLabel.textContent = 'Faixa indisponível no momento.'; }
         };
         refreshNowPlaying();
         setInterval(refreshNowPlaying, 20000);

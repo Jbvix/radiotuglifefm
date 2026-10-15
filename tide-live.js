@@ -2,8 +2,8 @@
    TugLife FM — Nível do mar MEDIDO (marégrafos SiMCosta/FURG)
    ------------------------------------------------------------
    Arquivo   : tide-live.js
-   Versão    : 3.4.0 (SPRINT 22)
-   Data/Hora : 2026-10-12T18:30:00-03:00
+   Versão    : 3.6.0 (SPRINT 24)
+   Data/Hora : 2026-10-15T00:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
@@ -12,11 +12,40 @@
            meteorológica (medido − previsto) e curva medida das
            últimas 6 h sobre a curva prevista. Volta sozinho para a
            previsão quando o dado fica velho (> 30 min) ou falha.
+   v3.5.0  [NOVO] Suape com nível medido pela MÉDIA de dois marégrafos,
+           Recife (id 330, UFPE) ao norte e Tamandaré (id 399,
+           CEPENE/UFPE) ao sul. O marégrafo de Suape (id 311) está
+           mudo desde 2024 e o radar dele foi para Tamandaré.
+           [MOD] ESTACOES[porto].fontes: lista de marégrafos, cada um
+           com o seu offset. Se um cair (> 30 min sem dado), segue
+           com o outro e a faixa avisa qual está no ar.
+           [NOVO] adiantamentoMin: correção de horário da estação de
+           referência para o porto (ver "PORTO SECUNDÁRIO" abaixo).
+           [FIX] Maré meteorológica pela mediana dos resíduos: a
+           mediana do nível atrasava ~5 min e, com a maré correndo,
+           inventava até ~4 cm (achado no teste de Suape).
+   v3.6.0  [NOVO] Nível medido em mais 4 portos: Pecém (SiMCosta 307),
+           Rio de Janeiro (SiMCosta 304, Niterói/DHN), Paranaguá
+           (SiMCosta 300, CEM/UFPR) e Salvador (marégrafo do IBGE/RMPG
+           via IOC/UNESCO, código "salv").
+           [NOVO] Segunda API: IOC Sea Level Monitoring (fonte.api =
+           'ioc'); cada fonte diz de qual API vem e a faixa de leituras
+           válidas (fonte.faixa), porque cada radar tem o seu zero.
+           [DECISÃO] Itaqui fica de fora: o marégrafo mais próximo
+           (Ribamar, id 302) está noutra baía, com amplitude 18% menor;
+           mesmo corrigida, sobram ~21 cm de erro de transferência que
+           virariam maré meteorológica falsa.
    ------------------------------------------------------------
    DE ONDE VEM O DADO
-   API pública e documentada do SiMCosta (https://simcosta.furg.br/q/docs/):
+   1) API pública e documentada do SiMCosta (https://simcosta.furg.br/q/docs/):
      GET /api/intrans_data?boiaID=332&type=json&time1=<s>&time2=<s>&params=<p>
-   - 1 leitura por minuto; CORS liberado; sem login.
+   2) v3.6.0: IOC Sea Level Monitoring (UNESCO), que redistribui
+      marégrafos do mundo todo — aqui o do IBGE em Salvador:
+     GET https://www.ioc-sealevelmonitoring.org/service.php?query=data
+         &code=salv&timestart=<ISO UTC>&timestop=<ISO UTC>&format=json
+      Resposta: [{slevel, stime "AAAA-MM-DD hh:mm:ss" (UTC), sensor}];
+      vários sensores misturados → filtramos fonte.sensor ('rad').
+   - 1 leitura por minuto; CORS liberado; sem login nas duas.
    - 1ª carga: últimas 6 h (~50 KB). Depois só o que chegou desde a
      última leitura (busca incremental, poucos KB a cada 5 min).
 
@@ -40,8 +69,38 @@
    astronômica local. É como a deriva no rebocador: a rota
    calculada é a maré; o vento e a corrente empurram por fora.
 
+   VÁRIOS MARÉGRAFOS NUM PORTO (Suape)
+   Cada marégrafo i vai ao NR pelo seu próprio offset; depois,
+   minuto a minuto, tira-se a média dos que estão no ar:
+
+       nível_NR(t) = (1/n) · Σ [ leitura_i(t) − OFFSET_i ]
+
+   A série combinada vai só até o último minuto que TODOS os
+   marégrafos ativos já mandaram; assim a média nunca "pula" entre
+   1 e 2 estações no fim da linha. É a mesma ideia de cruzar duas
+   marcações para fixar a posição: cada uma tem o seu erro, a média
+   fica mais firme e, se uma some, ainda sobra a outra.
+   Em 30 dias, Recife e Tamandaré no NR diferiram 0,0 cm em média
+   (RMS 3,2 cm).
+
+   PORTO SECUNDÁRIO (correção de horário)
+   Em Recife e Tamandaré a maré chega ~11 min ANTES da previsão de
+   Suape (melhor ajuste em 30 dias, passos de 1 min). Como nas
+   tábuas da DHN para portos secundários, transferimos a leitura
+   para o horário do porto:
+
+       t_porto = t_leitura + adiantamentoMin
+
+   Sem essa correção, perto da meia-maré (subida de ~0,5 m/h em
+   Suape) apareceria uma falsa maré meteorológica de ~±9 cm:
+       erro ≈ velocidade × atraso = 0,5 m/h × 11/60 h ≈ 9 cm
+   A idade do dado ("há N min") continua contada no relógio real.
+
    SUAVIZAÇÃO E TENDÊNCIA
-   - "Agora" = mediana dos últimos 10 min (descarta picos de onda).
+   - Maré meteorológica = mediana, nos últimos 10 min, de
+     (medido − previsto) minuto a minuto (descarta picos de onda).
+   - "Agora" = previsão no último minuto + essa maré meteorológica
+     (v3.5.0; antes era a mediana do nível, que atrasava ~5 min).
    - Tendência = inclinação da reta de mínimos quadrados dos
      últimos 30 min, em cm/h:
          b = Σ(tᵢ−t̄)(hᵢ−h̄) / Σ(tᵢ−t̄)²
@@ -52,84 +111,197 @@
   'use strict';
 
   const API = 'https://simcosta.furg.br/api/intrans_data';
+  // v3.5.0: cada porto lista 1 ou mais marégrafos (fontes); offset por fonte
+  // v3.6.0: fonte.api = 'simcosta' (padrão) ou 'ioc'; fonte.faixa = leituras
+  // aceitas em metros (descarta zeros e picos absurdos de cada radar).
+  // Offsets e adiantamentos: tools/mare/simcosta-offset.mjs <porto> 30.
+  // incerteza (cm) = metade da oscilação semanal do offset, no mínimo 3.
   const ESTACOES = {
     'rio-grande': {
-      id: 332,
       nome: 'São José do Norte',
-      param: 'avg_water_level_arbitrary_zero',
-      offset: 12.374,       // m — zero do radar → NR (ver cabeçalho)
+      fontes: [
+        { id: 332, nome: 'São José do Norte', offset: 12.374 }   // m — zero do radar → NR
+      ],
+      adiantamentoMin: 0,   // estação no próprio porto
       incerteza: 7,         // cm — oscilação semanal do offset
-      calibracao: '30 dias (12/09 a 12/10/2026)'
+      calibracao: '30 dias (12/09 a 12/10/2026)',
+      credito: 'SiMCosta/FURG'
+    },
+    suape: {
+      nome: 'Recife + Tamandaré',
+      fontes: [
+        { id: 330, nome: 'Recife', offset: 10.311 },      // ~40 km ao norte
+        { id: 399, nome: 'Tamandaré', offset: 10.305 }    // ~44 km ao sul
+      ],
+      adiantamentoMin: 11,  // maré chega 11 min antes nas duas (ver cabeçalho)
+      incerteza: 4,         // cm — oscilação semanal do offset
+      calibracao: '30 dias (15/09 a 15/10/2026)',
+      credito: 'SiMCosta/FURG, UFPE e CEPENE'
+    },
+    // v3.6.0 — calibrados em 30 dias (15/09 a 15/10/2026)
+    pecem: {
+      nome: 'Pecém',
+      fontes: [{ id: 307, nome: 'Pecém', offset: 9.293 }],   // no porto · RMS 3,7 cm
+      adiantamentoMin: 0, incerteza: 3,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'SiMCosta/FURG'
+    },
+    'rio-de-janeiro': {
+      nome: 'Niterói (DHN)',
+      fontes: [{ id: 304, nome: 'Niterói (DHN)', offset: 11.528 }],   // ~2 km da Ilha Fiscal · RMS 12 cm
+      adiantamentoMin: 0, incerteza: 7,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'SiMCosta/FURG'
+    },
+    paranagua: {
+      nome: 'Paranaguá',
+      fontes: [{ id: 300, nome: 'Paranaguá', offset: 11.295 }],   // no porto · RMS 28 cm (vento!)
+      adiantamentoMin: 0, incerteza: 9,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'SiMCosta/FURG e CEM/UFPR'
+    },
+    salvador: {
+      nome: 'Salvador (IBGE)',
+      fontes: [{ api: 'ioc', id: 'salv', sensor: 'rad', nome: 'Salvador (IBGE)', offset: 4.195, faixa: [0, 10] }],   // RMS 4,4 cm
+      adiantamentoMin: 0, incerteza: 3,
+      calibracao: '30 dias (15/09 a 15/10/2026)', credito: 'IBGE (RMPG), via IOC/UNESCO'
     }
   };
+  const PARAM = 'avg_water_level_arbitrary_zero';   // SiMCosta: média de 1 min
+  const IOC = 'https://www.ioc-sealevelmonitoring.org/service.php';
+  const chave = (f) => (f.api || 'simcosta') + ':' + f.id;   // cache por fonte
   const JANELA_H = 6;            // horas de série guardadas e desenhadas
   const VELHO_MIN = 30;          // dado mais velho que isso = indisponível
   const ATUALIZA_MS = 5 * 60000; // nova busca a cada 5 min
-  const H = 3600000;
+  const H = 3600000, MIN = 60000;
 
-  const cache = {};              // portId → { pontos:[{t,v}], ultimaBusca, erro }
-  let portoAtual = null, preditor = null, hoje = true, ocupado = false;
+  const cache = {};              // fonte.id → { pontos:[{t,v}], erro }
+  const ultimaBusca = {};        // portId → instante da última busca
+  const ocupado = {};            // portId → busca em andamento
+  let portoAtual = null, preditor = null, hoje = true;
 
-  /* ---------- 1. Busca ---------- */
-  async function buscar(portId) {
-    const est = ESTACOES[portId];
-    if (!est || ocupado) return;
-    const c = cache[portId] || (cache[portId] = { pontos: [], ultimaBusca: 0, erro: null });
-    ocupado = true;
+  /* ---------- 1. Busca (todas as fontes do porto em paralelo) ---------- */
+  // URL e leitura de cada API → lista [{t (ms UTC), v (m, zero do radar)}]
+  const ADAPTADORES = {
+    simcosta: {
+      url: (f, t1, t2) => `${API}?boiaID=${f.id}&type=json&time1=${Math.floor(t1 / 1000)}&time2=${Math.floor(t2 / 1000)}&params=${PARAM}`,
+      ler: (f, lista) => lista.map((d) => ({ t: Date.parse(d.timestamp), v: Number(d[PARAM]) }))
+    },
+    ioc: {
+      // datas ISO sem milissegundos, em UTC
+      url: (f, t1, t2) => { const iso = (t) => new Date(t).toISOString().slice(0, 19); return `${IOC}?query=data&code=${f.id}&timestart=${iso(t1)}&timestop=${iso(t2)}&format=json`; },
+      ler: (f, lista) => lista.filter((d) => d.sensor === f.sensor)
+        .map((d) => ({ t: Date.parse(String(d.stime).replace(' ', 'T') + 'Z'), v: Number(d.slevel) }))
+    }
+  };
+
+  async function buscarFonte(f) {
+    const k = chave(f), ad = ADAPTADORES[f.api || 'simcosta'];
+    const [lo, hi] = f.faixa || [5, 20];
+    const c = cache[k] || (cache[k] = { pontos: [], erro: null });
     try {
       const agora = Date.now();
       const ultimo = c.pontos.length ? c.pontos[c.pontos.length - 1].t : 0;
       // incremental: só o que veio depois da última leitura (com 1 s de folga)
-      const t1 = Math.floor((ultimo ? ultimo + 1000 : agora - JANELA_H * H) / 1000);
-      const t2 = Math.floor(agora / 1000);
-      const url = `${API}?boiaID=${est.id}&type=json&time1=${t1}&time2=${t2}&params=${est.param}`;
-      const r = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined });
+      const t1 = ultimo ? ultimo + 1000 : agora - JANELA_H * H;
+      const r = await fetch(ad.url(f, t1, agora), { cache: 'no-store', signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const txt = await r.text();
       const lista = txt ? JSON.parse(txt) : [];
-      const novos = (Array.isArray(lista) ? lista : [])
-        .map((d) => ({ t: Date.parse(d.timestamp), v: Number(d[est.param]) }))
-        .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v) && p.v > 5 && p.v < 20 && p.t > ultimo);
+      const novos = ad.ler(f, Array.isArray(lista) ? lista : [])
+        .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v) && p.v > lo && p.v < hi && p.t > ultimo)
+        .sort((a, b) => a.t - b.t);
       c.pontos = c.pontos.concat(novos).filter((p) => p.t >= agora - JANELA_H * H);
-      c.ultimaBusca = agora;
       c.erro = null;
     } catch (e) {
-      c.ultimaBusca = Date.now();
       c.erro = e.message || 'falha';
+    }
+  }
+
+  async function buscar(portId) {
+    const est = ESTACOES[portId];
+    if (!est || ocupado[portId]) return;
+    ocupado[portId] = true;
+    ultimaBusca[portId] = Date.now();
+    try {
+      await Promise.all(est.fontes.map(buscarFonte));
     } finally {
-      ocupado = false;
+      ocupado[portId] = false;
     }
     if (window.TugTides && portoAtual && portoAtual.id === portId) window.TugTides.render();
   }
 
-  /* ---------- 2. Cálculos ---------- */
+  /* ---------- 2. Combinação das fontes ---------- */
+  // Devolve a série do porto no NR: [{t (horário do porto), tReal, nr}]
+  // e quais fontes entraram. Fontes com dado > VELHO_MIN ficam de fora;
+  // se TODAS estiverem velhas, usa as que têm dado (para avisar "sem dado novo").
+  function combinar(portId) {
+    const est = ESTACOES[portId];
+    if (!est) return null;
+    const agora = Date.now();
+    const comDado = est.fontes.filter((f) => cache[chave(f)] && cache[chave(f)].pontos.length);
+    if (!comDado.length) return null;
+    const ultimoDe = (f) => cache[chave(f)].pontos[cache[chave(f)].pontos.length - 1].t;
+    let usadas = comDado.filter((f) => (agora - ultimoDe(f)) / MIN <= VELHO_MIN);
+    if (!usadas.length) usadas = comDado;
+    // corte no último minuto que todas as usadas já têm (média sem "degrau" no fim)
+    const corte = Math.min(...usadas.map(ultimoDe));
+    const soma = new Map();   // minuto → [Σ nr, n, t]
+    usadas.forEach((f) => cache[chave(f)].pontos.forEach((p) => {
+      if (p.t > corte) return;
+      const k = Math.round(p.t / MIN), a = soma.get(k) || [0, 0, p.t];
+      a[0] += p.v - f.offset; a[1] += 1; soma.set(k, a);
+    }));
+    const desloc = est.adiantamentoMin * MIN;
+    const pontos = [...soma.values()].sort((x, y) => x[2] - y[2])
+      .map(([s, n, t]) => ({ tReal: t, t: t + desloc, nr: s / n }));
+    const fora = est.fontes.filter((f) => !usadas.includes(f));
+    return { pontos, usadas, fora };
+  }
+
+  /* ---------- 3. Cálculos ---------- */
   const mediana = (a) => { const s = a.slice().sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
   function situacao(portId) {
-    const est = ESTACOES[portId], c = cache[portId];
-    if (!est || !c || !c.pontos.length) return null;
-    const ult = c.pontos[c.pontos.length - 1];
-    const idadeMin = (Date.now() - ult.t) / 60000;
-    const nr = (p) => p.v - est.offset;
-    const ult10 = c.pontos.filter((p) => p.t >= ult.t - 10 * 60000).map(nr);
-    const nivel = mediana(ult10);
+    const est = ESTACOES[portId], cb = combinar(portId);
+    if (!est || !cb || !cb.pontos.length) return null;
+    const pts = cb.pontos, ult = pts[pts.length - 1];
+    const idadeMin = (Date.now() - ult.tReal) / MIN;   // relógio real
+    const ult10 = pts.filter((p) => p.t >= ult.t - 10 * MIN);
     // tendência: mínimos quadrados nos últimos 30 min (t em horas)
-    const j = c.pontos.filter((p) => p.t >= ult.t - 30 * 60000);
+    const j = pts.filter((p) => p.t >= ult.t - 30 * MIN);
     let tend = 0;
     if (j.length >= 5) {
       const tm = j.reduce((s, p) => s + p.t, 0) / j.length;
-      const hm = j.reduce((s, p) => s + nr(p), 0) / j.length;
+      const hm = j.reduce((s, p) => s + p.nr, 0) / j.length;
       let num = 0, den = 0;
-      j.forEach((p) => { const dt = (p.t - tm) / H; num += dt * (nr(p) - hm); den += dt * dt; });
+      j.forEach((p) => { const dt = (p.t - tm) / H; num += dt * (p.nr - hm); den += dt * dt; });
       tend = den ? num / den : 0;          // m/h
     }
-    const prev = preditor ? preditor.getWaterLevelAtTime({ time: new Date(ult.t) }).level : null;
-    return { est, nivel, tend, idadeMin, surge: prev == null ? null : nivel - prev, quando: new Date(ult.t) };
+    // v3.5.0 [FIX] maré meteorológica = mediana dos RESÍDUOS minuto a minuto
+    //   surge = mediana( nr(tᵢ) − previsão(tᵢ) )   nos últimos 10 min
+    // Antes: mediana(nr) − previsão(último minuto). A mediana de 10 min
+    // "mora" ~5 min no passado; com a maré correndo a 0,5 m/h isso
+    // somava ~4 cm falsos (0,5 m/h × 5/60 h). Em Rio Grande não aparecia
+    // porque a maré astronômica lá quase não se move.
+    // Nível agora = previsão(último minuto) + surge: a forma da curva vem
+    // da previsão e a altura vem do marégrafo (sem atraso de 5 min).
+    // Sem previsão disponível: mediana simples dos últimos 10 min.
+    let nivel, surge = null;
+    if (preditor) {
+      const prev = (t) => preditor.getWaterLevelAtTime({ time: new Date(t) }).level;
+      surge = mediana(ult10.map((p) => p.nr - prev(p.t)));
+      nivel = prev(ult.t) + surge;        // horário do porto (já com o adiantamento)
+    } else {
+      nivel = mediana(ult10.map((p) => p.nr));
+    }
+    return { est, nivel, tend, idadeMin, surge, quando: new Date(ult.tReal), usadas: cb.usadas, fora: cb.fora };
   }
 
-  /* ---------- 3. Interface ---------- */
-  const fmtM = (m) => (Math.round(m * 100) / 100).toFixed(2).replace('.', ',') + ' m';
+  /* ---------- 4. Interface ---------- */
+  // v3.6.0: sinal de menos tipográfico (−), igual ao da maré meteorológica
+  const fmtM = (m) => (Math.round(m * 100) / 100).toFixed(2).replace('.', ',').replace('-', '−') + ' m';
   const fmtCm = (m) => { const cm = Math.round(m * 100); return (cm > 0 ? '+' : cm < 0 ? '−' : '±') + Math.abs(cm) + ' cm'; };
+  const nomes = (lista) => lista.map((f) => f.nome).join(' e ');
+
+  function algumErro(est) { return est.fontes.some((f) => cache[chave(f)] && cache[chave(f)].erro); }
 
   function desenharCaixa() {
     const box = document.getElementById('tide-live');
@@ -139,7 +311,7 @@
     const est = id && ESTACOES[id];
     if (!est || !hoje || !s) {
       // sem estação, outro dia, ou sem nenhum dado: some (a previsão continua)
-      box.hidden = !(est && hoje && cache[id] && cache[id].erro);
+      box.hidden = !(est && hoje && algumErro(est));
       if (!box.hidden) {
         box.className = 'tide-live is-off';
         box.replaceChildren(linha('tide-live-head', 'Nível medido indisponível agora · mostrando só a previsão'));
@@ -157,10 +329,12 @@
         credito());
       return;
     }
+    // v3.5.0: com uma fonte fora, o título mostra só a que está no ar
+    const titulo = s.fora.length ? nomes(s.usadas) : est.nome;
     const tendTxt = Math.abs(s.tend) < 0.02 ? '⇆ estável' : s.tend > 0 ? '↑ enchendo' : '↓ vazando';
     const head = linha('tide-live-head', '');
     const dot = document.createElement('span'); dot.className = 'tide-live-dot'; dot.setAttribute('aria-hidden', 'true');
-    head.append(dot, document.createTextNode(` Ao vivo · nível medido · ${est.nome}`));
+    head.append(dot, document.createTextNode(` Ao vivo · nível medido · ${titulo}`));
     const valor = document.createElement('div'); valor.className = 'tide-live-valor';
     const strong = document.createElement('strong'); strong.textContent = fmtM(s.nivel);
     const sup = document.createElement('sup'); sup.textContent = '*';
@@ -175,6 +349,11 @@
       filhos.push(sg);
     }
     filhos.push(linha('tide-live-sub', `Atualizado ${idade} · linha verde no gráfico = medido`));
+    if (est.fontes.length > 1) {
+      filhos.push(linha('tide-live-sub', s.fora.length
+        ? `Só ${nomes(s.usadas)} no ar (${nomes(s.fora)} sem dado) · horário corrigido para ${portoAtual.name}`
+        : `Média de ${nomes(s.usadas)} · horário corrigido para ${portoAtual.name}`));
+    }
     filhos.push(credito());
     box.replaceChildren(...filhos);
   }
@@ -182,21 +361,22 @@
   function linha(cls, txt) { const p = document.createElement('p'); p.className = cls; p.textContent = txt; return p; }
   function credito() {
     const est = ESTACOES[portoAtual.id];
-    return linha('tide-live-cred', `* Referido ao NR da DHN por ajuste de ${est.calibracao}; ±${est.incerteza} cm. Dados cortesia do SiMCosta/FURG.`);
+    return linha('tide-live-cred', `* Referido ao NR da DHN por ajuste de ${est.calibracao}; ±${est.incerteza} cm. Dados cortesia do ${est.credito}.`);
   }
 
-  /* ---------- 4. Interface pública (usada por tides.js) ---------- */
+  /* ---------- 5. Interface pública (usada por tides.js) ---------- */
   window.TugTideLive = {
     // há estação para o porto e um dado recente?
     ativo(portId) { const s = situacao(portId); return !!(s && s.idadeMin <= VELHO_MIN); },
     // série no NR para o gráfico (1 ponto a cada 5 min), só dentro da janela pedida
     serie(portId, inicio, fim) {
-      const est = ESTACOES[portId], c = cache[portId];
-      if (!est || !c || !hoje) return [];
+      if (!ESTACOES[portId] || !hoje) return [];
+      const cb = combinar(portId);
+      if (!cb) return [];
       const out = []; let ultimo = 0;
-      c.pontos.forEach((p) => {
-        if (p.t < inicio.getTime() || p.t > fim.getTime() || p.t - ultimo < 5 * 60000) return;
-        out.push({ time: new Date(p.t), level: p.v - est.offset }); ultimo = p.t;
+      cb.pontos.forEach((p) => {
+        if (p.t < inicio.getTime() || p.t > fim.getTime() || p.t - ultimo < 5 * MIN) return;
+        out.push({ time: new Date(p.t), level: p.nr }); ultimo = p.t;
       });
       return out;
     },
@@ -204,10 +384,10 @@
     aoDesenhar(porto, pred, ehHoje) {
       portoAtual = porto; preditor = pred; hoje = ehHoje;
       desenharCaixa();
-      const c = cache[porto.id];
-      if (ESTACOES[porto.id] && ehHoje && (!c || Date.now() - c.ultimaBusca > ATUALIZA_MS)) buscar(porto.id);
+      if (ESTACOES[porto.id] && ehHoje && Date.now() - (ultimaBusca[porto.id] || 0) > ATUALIZA_MS) buscar(porto.id);
     },
-    _estacoes: ESTACOES   // para testes e documentação
+    _estacoes: ESTACOES,   // para testes e documentação
+    _adaptadores: ADAPTADORES, _chave: chave   // v3.6.0: usados por tools/mare/simcosta-offset.mjs
   };
 
   if (typeof document === 'undefined') return;   // carregado em Node (tools/mare/simcosta-offset.mjs)
@@ -217,8 +397,7 @@
     // revisita a cada minuto; só busca se a aba/página estiver visível
     setInterval(() => {
       if (document.hidden || !portoAtual || !hoje || !ESTACOES[portoAtual.id]) return;
-      const c = cache[portoAtual.id];
-      if (!c || Date.now() - c.ultimaBusca > ATUALIZA_MS) buscar(portoAtual.id);
+      if (Date.now() - (ultimaBusca[portoAtual.id] || 0) > ATUALIZA_MS) buscar(portoAtual.id);
     }, 60000);
   });
 })();
