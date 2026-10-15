@@ -1,3 +1,45 @@
+# SPRINT 28 — PIN no Rio e programações recolhíveis — v3.9.1
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T17:30:00-03:00
+
+Pedido do Comandante: "Precisamos de um PIN para o acesso. E recolher as páginas de programação."
+
+Implementação:
+- **PIN no Rio, o mesmo de Suape.** A Edge Function `saam-rj` (v1.1.0, já publicada) exige o cabeçalho `x-saam-pin` e confere o PIN chamando `saam_programacao(p_pin)` — o mesmo hash bcrypt e a mesma trava contra adivinhação de Suape; nenhum segredo novo. Sem PIN ou PIN errado → 401. A resposta passou a `Cache-Control: private, no-store`.
+- **PIN único no aparelho.** Os dois cards usam a mesma chave `tuglife_saam_pin`: entrar em um destrava o outro (evento `saam:pin`) e "Bloquear neste aparelho" em qualquer um trava os dois (`saam:bloqueio`). PIN trocado no servidor (401) leva o card do Rio de volta à tela de PIN.
+- **Programações recolhíveis.** O cabeçalho de cada card virou o `<summary>` de um `<details>`: toque no título abre/fecha; à direita, 🔒 PIN, 🔓 ou "N manobras" e a seta ▸/▾. Fechado no celular, aberto no computador; a escolha do tripulante fica em `tuglife_paineis`. Alerta de Suape e clique na notificação (`#card-saam`) abrem o painel sozinhos, sem gravar como escolha. Recolhido, o card do Rio não busca nada.
+- Versão 3.9.1 (VERSION.json, index.html com rodapé, sw.js), manual (itens "Acesso por PIN" e "SAAM · Rio" e novidade), README, `docs/PROJETO.md` 1.7.0.
+
+Verificação: função publicada responde 401 sem PIN e com PIN errado (a resposta 401 com PIN errado prova que a conferência pela função SQL funciona); o caminho com o PIN certo não foi testado de fora porque o PIN real não foi lido (segredo). `saam-rj-check.cjs` com 10 cenários passou; regressões manual-check, update-check, tide-live-check, radio-check, browser-check, pwa-check, schedule.test, README e `tools/saam-rj/test.mjs` passaram.
+
+Limitação: cada PIN errado digitado no card do Rio conta na mesma trava de Suape (é a mesma proteção).
+
+# SPRINT 27 — Programação SAAM · Rio de Janeiro (Praticagem RJ) — v3.9.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T16:40:00-03:00
+
+Pedido do Comandante: programação de manobras dos portos do Rio de Janeiro a partir de https://www.praticagem-rj.com.br/, só SAAM (sigla SAA).
+
+Pesquisa da fonte:
+- A página inicial **é** a programação: HTML gerado no servidor (ASP.NET/IIS), sem login, regenerado a cada ~1 min (`last-modified`), ~630 KB. Não há API nem PDF.
+- Áreas publicadas hoje: Baía de Guanabara, Baía de Sepetiba, Porto do Forno e Porto do Açu – T1, cada uma com a situação da barra.
+- Colunas: POB, Navio, Cal, LOA, Boca, DWT, GT, M (E/S/M), De, BD, Canal, Para, BD, CTB, RB, **EMP.RB**, Agência. O filtro "SAA" não é ambíguo: é a sigla da SAAM na coluna EMP.RB (as outras são WIL, CAM, VAL e N/A).
+- Fichas escondidas trazem o IMO, os **rebocadores escalados** (nome, tração estática em t, propulsão, fainas ATR/DES/PON/NAV e aviso quando o mesmo rebocador está em outra manobra) e observações como "ATRACA A CONTRA BORDO".
+- **Sem CORS**: o navegador não lê a página direto. Solução: ponte no Supabase.
+- Em 15/10/2026 às 16:40: 54 manobras no total, 12 da SAAM (8 Guanabara, 4 Sepetiba).
+
+Implementação:
+- Edge Function `saam-rj` (`tools/saam-rj/index.ts` + `parser.js`): busca a página, cache de 60 s na memória (no máximo 1 acesso/min ao site por instância), filtra `EMP.RB = SAA`, responde ~5 KB de JSON com CORS. Pública e só leitura (sem banco, sem segredo); se o site cair, devolve a última leitura boa.
+- App: card **"Programação SAAM · Rio de Janeiro"** na aba Manobras, abaixo de Suape, **sem PIN** (a fonte é pública). Lista por dia no horário de Brasília: navio, Entrada/Saída/Mudança, área, berço e bordo, calado, LOA, agência, rebocadores com tração e fainas, ⚠️ do rebocador escalado em outra manobra e observação CTB. Filtro por área lembrado no aparelho; situação da barra (fechada em vermelho). Busca a cada 2 min só com o card visível e o app em primeiro plano.
+- Versão 3.9.0 em `VERSION.json`, `index.html`, `sw.js` (cache novo + `saam-rj.js`), manual (3 itens novos e novidade), README regenerado, `docs/PROJETO.md` 1.6.0.
+
+Verificação: `tools/saam-rj/test.mjs` (página sintética + página real salva: 54 manobras, 12 SAAM); função publicada respondendo 200 com CORS (`access-control-allow-origin: *`) e os mesmos 12; `saam-rj-check.cjs` (novo) passou; card com dados reais conferido em 390 px. Regressões: manual-check (ajustado para 8 itens em Manobras), update-check, tide-live-check, browser-check, pwa-check, schedule.test e README em dia.
+
+Limitações e próximos passos (propostas, não implementadas):
+- **P1 · Alertas no Rio:** a página não tem "situação" (confirmada/cancelada); daria para alertar ANTECIPADA (POB adiantado), CANCELADA (sumiu da programação em 2 leituras) e **rebocador escalado** (novo nome na ficha RB), reaproveitando `saam_eventos` e o push. Exige coletor com pg_cron, como Suape.
+- **P2 · Meu rebocador:** escolher o rebocador do tripulante (ex.: SAAM HOLANDA) e destacar só as manobras dele.
+- A praticagem só lista rebocadores perto da manobra; antes disso aparece "rebocadores a designar".
+
 # P3 — SAAM em outros portos: pesquisa encerrada (sem implementação)
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T00:55:00-03:00

@@ -2,11 +2,16 @@
    TugLife FM — Manual de bordo (botão ?) e Tour guiado
    ------------------------------------------------------------
    Arquivo   : manual.js
-   Versão    : 3.8.0 (SPRINT 26)
-   Data/Hora : 2026-10-15T00:30:00-03:00
+   Versão    : 3.9.1 (SPRINT 28)
+   Data/Hora : 2026-10-15T17:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.9.1  [MOD] Manobras: o card do Rio também pede o PIN (o mesmo de
+                 Suape) e os dois cards se recolhem; novidade da v3.9.1.
+   v3.9.0  [MOD] Seção Manobras ganha os itens do card "SAAM · Rio de
+                 Janeiro" (Praticagem RJ, sem PIN); passo do tour cita
+                 Suape e Rio; novidade da v3.9.0.
    v3.8.0  [MOD] Item "Como atualizar" descreve a faixa "Nova versão disponível";
                  item "Nível medido" descreve a linha recolhida com ⓘ;
                  novidade da v3.8.0.
@@ -47,9 +52,11 @@
 
 (function () {
   const MANUAL = {
-    versao: '3.8.0',
+    versao: '3.9.1',
     tourVersao: '3.2.0',   // mude só quando o tour precisar ser revisto pela tripulação
     novidades: [
+      { versao: '3.9.1', texto: 'Programação do Rio agora com o PIN da tripulação (o mesmo de Suape). Toque no título de cada programação para recolher ou abrir.' },
+      { versao: '3.9.0', texto: 'Programação SAAM no Rio de Janeiro: manobras da Praticagem RJ com rebocadores SAAM, por área (Guanabara, Sepetiba, Forno, Açu), sem PIN.' },
       { versao: '3.8.0', texto: 'Aviso de nova versão: toque em Atualizar e pronto, sem fechar o app. Nível medido da Maré numa linha só; toque no ⓘ para os detalhes.' },
       { versao: '3.7.0', texto: 'Aba Rádio numa tela só: faixa atual no player e o resto em "Mais da TugLife".' },
       { versao: '3.6.0', texto: 'Nível do mar medido ao vivo também em Pecém, Rio de Janeiro, Paranaguá e Salvador.' },
@@ -74,12 +81,15 @@
         ['Nível medido (6 portos)', 'Linha verde "Medido": nível real do mar, atualizado a cada 5 min, e a maré meteorológica — quanto o vento põe a água acima ou abaixo da previsão (laranja a partir de 15 cm). Toque na linha ou no ⓘ para ver estações, idade do dado e crédito. Em Rio Grande, Suape, Pecém, Rio de Janeiro, Paranaguá e Salvador. Suape usa a média de Recife e Tamandaré, com horário corrigido; se um sair do ar, segue com o outro. Linha verde no gráfico = medido.'],
         ['Selo de calibração', 'Mostra o erro típico contra a Tábua DHN 2026. Informativo: não substitui a DHN na navegação.']
       ]},
-      { id: 'manobras', label: 'Manobras', aba: 'manobras', resumo: 'Programação SAAM em Suape, exclusiva da tripulação.', itens: [
-        ['Acesso por PIN', 'Digite o PIN da tripulação. Ele fica lembrado no aparelho; "Bloquear neste aparelho" apaga.'],
+      { id: 'manobras', label: 'Manobras', aba: 'manobras', resumo: 'Programação SAAM em Suape e no Rio de Janeiro, exclusiva da tripulação (PIN).', itens: [
+        ['Acesso por PIN', 'O mesmo PIN da tripulação abre Suape e Rio: digitou num card, o outro destrava junto. Fica lembrado no aparelho; "Bloquear neste aparelho" (em qualquer um dos dois) trava os dois. Toque no título de cada programação para recolher ou abrir; o app lembra. Recolhida, a linha mostra 🔒 ou quantas manobras há.'],
         ['Lista de manobras', 'Agrupada por dia: hora, navio, tipo, situação, berço, calado e rebocadores.'],
         ['Três alertas sonoros', 'Confirmada: ding-dong subindo. Cancelada: dois tons descendo. Antecipada: bipes rápidos e repetidos.'],
         ['Ativar alertas', 'Libera o som e a notificação com a tela apagada. Use os botões de teste para ouvir cada som.'],
-        ['Selo laranja', 'Na barra de abas, conta os alertas que chegaram enquanto você estava em outra aba.']
+        ['Selo laranja', 'Na barra de abas, conta os alertas que chegaram enquanto você estava em outra aba.'],
+        ['SAAM · Rio de Janeiro', 'Logo abaixo de Suape, com o mesmo PIN: as manobras que a Praticagem RJ programou com rebocadores SAAM (coluna EMP.RB = SAA). Atualiza a cada 2 min enquanto o card está aberto e à vista (recolhido não gasta dados); o 🟢 mostra há quanto tempo o site foi lido.'],
+        ['Filtro por área (Rio)', 'Toque em Todas, Baía de Guanabara, Baía de Sepetiba, Porto do Forno ou Porto do Açu; o número é a quantidade de manobras SAAM. A escolha fica lembrada. Com uma área escolhida, aparece a situação da barra (aberta ou fechada).'],
+        ['Cada manobra (Rio)', 'Hora do prático a bordo (horário de Brasília), navio, Entrada/Saída/Mudança, berço e bordo (BB/BE), calado, comprimento e agência. Quando a praticagem já escalou, aparecem os rebocadores com a tração estática em toneladas e as fainas (ATR, DES, PON, NAV); ⚠️ indica rebocador também escalado em outra manobra.']
       ]},
       { id: 'portos', label: 'Portos', aba: 'portos', resumo: 'Painel do Marujo: tráfego e clima por porto.', itens: [
         ['Mapa marítimo', 'Navios em tempo real (AIS) no porto escolhido.'],
@@ -100,7 +110,7 @@
       { titulo: 'Rádio', alvos: ['.tabbar [data-aba="radio"]', '#card-player'], texto: 'Ouça a TugLife FM, veja o programa no ar e a grade da semana.' },
       { titulo: 'Ouvir ao vivo', alvos: ['#btn-play'], aba: 'radio', texto: 'Toque aqui para ouvir. Nas outras abas, o play continua na faixa ao vivo acima da barra.' },
       { titulo: 'Maré', alvos: ['.tabbar [data-aba="mare"]', '#card-mare'], texto: 'Previsão de 13 portos calibrada com a DHN: agora, curva do dia, preamares e baixa-mares.' },
-      { titulo: 'Manobras SAAM', alvos: ['.tabbar [data-aba="manobras"]', '#card-saam'], texto: 'Programação de Suape com PIN da tripulação e 3 alertas sonoros. O selo laranja conta alertas novos.' },
+      { titulo: 'Manobras SAAM', alvos: ['.tabbar [data-aba="manobras"]', '#card-saam'], texto: 'Programação de Suape (3 alertas sonoros) e do Rio de Janeiro (Praticagem RJ), com o PIN da tripulação. Toque no título para abrir. O selo laranja conta alertas novos.' },
       { titulo: 'Portos', alvos: ['.tabbar [data-aba="portos"]', '#card-mapa'], texto: 'Painel do Marujo: tráfego de navios e clima por porto.' },
       { titulo: 'Manual de bordo', alvos: ['#help-btn'], texto: 'Ficou alguma dúvida? Toque no ? a qualquer momento para ver tudo o que o app faz.' }
     ]
