@@ -1,3 +1,27 @@
+# P3 — SAAM em outros portos: pesquisa encerrada (sem implementação)
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T00:55:00-03:00
+
+Pergunta: a planilha que alimenta a Programação SAAM traz manobras de outros portos além de Suape?
+
+Fonte analisada: a planilha da agência (ACK Marine, link público do SharePoint guardado em `saam_config.planilha_url`), lida do mesmo jeito que o coletor (cookie FedAuth). Abas JUNHO a OUTUBRO/2026 (só OUTUBRO visível) e a aba auxiliar VAL, sem manobras.
+
+| Mês | Suape (SUA) | Recife (REC) | SAAM em Recife |
+|---|---|---|---|
+| Junho | 297 | 21 | 0 |
+| Julho | 308 | 17 | 0 |
+| Agosto | 296 | 12 | 0 |
+| Setembro | 350 | 18 | 0 |
+| Outubro (até 15/10) | 156 | 12 | 0 |
+
+- A planilha só tem dois portos: Suape e Recife.
+- Em Recife, todas as 80 manobras de 5 meses foram da Wilson Sons (1 sem rebocador); **nenhuma da SAAM**.
+- Em Suape, a divisão é ~63% SAAM, ~25% Wilson Sons e ~12% Svitzer. O coletor já lê as três empresas.
+
+Decisão do Comandante (opção A): **P3 encerrada**. Esta fonte só cobre Pernambuco, onde a SAAM opera apenas em Suape. Levar a programação a outros portos (Santos, Rio, Paranaguá, Rio Grande…) depende de outras fontes (planilhas de praticagens ou agências locais, ou a programação interna da SAAM). Retomar quando houver um link novo: a análise é rápida, e o `parser.js` já filtra por porto (`{ porto: 'SUA' }`).
+
+Higiene: a planilha baixada para a análise ficou só no ambiente temporário e foi apagada em seguida; nada dela entrou no repositório. Os segredos de `saam_config` (PIN, chaves VAPID, token do cron) não foram lidos.
+
 # SPRINT 26 — Aviso de nova versão — v3.8.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T00:30:00-03:00

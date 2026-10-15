@@ -455,7 +455,7 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 ## 13. Limitações conhecidas
 
 - **Aba Rádio** cabe numa tela em 390×844; em celulares baixos (360×740) ainda rola ~130 px, mas o play e a faixa atual ficam à vista.
-- **SAAM** depende do link público da planilha da praticagem; só Suape por enquanto.
+- **SAAM** depende do link público da planilha da agência; só Suape. Pesquisa P3 (15/10/2026): a planilha só traz Suape e Recife, e em Recife a SAAM não fez nenhuma manobra em 5 meses (todas da Wilson Sons). Outros portos dependem de outras fontes (ver `REPORT.md`).
 - **Push com tela apagada** usa o som padrão do celular; no iPhone exige o app instalado.
 - **Maré** é previsão astronômica: não considera vento, pressão ou vazão de rio. Informativa — não substitui a Tábua DHN na navegação.
 - **Nível medido** em 6 dos 13 portos (Rio Grande, Suape, Pecém, Rio de Janeiro, Paranaguá, Salvador); Itaqui sem fonte representativa (ver §6.4). Referência ao NR é estimada (±3 a ±9 cm) até a amarração dos radares à rede do IBGE; depende das estações estarem no ar.
