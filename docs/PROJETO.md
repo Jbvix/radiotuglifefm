@@ -3,14 +3,15 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.10.0 (SPRINT 29) |
-| **Documento** | 1.8.0 · 2026-10-15T18:45:00-03:00 |
+| **Versão do app** | 3.11.0 (SPRINT 30) |
+| **Documento** | 1.9.0 · 2026-10-15T20:30:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
 | **Repositório** | https://github.com/Jbvix/radiotuglifefm |
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
+> - 1.9.0 (2026-10-15) — SPRINT 30: player com o logo girando como disco (sentido horário, só tocando) à esquerda e equalizador de 20 barras (50 Hz → 16 kHz, escala logarítmica) à direita, no lugar do espectro circular; `equalizer-check.cjs` reescrito.
 > - 1.8.0 (2026-10-15) — SPRINT 29: contador de visitas anônimo (`visitas.js`, tabelas `visitas_aparelhos`/`visitas_diarias`, função `registrar_visita`, chave `tuglife_aparelho`, §6.6, teste `visitas-check.cjs`, `tools/visitas/`).
 > - 1.7.0 (2026-10-15) — SPRINT 28: PIN da tripulação também no Rio (conferido no servidor pela `saam-rj` via `saam_programacao`), PIN único para os dois cards (eventos `saam:pin`/`saam:bloqueio`), programações recolhíveis (`tuglife_paineis`).
 > - 1.6.0 (2026-10-15) — Programação SAAM · Rio de Janeiro (SPRINT 27): `saam-rj.js`, Edge Function `saam-rj` (ponte CORS com cache de 60 s para a página da Praticagem RJ), §5 e §6.5 novos, teste `saam-rj-check.cjs` e `tools/saam-rj/`.
@@ -31,7 +32,7 @@ A TugLife FM é uma webrádio 24/7 (stream BRLOGIC). O app começou como um play
 
 | Função | O que entrega | Desde |
 |---|---|---|
-| **Rádio** | Player ao vivo, espectro, programa no ar, próximo programa, grade semanal, faixa atual | v1 → v2.2 |
+| **Rádio** | Player ao vivo, disco girando e equalizador, programa no ar, próximo programa, grade semanal, faixa atual | v1 → v2.2 |
 | **Tripulação a bordo** | Ouvintes conectados agora e pico do dia | v2.6.0 |
 | **Tábua de Maré** | 13 portos, previsão harmônica calibrada com a Tábua DHN 2026 | v2.7.0 → v2.9.2 |
 | **Programação SAAM · Suape** | Manobras SAAM com PIN, 3 alertas sonoros e notificação push | v3.0.0 |
@@ -43,7 +44,7 @@ E ainda: layout em abas no celular (v3.1.0), Manual de bordo e tour guiado (v3.2
 
 1. **Site estático, sem etapa de build.** HTML, CSS e JavaScript puros, publicados como estão. Qualquer arquivo pode ser aberto e lido diretamente — como um quadro elétrico com todos os cabos etiquetados, sem caixa-preta.
 2. **Módulos independentes, como sensores externos.** Cada recurso (ouvintes, maré, SAAM, abas, manual) é um arquivo próprio que apenas *observa* o player e o DOM, sem reescrevê-los. Se um módulo falha, os outros continuam — falha isolada, como um circuito com disjuntor próprio.
-3. **Degradação graciosa.** Sem internet: grade, maré e manual continuam (service worker). Sem Supabase: some o contador de ouvintes, a rádio segue. Sem Web Audio/CORS: some o espectro, o áudio segue.
+3. **Degradação graciosa.** Sem internet: grade, maré e manual continuam (service worker). Sem Supabase: some o contador de ouvintes, a rádio segue. Sem Web Audio/CORS: o equalizador fica parado, o disco gira e o áudio segue.
 4. **Mobile first.** Projetado para o celular do tripulante no convés (sol forte → tema claro; toque ≥ 44 px; uma tela por função).
 5. **Segurança no servidor.** Nada sensível no app: a programação SAAM só sai do banco mediante PIN validado por função SQL, com hash bcrypt e trava contra tentativa e erro.
 
@@ -61,7 +62,7 @@ radiotuglifefm/
 ├── schedule.js             Grade semanal (dados) e cálculo "no ar agora / próximo"
 ├── schedule-ui.js          Interface da grade: dias, "Hoje", lista, relógio, painel recolhível
 ├── experience.js           Mini-player, duração e barra de progresso do programa
-├── equalizer.js            Motor Web Audio (analisador) + espectro circular de barras
+├── equalizer.js            Motor Web Audio (analisador) + equalizador de 20 barras + giro do disco
 ├── pwa.js                  Instalar app, compartilhar, QR Code, aviso de offline, painel "Mais da TugLife", aviso de nova versão
 ├── listeners.js            "Tripulação a bordo": ouvintes ao vivo e pico do dia (Supabase)
 ├── visitas.js              Contador de visitas anônimo (Supabase, RPC registrar_visita)
@@ -110,7 +111,7 @@ radiotuglifefm/
 │
 ├── browser-check.cjs       Teste de navegador: larguras, grade, tema, mapa, mini-player
 ├── pwa-check.cjs           Teste de navegador: manifesto, QR, instalação, offline
-├── equalizer-check.cjs     Teste de navegador: espectro, pausa, movimento reduzido, CORS
+├── equalizer-check.cjs     Teste de navegador: disco, equalizador, pausa, movimento reduzido, CORS
 ├── manual-check.cjs        Teste de navegador: manual, tour, #manual, desktop
 ├── radio-check.cjs         Teste de navegador: aba Rádio numa tela (390×844), painel "Mais", desktop
 ├── update-check.cjs        Teste de navegador: aviso de nova versão com deploys simulados (servidor próprio)
@@ -205,7 +206,7 @@ flowchart LR
 | `schedule.js` | Grade da semana (texto `HH:MM\|Programa` por dia) e `getState()` → programa atual/próximo no fuso de Brasília | — (só dados) | — | 2.1.0 |
 | `schedule-ui.js` | Botões dos dias, "Hoje", lista com "No ar agora", relógio digital; painel recolhível | `#schedule-panel`, `#schedule-days`, `#schedule-list`, `#digital-clock` | `RadioSchedule` | 3.3.0 |
 | `experience.js` | Mini-player (faixa ao vivo) e duração/progresso do programa | `#mini-play`, `#mini-status`, `.program-duration` | `RadioSchedule` | 2.2.0 |
-| `equalizer.js` | Prepara o Web Audio (confere CORS antes); espectro circular; respeita "movimento reduzido" | `#spectrum-bars`, `#spectrum-status` | stream BRLOGIC | SPRINT 08 |
+| `equalizer.js` | Prepara o Web Audio (confere CORS antes); equalizador de 20 barras (graves à esquerda, agudos à direita; perfil estático em repouso); liga o giro do disco (`.is-spinning`) só enquanto toca; respeita "movimento reduzido" | `#radio-disc`, `#spectrum-bars`, `#spectrum-status` | stream BRLOGIC | 3.11.0 |
 | `pwa.js` | Instalar app, diálogo de compartilhamento/QR, copiar link, aviso offline, registro do SW; abre o painel "Mais da TugLife" no computador e rola até ele no celular | `#install-app`, `#share-radio`, `#share-dialog`, `#network-status`, `#more-panel` | — | 3.7.0 |
 | `listeners.js` | Presença em tempo real ("N a bordo") e pico do dia; só observa os eventos do `<audio>` | `#crew-row`, `#crew-count`, `#crew-peak` | Supabase Realtime + RPC `registrar_pico`, `pico_hoje` | 2.6.0 |
 | `visitas.js` | Registra a abertura do app e mostra "👁️ N visitas · N aparelhos · N hoje" (rodapé no computador, "Mais da TugLife" no celular); oculto se falhar | `[data-visitas]`, `[data-visitas-texto]`, `.visitas-rodape`, `.visitas-mais` | RPC `registrar_visita` | 3.10.0 |
@@ -472,7 +473,7 @@ python3 server.py          # http://localhost:8787/
 | Navegador · PWA | `node pwa-check.cjs` | Manifesto, ícones, QR, copiar link, instalação, offline |
 | Navegador · nova versão | `node update-check.cjs` | Servidor próprio (porta 8799) simula deploys: 1ª visita sem aviso nem recarga, faixa "Nova versão 9.9.2 disponível", "×" dispensa, rádio tocando não troca sozinha e avisa, "Atualizar" recarrega na versão nova |
 | Navegador · aba Rádio | `node radio-check.cjs` | 390×844 sem rolagem; com ouvintes conectados (390×844 e 412×823) a linha 👥 não encavala o selo e o "Mais" segue à vista; com play, faixa, grade e "Mais" à vista; painel fechado no celular e aberto numa linha no computador; manual → "Instalar na tela inicial"; rodapé só no computador |
-| Navegador · espectro | `node equalizer-check.cjs` | Pausa/retomada, movimento reduzido, falha de CORS mantém o áudio |
+| Navegador · disco e equalizador | `node equalizer-check.cjs` | Tom de 440 Hz acende a barra 7; disco parado no standby, girando tocando, parado na pausa e sem animação com movimento reduzido; equalizador à direita do disco; falha de CORS mantém o áudio e o giro |
 | Navegador · manual | `node manual-check.cjs` | Tour automático, manual por seção, "Abrir a aba", `#manual`, desktop |
 | Navegador · nível medido | `node tide-live-check.cjs` | API SiMCosta simulada: Rio Grande ao vivo (+12 cm), busca incremental, outro dia, outro porto, dado velho, falha; Suape com 2 fontes (média e horário corrigido), 1 fonte fora e as 2 fora; Pecém, Rio, Paranaguá e Salvador (IOC com sensor de isca); Itaqui sem busca; faixa recolhida (uma linha, abre/fecha, segue aberta após nova busca, laranja com +20 cm) |
 | README em dia | `node tools/manual/gerar-readme.mjs --check` | Manual do README igual ao `manual.js` |

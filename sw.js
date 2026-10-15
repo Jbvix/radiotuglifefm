@@ -1,4 +1,6 @@
 // Only the app shell is cached. Never cache the live stream or third-party APIs.
+// v3.11.0 (SPRINT 30) · 2026-10-15T20:30:00-03:00 · Jossian Brito
+//   [MOD] Cache novo (logo girando como disco + equalizador ao lado no player).
 // v3.10.0 (SPRINT 29) · 2026-10-15T18:45:00-03:00 · Jossian Brito
 //   [MOD] visitas.js no cache do app (contador de visitas). A contagem
 //         em si (RPC registrar_visita) nunca é guardada.
@@ -11,7 +13,7 @@
 //   [NOVO] Mensagem SKIP_WAITING: a versão nova instala e fica em espera
 //          (nunca troca sozinha); só assume quando o tripulante toca em
 //          "Atualizar" na faixa "Nova versão disponível" (pwa.js).
-const CACHE = 'tuglife-shell-v3.10.0';
+const CACHE = 'tuglife-shell-v3.11.0';
 const FILES = ['./','./index.html','./refresh.css','./schedule.js','./schedule-ui.js','./experience.js','./equalizer.js','./pwa.js','./listeners.js','./visitas.js','./tides.js','./tide-live.js','./saam.js','./saam-rj.js','./tabs.js','./manual.js','./tide-data.js','./vendor/tide-engine.js','./manifest.webmanifest','./assets/icon-192.png','./assets/icon-512.png','./assets/apple-touch-icon.png','./assets/brand.png','./assets/share-qr.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))));
 self.addEventListener('activate', event => event.waitUntil((async () => {

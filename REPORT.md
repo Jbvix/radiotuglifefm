@@ -1,3 +1,18 @@
+# SPRINT 30 — Logo girando como disco e equalizador ao lado — v3.11.0
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T20:30:00-03:00
+
+Pedido do Comandante: "O logo muito pequeno. Podemos pôr o logo à esquerda girando como um disco no sentido horário e à sua direita o equalizador. Tudo bem distribuído e centralizado."
+
+Implementação:
+- **Player (`index.html`, `refresh.css`).** O espectro circular em volta de um logo de 84 px virou um "toca-discos": o logo, num disco com sulcos de vinil, à esquerda; o equalizador de barras à direita, centrados na mesma linha. Uma medida só (`--disc`) dita o resto: barras com 72% da altura do disco. Computador: disco de 120–210 px; aba Rádio do celular: 112 px.
+- **Giro.** Sentido horário, uma volta a cada 6 s (10 rpm; um LP a 33⅓ rpm deixaria o logo ilegível). A animação fica pausada e só anda com `.is-spinning`, que o `equalizer.js` liga no `playing` e desliga em pause/ended/waiting/error: o disco para onde está, sem pular. Com "movimento reduzido" o disco não anima.
+- **Equalizador (`equalizer.js`).** 20 barras de 50 Hz a 16 kHz em escala logarítmica (cada barra cobre ×1,34 em frequência). Em repouso, um perfil estático em "morro" (pico na barra 5) para ser reconhecível sem som.
+- **Espaço na aba Rádio do celular.** Para o disco maior caber sem rolar: botão Ouvir sem os 24 px de respiro embaixo, barra de progresso com 10 px (era 24) e bloco do programa 6 px mais baixo.
+- Versão 3.11.0 (VERSION.json, index.html, sw.js), manual (item "Disco e equalizador" e novidade), README, `docs/PROJETO.md` 1.9.0.
+
+Verificação: `equalizer-check.cjs` reescrito (tom real de 440 Hz acende a barra 7; disco parado → girando → parado; movimento reduzido; falha de CORS mantém áudio e giro). Regressões radio-check (inclusive 412×823 com ouvintes, que antes falhava por ~8 px e agora passa), pwa-check, update-check, manual-check, browser-check e README em dia.
+
 # SPRINT 29 — Contador de visitas — v3.10.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T18:45:00-03:00
