@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>TugLife FM • App Mobile v3.9.0 · Rádio</title>
+    <title>TugLife FM • App Mobile v3.9.1 · Rádio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Meta Tags para Compartilhamento (WhatsApp, Facebook, etc) -->
@@ -29,10 +29,13 @@
     <style>
         /* ===========================================================
            TugLife FM - App Mobile First (Elite Edition)
-           Versão: v3.9.0
-           Data: 2026-10-15T16:40:00-03:00
+           Versão: v3.9.1
+           Data: 2026-10-15T17:30:00-03:00
            Autor: Jossian Brito (Charlie Bravo)
            Modificações:
+           - v3.9.1 (SPRINT 28): PIN da tripulação também no card do Rio
+             (o mesmo de Suape, conferido no servidor pela função saam-rj)
+             e os dois cards de programação recolhíveis.
            - v3.9.0 (SPRINT 27): card "Programação SAAM · Rio de Janeiro"
              na aba Manobras, público (sem PIN), lido da página da
              Praticagem RJ (EMP.RB = SAA) pela Edge Function saam-rj
@@ -395,13 +398,16 @@
     </section>
 
     <!-- SPRINT 18 · v3.0.0: Programação SAAM · Suape (saam.js) -->
+    <!-- SPRINT 28 · v3.9.1: recolhível (summary = título + resumo) -->
     <section class="card" data-tab="manobras" id="card-saam" hidden aria-labelledby="saam-heading">
-        <div class="saam-head">
+      <details class="saam-panel" id="saam-panel">
+        <summary class="saam-head">
             <div>
                 <div class="eyebrow" id="saam-heading">Programação SAAM · Suape</div>
                 <div class="saam-sub">Apoio ao Comandante do rebocador</div>
             </div>
-        </div>
+            <span class="saam-resumo" id="saam-resumo">🔒 PIN</span>
+        </summary>
         <div id="saam-lock">
             <p class="saam-sub">Área da tripulação SAAM. Digite o PIN para ver as manobras e receber alertas.</p>
             <form id="saam-form" class="saam-form" autocomplete="off">
@@ -428,21 +434,36 @@
             <ul id="saam-events" class="saam-events"></ul>
             <p class="tide-disclaimer">Fonte: planilha de manobras da praticagem, lida a cada 2 min. Apoio informativo — confirme sempre com a central e o prático. <button id="saam-sair" type="button" class="saam-link">Bloquear neste aparelho</button></p>
         </div>
+      </details>
     </section>
 
-    <!-- SPRINT 27 · v3.9.0: Programação SAAM · Rio de Janeiro (saam-rj.js · Praticagem RJ) -->
+    <!-- SPRINT 27 · v3.9.0: Programação SAAM · Rio de Janeiro (saam-rj.js · Praticagem RJ)
+         SPRINT 28 · v3.9.1: PIN da tripulação (o mesmo de Suape) e card recolhível -->
     <section class="card" data-tab="manobras" id="card-saam-rj" hidden aria-labelledby="saamrj-heading">
-        <div class="saam-head">
+      <details class="saam-panel" id="saamrj-panel">
+        <summary class="saam-head">
             <div>
                 <div class="eyebrow" id="saamrj-heading">Programação SAAM · Rio de Janeiro</div>
                 <div class="saam-sub">Manobras com rebocadores SAAM na programação da Praticagem RJ</div>
             </div>
+            <span class="saam-resumo" id="saamrj-resumo">🔒 PIN</span>
+        </summary>
+        <div id="saamrj-lock">
+            <p class="saam-sub">Área da tripulação SAAM. Digite o PIN (o mesmo de Suape) para ver as manobras do Rio.</p>
+            <form id="saamrj-form" class="saam-form" autocomplete="off">
+                <input id="saamrj-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="PIN" aria-label="PIN da tripulação">
+                <button type="submit">Entrar</button>
+            </form>
+            <p id="saamrj-msg" class="saam-msg" role="status"></p>
         </div>
+        <div id="saamrj-main" hidden>
         <p id="saamrj-sync" class="saam-sync" role="status"></p>
         <div id="saamrj-areas" class="saamrj-areas" role="group" aria-label="Filtrar por área"></div>
         <p id="saamrj-barra" class="saamrj-barra" hidden></p>
         <div id="saamrj-list" class="saam-list"></div>
-        <p class="tide-disclaimer">Fonte: <a href="https://www.praticagem-rj.com.br/" target="_blank" rel="noopener">praticagem-rj.com.br</a>, coluna EMP.RB = SAA, lida a cada 2 min com o card à vista. Horários de Brasília. Apoio informativo — confirme sempre com a central e o prático.</p>
+        <p class="tide-disclaimer">Fonte: <a href="https://www.praticagem-rj.com.br/" target="_blank" rel="noopener">praticagem-rj.com.br</a>, coluna EMP.RB = SAA, lida a cada 2 min com o card aberto. Horários de Brasília. Apoio informativo — confirme sempre com a central e o prático. <button id="saamrj-sair" type="button" class="saam-link">Bloquear neste aparelho</button></p>
+        </div>
+      </details>
     </section>
 
     <!-- Monitoramento AIS -->
@@ -459,9 +480,9 @@
     </section>
 
     <footer data-tab="radio">
-        <strong>TugLife FM v3.9.0</strong> • Mobile First GOC<br>
+        <strong>TugLife FM v3.9.1</strong> • Mobile First GOC<br>
         Desenvolvido por <strong>Jossian Brito</strong><br>
-        © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T00:30:00-03:00
+        © 2026 • Rádio TugLife FM · Atualização: 2026-10-15T17:30:00-03:00
     </footer>
 </div>
 <!-- SPRINT 20 · v3.2.0: Manual de bordo (manual.js preenche) -->
@@ -507,7 +528,7 @@
 </nav>
 <script>
     /**
-     * TugLife FM Engine v3.9.0
+     * TugLife FM Engine v3.9.1
      * Jossian Brito - 18/04/2026
      */
     const showModal = (t) => { document.getElementById('modal-text').innerText = t; document.getElementById('goc-modal').style.display = 'flex'; };

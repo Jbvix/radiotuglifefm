@@ -2,12 +2,19 @@
    TugLife FM — "Programação SAAM · Rio de Janeiro"
    ------------------------------------------------------------
    Arquivo   : saam-rj.js
-   Versão    : 3.9.0 (SPRINT 27)
-   Data/Hora : 2026-10-15T16:40:00-03:00
+   Versão    : 3.9.1 (SPRINT 28)
+   Data/Hora : 2026-10-15T17:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
-   v3.9.0  [NOVO] Card público (sem PIN) na aba Manobras com as
+   v3.9.1  [NOVO] PIN da tripulação — o MESMO de Suape, guardado na mesma
+           chave (tuglife_saam_pin). Vai no cabeçalho x-saam-pin e é
+           conferido no servidor (saam-rj → saam_programacao). Entrar aqui
+           destrava Suape e vice-versa (eventos 'saam:pin' / 'saam:bloqueio').
+           [NOVO] Card recolhível (<details id="saamrj-panel">): fechado no
+           celular, aberto no computador, escolha lembrada. Fechado = sem
+           busca nenhuma (economia de dados); o resumo mostra 🔒 ou a contagem.
+   v3.9.0  [NOVO] Card na aba Manobras com as
            manobras da SAAM (coluna EMP.RB = "SAA") nos portos do Rio
            de Janeiro, lidas da página da Praticagem RJ pela Edge
            Function saam-rj (Supabase), que faz a ponte CORS e guarda
@@ -20,7 +27,8 @@
    ------------------------------------------------------------
    QUANDO BUSCA (economia de dados a bordo)
    Um "relógio de quarto" bate a cada TICK_MS = 30 s e só busca se:
-       card visível  E  app em primeiro plano  E  idade ≥ IDADE_MS (2 min)
+       PIN  E  painel aberto  E  card visível  E  app em primeiro plano
+       E  idade ≥ IDADE_MS (2 min)
    Como o servidor guarda a página por 60 s, 2 min no aparelho é o
    ponto de equilíbrio: dado com no máximo ~3 min de atraso e nenhum
    acesso enquanto o tripulante está em outra aba ou com a tela apagada.
@@ -40,17 +48,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const TICK_MS = 30000;
   const IDADE_MS = 120000;
   const LS_AREA = 'tuglife_saamrj_area';
+  const LS_PIN = 'tuglife_saam_pin';          // compartilhado com saam.js
+  const LS_PAINEIS = 'tuglife_paineis';
   const TZ = 'America/Sao_Paulo';
 
   const $ = (id) => document.getElementById(id);
   const card = $('card-saam-rj');
   if (!card) return;
-  const ui = { sync: $('saamrj-sync'), areas: $('saamrj-areas'), barra: $('saamrj-barra'), list: $('saamrj-list') };
+  const ui = {
+    sync: $('saamrj-sync'), areas: $('saamrj-areas'), barra: $('saamrj-barra'), list: $('saamrj-list'),
+    panel: $('saamrj-panel'), resumo: $('saamrj-resumo'), lock: $('saamrj-lock'), form: $('saamrj-form'),
+    pin: $('saamrj-pin'), msg: $('saamrj-msg'), main: $('saamrj-main'), sair: $('saamrj-sair')
+  };
 
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
-    set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* modo anônimo */ } }
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* modo anônimo */ } },
+    del: (k) => { try { localStorage.removeItem(k); } catch (e) { /* idem */ } }
   };
+  let pin = store.get(LS_PIN);
 
   let dados = null;          // última resposta boa
   let buscadoEm = 0;         // quando o aparelho buscou pela última vez
@@ -152,21 +168,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderSync() {
     if (!dados) return;
+    if (pin) ui.resumo.textContent = `${dados.total} manobra${dados.total === 1 ? '' : 's'}`;
     const velho = Date.now() - new Date(dados.lido_em) > 10 * 60000;
     ui.sync.textContent = `${dados.ok && !velho ? '🟢' : '🟠'} Praticagem RJ lida ${ha(dados.lido_em)}`
       + (dados.ok ? '' : ' · site fora do ar, mostrando a última leitura');
   }
 
   /* ---------- 3. Busca ---------- */
-  const visivel = () => card.offsetParent !== null && !document.hidden;
+  const visivel = () => !!pin && (!ui.panel || ui.panel.open) && card.offsetParent !== null && !document.hidden;
+  const pedir = (p) => fetch(URL_API, { cache: 'no-store', headers: { 'x-saam-pin': p } });
 
   async function buscar(forcar) {
-    if (buscando || (!forcar && (!visivel() || Date.now() - buscadoEm < IDADE_MS))) return;
+    if (!pin || buscando || (!forcar && (!visivel() || Date.now() - buscadoEm < IDADE_MS))) return;
     buscando = true;
     buscadoEm = Date.now();
     try {
-      const r = await fetch(URL_API, { cache: 'no-store' });
+      const r = await pedir(pin);
       const d = await r.json();
+      if (r.status === 401) { sair('PIN incorreto ou trocado. Digite de novo.'); return; }
       if (!r.ok || !d.areas) throw new Error(d.mensagem || 'HTTP ' + r.status);
       dados = d;
       render();
@@ -193,9 +212,70 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('visibilitychange', () => buscar(false));
   window.addEventListener('resize', () => buscar(false));   // troca de aba (tabs.js)
 
-  /* ---------- 4. Partida ---------- */
+  /* ---------- 4. PIN (v3.9.1) ---------- */
+  function mostrar(aberto) {
+    ui.lock.hidden = aberto;
+    ui.main.hidden = !aberto;
+    ui.resumo.textContent = !aberto ? '🔒 PIN' : dados ? ui.resumo.textContent : '🔓';
+  }
+  // avisar=false quando o pedido veio do card de Suape (evita eco)
+  function sair(motivo, avisar = true) {
+    pin = null; store.del(LS_PIN);
+    dados = null; ui.list.replaceChildren(); ui.areas.replaceChildren();
+    mostrar(false);
+    ui.msg.textContent = motivo || '';
+    if (avisar) document.dispatchEvent(new CustomEvent('saam:bloqueio', { detail: { origem: 'rj', motivo } }));
+  }
+  function entrar(p) {
+    pin = p; ui.msg.textContent = '';
+    mostrar(true);
+    ui.sync.textContent = 'Lendo a programação da Praticagem RJ…';
+    buscadoEm = 0; buscar(false);               // só busca se o painel estiver aberto
+  }
+  ui.form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const p = ui.pin.value.trim();
+    if (!/^\d{4,8}$/.test(p)) { ui.msg.textContent = 'Digite o PIN numérico da tripulação.'; return; }
+    ui.msg.textContent = 'Verificando…';
+    try {
+      const r = await pedir(p);
+      if (r.status === 401) { ui.msg.textContent = 'PIN incorreto.'; return; }
+      const d = await r.json();
+      if (!r.ok || !d.areas) throw new Error(d.mensagem || 'HTTP ' + r.status);
+      store.set(LS_PIN, p); ui.pin.value = '';
+      pin = p; ui.msg.textContent = '';
+      dados = d; buscadoEm = Date.now();
+      mostrar(true); render(); renderSync();
+      document.dispatchEvent(new CustomEvent('saam:pin', { detail: { origem: 'rj', pin: p } }));
+    } catch (e) { ui.msg.textContent = 'Sem conexão. Tente novamente.'; }
+  });
+  ui.sair.addEventListener('click', () => sair('Programação bloqueada neste aparelho.'));
+  document.addEventListener('saam:pin', (ev) => { if (ev.detail.origem !== 'rj' && !pin) entrar(ev.detail.pin); });
+  document.addEventListener('saam:bloqueio', (ev) => { if (ev.detail.origem !== 'rj' && pin) sair(ev.detail.motivo, false); });
+
+  /* ---------- 5. Painel recolhível (v3.9.1) ----------
+     Mesmo esquema de saam.js: tuglife_paineis = {"saamrj-panel":true,…};
+     sem escolha salva, aberto só em tela larga. Abrir = buscar na hora. */
+  let mem = {};
+  try { mem = JSON.parse(store.get(LS_PAINEIS) || '{}') || {}; } catch (e) { mem = {}; }
+  if ('saamrj-panel' in mem ? mem['saamrj-panel'] : !window.matchMedia('(max-width: 760px)').matches) {
+    ui.panel.dataset.auto = '1'; ui.panel.open = true;
+  }
+  ui.panel.addEventListener('toggle', () => {
+    if (ui.panel.open) buscar(false);
+    if (ui.panel.dataset.auto) { delete ui.panel.dataset.auto; return; }
+    let m = {};
+    try { m = JSON.parse(store.get(LS_PAINEIS) || '{}') || {}; } catch (e) { m = {}; }
+    m['saamrj-panel'] = ui.panel.open;
+    store.set(LS_PAINEIS, JSON.stringify(m));
+  });
+
+  /* ---------- 6. Partida ---------- */
   card.hidden = false;
-  ui.sync.textContent = 'Lendo a programação da Praticagem RJ…';
-  // 1ª leitura só quando o card estiver à vista (abre na aba Manobras)
-  requestAnimationFrame(() => buscar(false));
+  if (pin) {
+    mostrar(true);
+    ui.sync.textContent = 'Lendo a programação da Praticagem RJ…';
+    // 1ª leitura só quando o painel estiver aberto e à vista
+    requestAnimationFrame(() => buscar(false));
+  } else mostrar(false);
 });

@@ -1,6 +1,6 @@
 # Programação SAAM · Rio de Janeiro — ponte da Praticagem RJ
 
-Autor: Jossian Brito · SPRINT 27 · app v3.9.0 · 2026-10-15T16:40:00-03:00
+Autor: Jossian Brito · SPRINT 27/28 · app v3.9.1 · 2026-10-15T17:30:00-03:00
 
 | Arquivo | Papel |
 |---|---|
@@ -12,7 +12,7 @@ Autor: Jossian Brito · SPRINT 27 · app v3.9.0 · 2026-10-15T16:40:00-03:00
 
 **Fonte e filtro:** coluna `EMP.RB` (empresa dos rebocadores). Siglas vistas em 15/10/2026: `SAA` (SAAM), `WIL` (Wilson Sons), `CAM` (Camorim), `VAL` (Vale), `N/A` (sem rebocador). O filtro casa `SAA` como palavra inteira.
 
-**Chamada:** `GET https://udedhipgekgonnioofgk.supabase.co/functions/v1/saam-rj` (opcional `?emp=WIL` para testar outra empresa). Pública, só leitura, sem banco e sem segredo.
+**Chamada:** `GET https://udedhipgekgonnioofgk.supabase.co/functions/v1/saam-rj` com o cabeçalho `x-saam-pin: <PIN da tripulação>` (opcional `?emp=WIL` para testar outra empresa). Só leitura. Desde a v1.1.0 (SPRINT 28) o PIN é obrigatório e conferido pela função SQL `saam_programacao` (o mesmo PIN e a mesma trava de Suape); sem PIN ou errado → 401.
 
 **Publicar** (projeto `tuglife-fm`, `udedhipgekgonnioofgk`), copiando esta pasta para `supabase/functions/saam-rj/`:
 ```bash

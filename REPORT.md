@@ -1,3 +1,19 @@
+# SPRINT 28 — PIN no Rio e programações recolhíveis — v3.9.1
+Autor: Jossian Brito  
+Data/hora: 2026-10-15T17:30:00-03:00
+
+Pedido do Comandante: "Precisamos de um PIN para o acesso. E recolher as páginas de programação."
+
+Implementação:
+- **PIN no Rio, o mesmo de Suape.** A Edge Function `saam-rj` (v1.1.0, já publicada) exige o cabeçalho `x-saam-pin` e confere o PIN chamando `saam_programacao(p_pin)` — o mesmo hash bcrypt e a mesma trava contra adivinhação de Suape; nenhum segredo novo. Sem PIN ou PIN errado → 401. A resposta passou a `Cache-Control: private, no-store`.
+- **PIN único no aparelho.** Os dois cards usam a mesma chave `tuglife_saam_pin`: entrar em um destrava o outro (evento `saam:pin`) e "Bloquear neste aparelho" em qualquer um trava os dois (`saam:bloqueio`). PIN trocado no servidor (401) leva o card do Rio de volta à tela de PIN.
+- **Programações recolhíveis.** O cabeçalho de cada card virou o `<summary>` de um `<details>`: toque no título abre/fecha; à direita, 🔒 PIN, 🔓 ou "N manobras" e a seta ▸/▾. Fechado no celular, aberto no computador; a escolha do tripulante fica em `tuglife_paineis`. Alerta de Suape e clique na notificação (`#card-saam`) abrem o painel sozinhos, sem gravar como escolha. Recolhido, o card do Rio não busca nada.
+- Versão 3.9.1 (VERSION.json, index.html com rodapé, sw.js), manual (itens "Acesso por PIN" e "SAAM · Rio" e novidade), README, `docs/PROJETO.md` 1.7.0.
+
+Verificação: função publicada responde 401 sem PIN e com PIN errado (a resposta 401 com PIN errado prova que a conferência pela função SQL funciona); o caminho com o PIN certo não foi testado de fora porque o PIN real não foi lido (segredo). `saam-rj-check.cjs` com 10 cenários passou; regressões manual-check, update-check, tide-live-check, radio-check, browser-check, pwa-check, schedule.test, README e `tools/saam-rj/test.mjs` passaram.
+
+Limitação: cada PIN errado digitado no card do Rio conta na mesma trava de Suape (é a mesma proteção).
+
 # SPRINT 27 — Programação SAAM · Rio de Janeiro (Praticagem RJ) — v3.9.0
 Autor: Jossian Brito  
 Data/hora: 2026-10-15T16:40:00-03:00

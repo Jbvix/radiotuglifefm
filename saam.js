@@ -2,11 +2,18 @@
    TugLife FM — "Programação SAAM · Suape" (apoio ao Comandante)
    ------------------------------------------------------------
    Arquivo   : saam.js
-   Versão    : 3.1.0 (SPRINT 19)
-   Data/Hora : 2026-10-12T19:30:00-03:00
+   Versão    : 3.9.1 (SPRINT 28)
+   Data/Hora : 2026-10-15T17:30:00-03:00
    Autor     : Jossian Brito
    ------------------------------------------------------------
    HISTÓRICO DE MODIFICAÇÕES
+   v3.9.1  [NOVO] Card recolhível (<details id="saam-panel">): fechado no
+           celular, aberto no computador; a escolha do tripulante fica
+           lembrada. O resumo na linha fechada mostra 🔒 ou "N manobras".
+           Um alerta abre o painel sozinho (a faixa colorida fica dentro).
+           [NOVO] PIN único para Suape e Rio (saam-rj.js): entrar num card
+           emite 'saam:pin' e o outro destrava junto; "Bloquear neste
+           aparelho" emite 'saam:bloqueio' e trava os dois.
    v3.1.0  [NOVO] alertar() emite o evento 'saam:alerta' para o
            selo laranja da aba "Manobras" (tabs.js). Testes de som
            não acendem o selo (detail.teste = true).
@@ -37,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const API = 'https://udedhipgekgonnioofgk.supabase.co/rest/v1/rpc/';
   const KEY = 'sb_publishable_eFnlzgsmvXurOo60X7OPcw_hlj_kFnt';
   const POLL_MS = 60000;
-  const LS = { pin: 'tuglife_saam_pin', ultimo: 'tuglife_saam_ultimo', alertas: 'tuglife_saam_alertas' };
+  const LS = { pin: 'tuglife_saam_pin', ultimo: 'tuglife_saam_ultimo', alertas: 'tuglife_saam_alertas', paineis: 'tuglife_paineis' };
 
   const $ = (id) => document.getElementById(id);
   const card = $('card-saam');
@@ -45,7 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ui = {
     lock: $('saam-lock'), form: $('saam-form'), pin: $('saam-pin'), msg: $('saam-msg'),
     main: $('saam-main'), sync: $('saam-sync'), alertBtn: $('saam-alert-btn'), alertInfo: $('saam-alert-info'),
-    tests: $('saam-tests'), list: $('saam-list'), events: $('saam-events'), banner: $('saam-banner'), sair: $('saam-sair')
+    tests: $('saam-tests'), list: $('saam-list'), events: $('saam-events'), banner: $('saam-banner'), sair: $('saam-sair'),
+    panel: $('saam-panel'), resumo: $('saam-resumo')
   };
 
   const store = {
@@ -105,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ICONE = { CONFIRMADA: '✅', CANCELADA: '❌', ANTECIPADA: '⏩' };
 
   function alertar(tipo, texto) {
+    if (texto !== 'teste de som') abrirPainel();   // v3.9.1: alerta abre o painel
     try { SONS[tipo] && SONS[tipo](); } catch (e) { /* áudio bloqueado */ }
     if (navigator.vibrate) navigator.vibrate(VIBRA[tipo] || 200);
     ui.banner.className = 'saam-banner is-' + tipo.toLowerCase();
@@ -114,6 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
     alertar.t = setTimeout(() => { ui.banner.hidden = true; }, 20000);
     // v3.1.0: avisa a barra de abas (selo na aba Manobras)
     document.dispatchEvent(new CustomEvent('saam:alerta', { detail: { tipo, teste: texto === 'teste de som' } }));
+  }
+
+  function abrirPainel() {
+    if (!ui.panel || ui.panel.open) return;
+    ui.panel.dataset.auto = '1';
+    ui.panel.open = true;
   }
 
   /* ---------- 3. Formatação ---------- */
@@ -142,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Manobras agrupadas por dia
     ui.list.replaceChildren();
     const ms = d.manobras || [];
+    if (ui.resumo) ui.resumo.textContent = `${ms.length} manobra${ms.length === 1 ? '' : 's'}`;
     if (!ms.length) {
       ui.list.innerHTML = '<p class="saam-vazio">Nenhuma manobra SAAM programada nas próximas horas.</p>';
     }
@@ -218,11 +234,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function mostrar(aberto) {
     ui.lock.hidden = aberto;
     ui.main.hidden = !aberto;
+    if (ui.resumo && !aberto) ui.resumo.textContent = '🔒 PIN';
   }
-  function sair(motivo) {
+  // v3.9.1: avisar=false quando o pedido veio do outro card (evita eco)
+  function sair(motivo, avisar = true) {
     pin = null; store.del(LS.pin); clearInterval(timer);
     mostrar(false);
     ui.msg.textContent = motivo || '';
+    if (avisar) document.dispatchEvent(new CustomEvent('saam:bloqueio', { detail: { origem: 'suape', motivo } }));
   }
   ui.form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -233,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const d = await rpc('saam_programacao', { p_pin: p });
       if (d.erro) { ui.msg.textContent = 'PIN incorreto.'; return; }
       pin = p; store.set(LS.pin, p); ui.pin.value = ''; ui.msg.textContent = '';
+      document.dispatchEvent(new CustomEvent('saam:pin', { detail: { origem: 'suape', pin: p } }));
       ultimo = Math.max(ultimo, ...(d.eventos || []).map((e) => e.id), 0);
       store.set(LS.ultimo, String(ultimo));
       vapidKey = d.vapid_public;
@@ -304,7 +324,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---------- 8. Partida ---------- */
+  // v3.9.1: PIN digitado no card do Rio destrava Suape (e vice-versa)
+  document.addEventListener('saam:pin', (ev) => {
+    if (ev.detail.origem === 'suape' || pin) return;
+    pin = ev.detail.pin; ui.msg.textContent = '';
+    mostrar(true); atualizar(true); agendar(); estadoAlertas();
+  });
+  document.addEventListener('saam:bloqueio', (ev) => {
+    if (ev.detail.origem !== 'suape' && pin) sair(ev.detail.motivo, false);
+  });
+
+  /* ---------- 8. Painel recolhível (v3.9.1) ----------
+     Abertura automática (alerta ou clique na notificação #card-saam)
+     não conta como escolha do tripulante: não é gravada.
+     Estado lembrado em tuglife_paineis = {"saam-panel":true,…}.
+     Sem escolha salva: aberto só em tela larga (> 760 px). */
+  if (ui.panel) {
+    let mem = {};
+    try { mem = JSON.parse(store.get(LS.paineis) || '{}') || {}; } catch (e) { mem = {}; }
+    if ('saam-panel' in mem ? mem['saam-panel'] : !window.matchMedia('(max-width: 760px)').matches) abrirPainel();
+    ui.panel.addEventListener('toggle', () => {
+      if (ui.panel.dataset.auto) { delete ui.panel.dataset.auto; return; }
+      let m = {};
+      try { m = JSON.parse(store.get(LS.paineis) || '{}') || {}; } catch (e) { m = {}; }
+      m['saam-panel'] = ui.panel.open;
+      store.set(LS.paineis, JSON.stringify(m));
+    });
+  }
+
+  window.addEventListener('hashchange', () => { if (location.hash === '#card-saam') abrirPainel(); });
+  if (location.hash === '#card-saam') abrirPainel();
+
+  /* ---------- 9. Partida ---------- */
   card.hidden = false;
   if (pin) { mostrar(true); atualizar(true); agendar(); estadoAlertas(); }
   else mostrar(false);

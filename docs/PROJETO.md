@@ -3,14 +3,15 @@
 | | |
 |---|---|
 | **Projeto** | TugLife FM · App da rádio (PWA) |
-| **Versão do app** | 3.9.0 (SPRINT 27) |
-| **Documento** | 1.6.0 · 2026-10-15T16:40:00-03:00 |
+| **Versão do app** | 3.9.1 (SPRINT 28) |
+| **Documento** | 1.7.0 · 2026-10-15T17:30:00-03:00 |
 | **Autor** | Jossian Brito (Charlie Bravo) |
 | **Site** | https://radiotuglifefm.netlify.app |
 | **Repositório** | https://github.com/Jbvix/radiotuglifefm |
 | **Licença** | CC BY-NC 4.0 (código próprio) · terceiros: ver §12 |
 
 > **Histórico deste documento**
+> - 1.7.0 (2026-10-15) — SPRINT 28: PIN da tripulação também no Rio (conferido no servidor pela `saam-rj` via `saam_programacao`), PIN único para os dois cards (eventos `saam:pin`/`saam:bloqueio`), programações recolhíveis (`tuglife_paineis`).
 > - 1.6.0 (2026-10-15) — Programação SAAM · Rio de Janeiro (SPRINT 27): `saam-rj.js`, Edge Function `saam-rj` (ponte CORS com cache de 60 s para a página da Praticagem RJ), §5 e §6.5 novos, teste `saam-rj-check.cjs` e `tools/saam-rj/`.
 > - 1.5.0 (2026-10-15) — Aviso de nova versão (SPRINT 26): `SKIP_WAITING` no `sw.js`, faixa no `pwa.js`, §8 com o novo fluxo de atualização, teste `update-check.cjs`. Faixa "Ao vivo" da Maré recolhida numa linha com ⓘ.
 > - 1.4.0 (2026-10-15) — Aba Rádio compacta (SPRINT 25): faixa atual no player, painel "Mais da TugLife", rodapé só no computador; teste `radio-check.cjs`.
@@ -66,7 +67,7 @@ radiotuglifefm/
 ├── tides.js                Card "Tábua de Maré": cálculo, curva 24 h, extremos, navegação
 ├── tide-live.js            Nível MEDIDO ao vivo em 6 portos (SiMCosta e IOC/UNESCO; Suape = média de 2) e maré meteorológica
 ├── saam.js                 Card "Programação SAAM · Suape": PIN, lista, alertas, push
-├── saam-rj.js              Card "Programação SAAM · Rio de Janeiro": Praticagem RJ, sem PIN, filtro por área
+├── saam-rj.js              Card "Programação SAAM · Rio de Janeiro": Praticagem RJ, PIN da tripulação, filtro por área
 ├── tabs.js                 Navegação por abas no celular + selo de alerta em Manobras
 ├── manual.js               Manual de bordo + tour guiado (fonte única dos textos)
 │
@@ -206,8 +207,8 @@ flowchart LR
 | `tide-data.js` | Constantes harmônicas por porto, método de calibração e erro típico | — (só dados) | — | 2.9.0 |
 | `tides.js` | Altura agora, tendência, extremos do dia, curva SVG 24 h, navegação por dia, porto lembrado | `#card-mare`, `#tide-port`, `#tide-chart`, `#tide-list` | `NeapsTide`, `TUGLIFE_TIDES` | 3.4.0 |
 | `tide-live.js` | Nível medido agora (previsão + mediana dos resíduos de 10 min), tendência (reta de 30 min), maré meteorológica, série de 6 h no gráfico, busca incremental a cada 5 min, várias fontes por porto (média, uma pode cair), correção de horário de porto secundário, duas APIs (SiMCosta e IOC), volta à previsão se o dado tiver > 30 min | `#tide-live`, `.tide-real` | APIs SiMCosta e IOC; `window.TugTides` | 3.6.0 |
-| `saam.js` | PIN, lista por dia, sincronização a cada 60 s, 3 sons sintetizados + vibração, faixa de alerta, push | `#card-saam`, `#saam-pin`, `#saam-list`, `#saam-events`, `#saam-banner` | RPC `saam_programacao`, `saam_push_registrar`; SW | 3.1.0 |
-| `saam-rj.js` | Programação SAAM no Rio (Praticagem RJ), sem PIN; busca a cada 2 min só com o card visível; filtro por área lembrado; rebocadores com tração e fainas | `#card-saam-rj`, `#saamrj-areas`, `#saamrj-list`, `#saamrj-sync`, `#saamrj-barra` | Edge Function `saam-rj` | 3.9.0 |
+| `saam.js` | PIN, lista por dia, sincronização a cada 60 s, 3 sons sintetizados + vibração, faixa de alerta, push; painel recolhível (alerta e `#card-saam` abrem) | `#card-saam`, `#saam-panel`, `#saam-resumo`, `#saam-pin`, `#saam-list`, `#saam-events`, `#saam-banner` | RPC `saam_programacao`, `saam_push_registrar`; SW; eventos `saam:pin`/`saam:bloqueio` | 3.9.1 |
+| `saam-rj.js` | Programação SAAM no Rio (Praticagem RJ) com o PIN da tripulação; busca a cada 2 min só com o painel aberto e visível; filtro por área lembrado; rebocadores com tração e fainas | `#card-saam-rj`, `#saamrj-panel`, `#saamrj-resumo`, `#saamrj-pin`, `#saamrj-areas`, `#saamrj-list`, `#saamrj-sync`, `#saamrj-barra` | Edge Function `saam-rj` (cabeçalho `x-saam-pin`); eventos `saam:pin`/`saam:bloqueio` | 3.9.1 |
 | `tabs.js` | Barra de abas (≤ 760 px), aba lembrada, selo de alertas, `#card-saam` abre Manobras | `#tabbar`, `#tab-badge`, `body[data-aba]` | evento `saam:alerta` | 3.2.0 |
 | `manual.js` | Botão ?, Manual de bordo (seções, sanfona, "Abrir a aba"), tour de 6 passos, `#manual` | `#help-btn`, `#manual-dialog`, `.tour-camada` | `TugTabs` | 3.6.0 |
 | `sw.js` | Cache versionado só do app (nunca do stream nem de APIs); push SAAM com vibração por tipo; clique abre `#card-saam`; versão nova fica em espera até a mensagem `SKIP_WAITING` | — | Web Push | 3.8.0 |
@@ -221,6 +222,7 @@ flowchart LR
 | `body[data-aba]` | `tabs.js` | `refresh.css`, `manual.js` | Qual aba está à vista |
 | `window.TugTabs.abrir(aba)` | `tabs.js` | `manual.js` | Trocar de aba pelo manual/tour |
 | evento `saam:alerta` | `saam.js` | `tabs.js` | Acender o selo de Manobras |
+| eventos `saam:pin` / `saam:bloqueio` (`detail.origem` = `suape` ou `rj`) | `saam.js`, `saam-rj.js` | o outro card | PIN único: entrar num card destrava o outro; bloquear trava os dois |
 | mensagem SW `saam-push` | `sw.js` | `saam.js` | Tocar o som próprio com o app aberto |
 | `window.TugTides` (`render`, `porto`, `preditor`, `hoje`) | `tides.js` | `tide-live.js` | Redesenhar e comparar medido × previsto |
 | `window.TugTideLive` (`ativo`, `serie`, `aoDesenhar`) | `tide-live.js` | `tides.js` | Caixa "Ao vivo", linha verde, rótulo "Previsto agora" |
@@ -232,11 +234,12 @@ flowchart LR
 |---|---|
 | `tuglife_aba` | Última aba aberta |
 | `tuglife_tour_visto` | Versão do tour já vista (`manual.js` → `tourVersao`) |
-| `tuglife_saam_pin` | PIN da tripulação (apagado por "Bloquear neste aparelho") |
+| `tuglife_saam_pin` | PIN da tripulação, o mesmo para Suape e Rio (apagado por "Bloquear neste aparelho" em qualquer um) |
 | `tuglife_saam_ultimo` | Último evento SAAM já tocado (evita repetir som) |
 | `tuglife_saam_alertas` | Alertas ligados/desligados |
 | `tuglife_tide_port` | Último porto escolhido na maré |
 | `tuglife_saamrj_area` | Área escolhida no card SAAM · Rio (`TODAS` ou o nome da área) |
+| `tuglife_paineis` | Painéis recolhíveis abertos/fechados pelo tripulante, ex.: `{"saam-panel":false,"saamrj-panel":true}`. Sem escolha: fechado no celular, aberto no computador |
 | `tuglife_client_id` (sessionStorage) | Identificador anônimo da sessão para a contagem de ouvintes |
 
 Todo acesso é protegido por `try/catch`: em modo anônimo o app funciona, só não lembra.
@@ -288,7 +291,9 @@ Todo acesso é protegido por `try/catch`: em modo anônimo o app funciona, só n
 
 ### Ponte `saam-rj` (Edge Function, código em `tools/saam-rj/`)
 
-`GET https://udedhipgekgonnioofgk.supabase.co/functions/v1/saam-rj` — pública (`verify_jwt` desligado), só leitura, sem banco nem segredo.
+`GET https://udedhipgekgonnioofgk.supabase.co/functions/v1/saam-rj` com o cabeçalho `x-saam-pin` — só leitura, sem segredo próprio (`verify_jwt` desligado; a proteção é o PIN).
+
+0. **PIN (v1.1.0):** conferido chamando a mesma função SQL `saam_programacao(p_pin)` do card de Suape — mesmo hash bcrypt e mesma trava (> 20 erros em 10 min). PIN certo fica lembrado 10 min na instância (só o SHA-256). PIN errado ou ausente → HTTP 401.
 
 1. A página https://www.praticagem-rj.com.br/ é HTML gerado no servidor (ASP.NET), refeita a cada ~1 min, **sem cabeçalho CORS** — o navegador não pode lê-la direto do app. Por isso a ponte.
 2. A função guarda a página na memória por 60 s: N tripulantes com o app aberto = no máximo 1 acesso/min ao site por instância.
@@ -379,7 +384,8 @@ sequenceDiagram
   participant A as saam-rj.js (card à vista)
   participant F as Edge Function saam-rj
   participant P as praticagem-rj.com.br
-  A->>F: GET (a cada 2 min, só com o card visível e o app em primeiro plano)
+  A->>F: GET + x-saam-pin (a cada 2 min, só com o painel aberto e visível)
+  F->>F: confere o PIN (saam_programacao, lembrado 10 min)
   alt leitura com menos de 60 s
     F-->>A: JSON do cache
   else
@@ -460,7 +466,7 @@ python3 server.py          # http://localhost:8787/
 | README em dia | `node tools/manual/gerar-readme.mjs --check` | Manual do README igual ao `manual.js` |
 | Coletor SAAM | `cd tools/saam && npm i xlsx fflate && node test.mjs` | Leitor da planilha e regras de alerta (planilha sintética) |
 | Leitor Praticagem RJ | `node tools/saam-rj/test.mjs [pagina.html]` | Colunas pelo cabeçalho, `BD` repetido, fichas aninhadas, rebocadores e avisos, linhas repetidas, ano do POB (virada), filtro `SAA` × `SAAB`; opcional: página real salva |
-| Navegador · SAAM Rio | `node saam-rj-check.cjs` | Servidor próprio (porta 8798), função simulada: sem busca fora da aba, ordem por horário, dias, rebocadores/⚠️/CTB, filtro por área lembrado, barra fechada, falha mantém a lista, 360 px e computador |
+| Navegador · SAAM Rio | `node saam-rj-check.cjs` | Servidor próprio (porta 8798), função simulada (PIN 1234): sem busca fora da aba nem recolhido, cards recolhidos no celular, PIN errado/certo, ordem por horário, dias, rebocadores/⚠️/CTB, filtro por área, PIN e painel lembrados, falha mantém a lista, PIN único com Suape e bloqueio dos dois, PIN trocado (401), 360 px e computador |
 
 Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'`). `manual-check.cjs`, `update-check.cjs`, `tide-live-check.cjs` e `saam-rj-check.cjs` aceitam outro Chromium via `PW_CHROME=/caminho/chrome`. Com o servidor local rodando em outro terminal.
 
@@ -509,7 +515,7 @@ Os testes de navegador usam Playwright com o Edge do Windows (`channel: 'msedge'
 
 - **Aba Rádio** cabe numa tela em 390×844; em celulares baixos (360×740) ainda rola ~130 px, mas o play e a faixa atual ficam à vista.
 - **SAAM** depende do link público da planilha da agência; só Suape. Pesquisa P3 (15/10/2026): a planilha só traz Suape e Recife, e em Recife a SAAM não fez nenhuma manobra em 5 meses (todas da Wilson Sons). Outros portos dependem de outras fontes (ver `REPORT.md`).
-- **SAAM · Rio** depende do formato da página pública da Praticagem RJ (se mudar, `parser.js` precisa de ajuste; o teste com página real salva acusa). Mostra só o que a praticagem publica: rebocadores aparecem quando escalados, perto da manobra. Sem alertas sonoros nem push (por ora).
+- **SAAM · Rio** pede o mesmo PIN de Suape; trocar o PIN no banco vale para os dois (aparelhos com o PIN antigo voltam para a tela de PIN). Depende do formato da página pública da Praticagem RJ (se mudar, `parser.js` precisa de ajuste; o teste com página real salva acusa). Mostra só o que a praticagem publica: rebocadores aparecem quando escalados, perto da manobra. Sem alertas sonoros nem push (por ora).
 - **Push com tela apagada** usa o som padrão do celular; no iPhone exige o app instalado.
 - **Maré** é previsão astronômica: não considera vento, pressão ou vazão de rio. Informativa — não substitui a Tábua DHN na navegação.
 - **Nível medido** em 6 dos 13 portos (Rio Grande, Suape, Pecém, Rio de Janeiro, Paranaguá, Salvador); Itaqui sem fonte representativa (ver §6.4). Referência ao NR é estimada (±3 a ±9 cm) até a amarração dos radares à rede do IBGE; depende das estações estarem no ar.

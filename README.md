@@ -10,7 +10,7 @@ App mobile da webrádio TugLife FM.
 - **Documentação técnica:** [docs/PROJETO.md](docs/PROJETO.md) — diretórios, módulos, backend, fluxos, deploy e testes
 
 <!-- manual:inicio -->
-## Manual de bordo (v3.9.0)
+## Manual de bordo (v3.9.1)
 
 _Gerado de `manual.js` por `tools/manual/gerar-readme.mjs` — edite lá, não aqui._
 
@@ -18,6 +18,7 @@ No app: botão **?** no topo. No celular, a barra de abas embaixo leva a cada se
 
 **Novidades**
 
+- v3.9.1: Programação do Rio agora com o PIN da tripulação (o mesmo de Suape). Toque no título de cada programação para recolher ou abrir.
 - v3.9.0: Programação SAAM no Rio de Janeiro: manobras da Praticagem RJ com rebocadores SAAM, por área (Guanabara, Sepetiba, Forno, Açu), sem PIN.
 - v3.8.0: Aviso de nova versão: toque em Atualizar e pronto, sem fechar o app. Nível medido da Maré numa linha só; toque no ⓘ para os detalhes.
 - v3.7.0: Aba Rádio numa tela só: faixa atual no player e o resto em "Mais da TugLife".
@@ -50,14 +51,14 @@ Previsão de maré de 13 portos, calibrada com a DHN 2026.
 
 ### Manobras
 
-Programação SAAM em Suape (tripulação, com PIN) e no Rio de Janeiro (Praticagem RJ, aberta).
+Programação SAAM em Suape e no Rio de Janeiro, exclusiva da tripulação (PIN).
 
-- **Acesso por PIN** — Digite o PIN da tripulação. Ele fica lembrado no aparelho; "Bloquear neste aparelho" apaga.
+- **Acesso por PIN** — O mesmo PIN da tripulação abre Suape e Rio: digitou num card, o outro destrava junto. Fica lembrado no aparelho; "Bloquear neste aparelho" (em qualquer um dos dois) trava os dois. Toque no título de cada programação para recolher ou abrir; o app lembra. Recolhida, a linha mostra 🔒 ou quantas manobras há.
 - **Lista de manobras** — Agrupada por dia: hora, navio, tipo, situação, berço, calado e rebocadores.
 - **Três alertas sonoros** — Confirmada: ding-dong subindo. Cancelada: dois tons descendo. Antecipada: bipes rápidos e repetidos.
 - **Ativar alertas** — Libera o som e a notificação com a tela apagada. Use os botões de teste para ouvir cada som.
 - **Selo laranja** — Na barra de abas, conta os alertas que chegaram enquanto você estava em outra aba.
-- **SAAM · Rio de Janeiro** — Logo abaixo de Suape, sem PIN: as manobras que a Praticagem RJ programou com rebocadores SAAM (coluna EMP.RB = SAA). Atualiza a cada 2 min enquanto o card está à vista; o 🟢 mostra há quanto tempo o site foi lido.
+- **SAAM · Rio de Janeiro** — Logo abaixo de Suape, com o mesmo PIN: as manobras que a Praticagem RJ programou com rebocadores SAAM (coluna EMP.RB = SAA). Atualiza a cada 2 min enquanto o card está aberto e à vista (recolhido não gasta dados); o 🟢 mostra há quanto tempo o site foi lido.
 - **Filtro por área (Rio)** — Toque em Todas, Baía de Guanabara, Baía de Sepetiba, Porto do Forno ou Porto do Açu; o número é a quantidade de manobras SAAM. A escolha fica lembrada. Com uma área escolhida, aparece a situação da barra (aberta ou fechada).
 - **Cada manobra (Rio)** — Hora do prático a bordo (horário de Brasília), navio, Entrada/Saída/Mudança, berço e bordo (BB/BE), calado, comprimento e agência. Quando a praticagem já escalou, aparecem os rebocadores com a tração estática em toneladas e as fainas (ATR, DES, PON, NAV); ⚠️ indica rebocador também escalado em outra manobra.
 
